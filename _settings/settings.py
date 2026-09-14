@@ -59,6 +59,7 @@ TEMPLATES = [
                 'app_home.context_processors.site_logo',
                 'app_home.context_processors.phone',
                 'app_home.context_processors.instagram',
+                'app_home.context_processors.footer_info',
             ],
         },
     },

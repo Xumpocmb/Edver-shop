@@ -1,4 +1,4 @@
-from .models import Instagram, PhoneNumber, SiteLogo
+from .models import FooterInfo, Instagram, PhoneNumber, SiteLogo
 
 
 def site_logo(request):
@@ -14,3 +14,8 @@ def phone(request):
 def instagram(request):
     instagram = Instagram.objects.first()
     return {'instagram': instagram}
+
+
+def footer_info(request):
+    info = FooterInfo.objects.first()
+    return {'footer_info': info}

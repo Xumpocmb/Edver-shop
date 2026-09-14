@@ -1,6 +1,6 @@
 from django.contrib import admin
 from django.utils.html import format_html
-from .models import Instagram, PhoneNumber, SiteLogo
+from .models import FooterInfo, Instagram, PhoneNumber, SiteLogo
 
 
 @admin.register(SiteLogo)
@@ -25,3 +25,8 @@ class PhoneNumberAdmin(admin.ModelAdmin):
 @admin.register(Instagram)
 class InstagramAdmin(admin.ModelAdmin):
     list_display = ('id', 'url',)
+
+
+@admin.register(FooterInfo)
+class FooterInfoAdmin(admin.ModelAdmin):
+    list_display = ('id', 'text')

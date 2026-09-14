@@ -55,3 +55,19 @@ class Instagram(models.Model):
     class Meta:
         verbose_name = 'Instagram'
         verbose_name_plural = 'Instagram'
+
+
+class FooterInfo(models.Model):
+    is_singleton = models.BooleanField(default=True, unique=True, editable=False)
+    text = models.TextField(verbose_name='Текст', default='')
+
+    def save(self, *args, **kwargs):
+        self.is_singleton = True
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return 'Информация в футере'
+
+    class Meta:
+        verbose_name = 'Информация в футере'
+        verbose_name_plural = 'Информация в футере'
