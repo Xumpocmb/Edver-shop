@@ -16,3 +16,42 @@ class SiteLogo(models.Model):
     class Meta:
         verbose_name = 'Логотип сайта'
         verbose_name_plural = 'Логотип сайта'
+
+
+class PhoneNumber(models.Model):
+    is_singleton = models.BooleanField(default=True, unique=True, editable=False)
+    number = models.CharField(
+        max_length=20,
+        default='+375299673138',
+        verbose_name='Номер телефона',
+    )
+
+    def save(self, *args, **kwargs):
+        self.is_singleton = True
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return self.number
+
+    class Meta:
+        verbose_name = 'Номер телефона'
+        verbose_name_plural = 'Номер телефона'
+
+
+class Instagram(models.Model):
+    is_singleton = models.BooleanField(default=True, unique=True, editable=False)
+    url = models.URLField(
+        default='https://instagram.com/',
+        verbose_name='Ссылка на Instagram',
+    )
+
+    def save(self, *args, **kwargs):
+        self.is_singleton = True
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return self.url
+
+    class Meta:
+        verbose_name = 'Instagram'
+        verbose_name_plural = 'Instagram'

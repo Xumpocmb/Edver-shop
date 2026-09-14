@@ -1,6 +1,6 @@
 from django.contrib import admin
 from django.utils.html import format_html
-from .models import SiteLogo
+from .models import Instagram, PhoneNumber, SiteLogo
 
 
 @admin.register(SiteLogo)
@@ -15,3 +15,13 @@ class SiteLogoAdmin(admin.ModelAdmin):
         return '-'
 
     logo_preview.short_description = 'Предпросмотр'
+
+
+@admin.register(PhoneNumber)
+class PhoneNumberAdmin(admin.ModelAdmin):
+    list_display = ('id', 'number',)
+
+
+@admin.register(Instagram)
+class InstagramAdmin(admin.ModelAdmin):
+    list_display = ('id', 'url',)

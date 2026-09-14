@@ -8,14 +8,21 @@
             {% endif %}
         </a>
     </div>
-    <nav class="header-center">
+    <nav class="header-center" id="main-nav">
         <a href="/catalog/">Каталог</a>
         <a href="/about/">О нас</a>
         <a href="/contacts/">Контакты</a>
     </nav>
     <div class="header-right">
-        <a href="/phone/" class="header-icon" aria-label="Телефон">📞</a>
-        <a href="https://instagram.com/" class="header-icon" aria-label="Instagram" target="_blank" rel="noopener">📷</a>
+        <a href="tel:{{ phone.number }}" class="header-icon header-phone-link" aria-label="Телефон">
+            📞 <span class="header-phone-number">{{ phone.number }}</span>
+        </a>
+        <a href="{{ instagram.url }}" class="header-icon" aria-label="Instagram" target="_blank" rel="noopener">📷</a>
         <a href="/profile/" class="header-icon" aria-label="Профиль">👤</a>
+        <button class="burger" id="burger" aria-label="Меню" aria-expanded="false">
+            <span class="burger-bar"></span>
+            <span class="burger-bar"></span>
+            <span class="burger-bar"></span>
+        </button>
     </div>
 </header>

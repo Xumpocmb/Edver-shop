@@ -68,14 +68,54 @@ img {
 }
 
 .header-center {
-    order: 3;
-    width: 100%;
-    display: flex;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    display: none;
+    flex-direction: column;
     align-items: center;
+    gap: 1rem;
+    padding: 1rem 1.25rem;
+    background-color: var(--color-bg);
+    border-bottom: 1px solid var(--color-border);
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.08);
+    z-index: 90;
+}
+
+.header-center.open {
+    display: flex;
+}
+
+.burger {
+    display: inline-flex;
+    flex-direction: column;
     justify-content: center;
-    gap: 1.25rem;
-    padding-top: 0.5rem;
-    border-top: 1px solid var(--color-border);
+    gap: 4px;
+    background: none;
+    border: none;
+    padding: 4px;
+    cursor: pointer;
+}
+
+.burger-bar {
+    width: 22px;
+    height: 2px;
+    background-color: var(--color-text);
+    border-radius: 2px;
+    transition: transform 0.2s ease, opacity 0.2s ease;
+}
+
+.burger.active .burger-bar:nth-child(1) {
+    transform: translateY(6px) rotate(45deg);
+}
+
+.burger.active .burger-bar:nth-child(2) {
+    opacity: 0;
+}
+
+.burger.active .burger-bar:nth-child(3) {
+    transform: translateY(-6px) rotate(-45deg);
 }
 
 .header-center a {
@@ -101,6 +141,24 @@ img {
 
 .header-icon:hover {
     opacity: 1;
+}
+
+.header-phone-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+
+.header-phone-number {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--color-accent);
+}
+
+@media (max-width: 1023px) {
+    .header-phone-number {
+        display: none;
+    }
 }
 
 /* ===== Home page ===== */
@@ -263,10 +321,21 @@ section {
     }
 
     .header-center {
-        order: initial;
-        width: auto;
-        border-top: none;
-        padding-top: 0;
+        position: static;
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        justify-content: center;
+        gap: 1.25rem;
+        padding: 0;
+        background: none;
+        border-bottom: none;
+        box-shadow: none;
+        z-index: auto;
+    }
+
+    .burger {
+        display: none;
     }
 
     .logo {

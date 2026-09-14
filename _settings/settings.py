@@ -57,6 +57,8 @@ TEMPLATES = [
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
                 'app_home.context_processors.site_logo',
+                'app_home.context_processors.phone',
+                'app_home.context_processors.instagram',
             ],
         },
     },
