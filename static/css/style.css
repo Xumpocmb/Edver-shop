@@ -165,22 +165,12 @@ img {
     opacity: 1;
 }
 
-.header-phone-link {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.4rem;
-}
-
-.header-phone-number {
-    font-size: 0.85rem;
+.header-menu-contact {
+    margin-top: 0.5rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--color-border);
     font-weight: 600;
     color: var(--color-accent);
-}
-
-@media (max-width: 1023px) {
-    .header-phone-number {
-        display: none;
-    }
 }
 
 /* ===== Home page ===== */

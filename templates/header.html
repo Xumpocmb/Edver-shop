@@ -14,9 +14,7 @@
         <a href="/contacts/">Контакты</a>
     </nav>
     <div class="header-right">
-        <a href="tel:{{ phone.number }}" class="header-icon header-phone-link" aria-label="Телефон">
-            📞 <span class="header-phone-number">{{ phone.number }}</span>
-        </a>
+        <a href="tel:{{ phone.number }}" class="header-icon" aria-label="Телефон">📞</a>
         <a href="{{ instagram.url }}" class="header-icon" aria-label="Instagram" target="_blank" rel="noopener">📷</a>
         <a href="/profile/" class="header-icon" aria-label="Профиль">👤</a>
         <button class="burger" id="burger" aria-label="Меню" aria-expanded="false">
@@ -31,5 +29,7 @@
         <a href="/contacts/">Контакты</a>
         <a href="/payment/">Оплата</a>
         <a href="/returns/">Возврат товара</a>
+        <a href="tel:{{ phone.number }}" class="header-menu-contact">📞 {{ phone.number }}</a>
+        <a href="{{ instagram.url }}" class="header-menu-contact" target="_blank" rel="noopener">📷 Мы в Instagram</a>
     </nav>
 </header>
