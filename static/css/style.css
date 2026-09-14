@@ -68,6 +68,19 @@ img {
 }
 
 .header-center {
+    display: none;
+}
+
+.header-center a {
+    font-size: 0.9rem;
+    transition: color 0.2s ease;
+}
+
+.header-center a:hover {
+    color: var(--color-accent);
+}
+
+.header-menu {
     position: absolute;
     top: 100%;
     left: 0;
@@ -83,8 +96,17 @@ img {
     z-index: 90;
 }
 
-.header-center.open {
+.header-menu.open {
     display: flex;
+}
+
+.header-menu a {
+    font-size: 0.9rem;
+    transition: color 0.2s ease;
+}
+
+.header-menu a:hover {
+    color: var(--color-accent);
 }
 
 .burger {
@@ -332,10 +354,6 @@ section {
         border-bottom: none;
         box-shadow: none;
         z-index: auto;
-    }
-
-    .burger {
-        display: none;
     }
 
     .logo {
