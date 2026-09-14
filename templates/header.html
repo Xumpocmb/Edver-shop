@@ -1,0 +1,21 @@
+<header class="header">
+    <div class="header-left">
+        <a href="/" class="logo">
+            {% if site_logo and site_logo.image %}
+                <img src="{{ site_logo.image.url }}" alt="{{ site_logo.text }}" class="logo-img">
+            {% else %}
+                {{ site_logo.text|default:"EDVER Shop" }}
+            {% endif %}
+        </a>
+    </div>
+    <nav class="header-center">
+        <a href="/catalog/">Каталог</a>
+        <a href="/about/">О нас</a>
+        <a href="/contacts/">Контакты</a>
+    </nav>
+    <div class="header-right">
+        <a href="/phone/" class="header-icon" aria-label="Телефон">📞</a>
+        <a href="https://instagram.com/" class="header-icon" aria-label="Instagram" target="_blank" rel="noopener">📷</a>
+        <a href="/profile/" class="header-icon" aria-label="Профиль">👤</a>
+    </div>
+</header>

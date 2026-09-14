@@ -28,7 +28,7 @@ INSTALLED_APPS = [
     
     "app_home.apps.AppHomeConfig",
     "app_catalog.apps.AppCatalogConfig",
-    "app_users.apps.AppUsersConfig",
+    "app_user.apps.AppUserConfig",
     "app_cart.apps.AppCartConfig",
     "app_order.apps.AppOrderConfig",
 
@@ -49,13 +49,14 @@ ROOT_URLCONF = '_settings.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [BASE_DIR / 'templates'],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'app_home.context_processors.site_logo',
             ],
         },
     },
@@ -103,6 +104,7 @@ USE_I18N = True
 USE_TZ = True
 
 STATIC_URL = 'static/'
+STATICFILES_DIRS = [BASE_DIR / 'static']
 MEDIA_URL = "/media/"
 MEDIA_ROOT = BASE_DIR / "media"
 
