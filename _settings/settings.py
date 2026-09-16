@@ -13,7 +13,7 @@ SECRET_KEY = 'django-insecure-z%a8fdlae)zr7w1a-5!)!j^ie)-ywp*mta8f7e2)!x3qros4h$
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['*']
 
 
 # Application definition
@@ -25,6 +25,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'mptt',
     
     "app_home.apps.AppHomeConfig",
     "app_catalog.apps.AppCatalogConfig",
@@ -60,6 +61,7 @@ TEMPLATES = [
                 'app_home.context_processors.phone',
                 'app_home.context_processors.instagram',
                 'app_home.context_processors.footer_info',
+                'app_home.context_processors.cart_count',
             ],
         },
     },
@@ -120,4 +122,7 @@ MAILERS = {
         'BACKEND': 'django.core.mail.backends.console.EmailBackend',
     },
 }
+
+# Django MPTT
+DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 

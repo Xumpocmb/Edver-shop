@@ -19,3 +19,15 @@ def instagram(request):
 def footer_info(request):
     info = FooterInfo.objects.first()
     return {'footer_info': info}
+
+
+def cart_count(request):
+    try:
+        from app_cart.models import Cart
+        if request.session.session_key:
+            cart = Cart.objects.filter(session_key=request.session.session_key).first()
+            if cart:
+                return {'cart_total_items': cart.total_items}
+    except Exception:
+        pass
+    return {'cart_total_items': 0}

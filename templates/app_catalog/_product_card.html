@@ -1,0 +1,59 @@
+{% load static %}
+<article class="product-card">
+    <a href="{{ product.get_absolute_url }}" class="product-card__link" aria-label="{{ product.name }}">
+        <div class="product-card__media">
+            {% with img=product.main_image %}
+                {% if img %}
+                    <img src="{{ img.image.url }}" alt="{{ img.alt|default:product.name }}" loading="lazy">
+                {% else %}
+                    <div class="product-card__noimg">
+                        <span>Нет фото</span>
+                    </div>
+                {% endif %}
+            {% endwith %}
+
+            <div class="product-card__badges">
+                {% if product.is_new %}<span class="badge badge--new">NEW</span>{% endif %}
+                {% if product.is_sale %}<span class="badge badge--sale">-{{ product.discount_percent }}%</span>{% endif %}
+                {% if product.is_popular %}<span class="badge badge--popular">HIT</span>{% endif %}
+            </div>
+
+            <button type="button"
+                    class="product-card__fav js-fav-toggle"
+                    data-product-id="{{ product.id }}"
+                    aria-label="Добавить в избранное">🤍</button>
+        </div>
+    </a>
+
+    <div class="product-card__body">
+        {% if product.brand %}
+            <div class="product-card__brand">{{ product.brand.name }}</div>
+        {% endif %}
+        <a href="{{ product.get_absolute_url }}" class="product-card__name">{{ product.name }}</a>
+
+        <div class="product-card__rating" aria-label="Рейтинг {{ product.average_rating }}">
+            <span class="stars">
+                {% for i in '12345' %}
+                    {% if forloop.counter <= product.average_rating|default:0 %}★{% else %}☆{% endif %}
+                {% endfor %}
+            </span>
+            {% if product.reviews_count %}
+                <span class="product-card__reviews">({{ product.reviews_count }})</span>
+            {% endif %}
+        </div>
+
+        <div class="product-card__price-row">
+            <span class="product-card__price">{{ product.price }} ₽</span>
+            {% if product.old_price and product.old_price > product.price %}
+                <span class="product-card__old-price">{{ product.old_price }} ₽</span>
+            {% endif %}
+        </div>
+
+        <button type="button"
+                class="btn btn--primary btn--block btn--sm js-add-to-cart"
+                data-product-id="{{ product.id }}"
+                data-product-name="{{ product.name }}">
+            В корзину
+        </button>
+    </div>
+</article>

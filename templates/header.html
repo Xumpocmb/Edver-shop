@@ -8,14 +8,30 @@
             {% endif %}
         </a>
     </div>
+
+    <form class="header-search" action="/catalog/search/" method="get" role="search">
+        <input type="search" name="q" placeholder="Поиск по каталогу…"
+               value="{{ search_query|default:'' }}" class="header-search-input" aria-label="Поиск">
+        <button type="submit" class="header-search-btn" aria-label="Искать">🔍</button>
+    </form>
+
     <nav class="header-center">
         <a href="/catalog/">Каталог</a>
         <a href="/about/">О нас</a>
         <a href="/contacts/">Контакты</a>
     </nav>
     <div class="header-right">
-        <a href="tel:{{ phone.number }}" class="header-icon" aria-label="Телефон">📞</a>
-        <a href="{{ instagram.url }}" class="header-icon" aria-label="Instagram" target="_blank" rel="noopener">📷</a>
+        <a href="tel:{{ phone.number }}" class="header-icon header-icon--label" aria-label="Телефон">
+            <span>📞</span><span class="header-icon-text">{{ phone.number }}</span>
+        </a>
+        <a href="/favorites/" class="header-icon" aria-label="Избранное">
+            <span>🤍</span>
+            <span class="header-badge" id="fav-badge" hidden>0</span>
+        </a>
+        <a href="/cart/" class="header-icon" aria-label="Корзина">
+            <span>🛒</span>
+            <span class="header-badge" id="cart-badge" {% if not cart_total_items %}hidden{% endif %}>{{ cart_total_items|default:"0" }}</span>
+        </a>
         <a href="/profile/" class="header-icon" aria-label="Профиль">👤</a>
         <button class="burger" id="burger" aria-label="Меню" aria-expanded="false">
             <span class="burger-bar"></span>
@@ -25,6 +41,9 @@
     </div>
     <nav class="header-menu" id="main-nav">
         <a href="/catalog/">Каталог</a>
+        <a href="/catalog/?is_popular=1">Популярное</a>
+        <a href="/catalog/?is_new=1">Новинки</a>
+        <a href="/catalog/?on_sale=1">Акции и скидки</a>
         <a href="/about/">О нас</a>
         <a href="/contacts/">Контакты</a>
         <a href="/payment/">Оплата</a>

@@ -6,50 +6,138 @@
 {% endblock %}
 
 {% block content %}
-
 <main class="home">
-    <section class="hero">
-    <h1>EDVER Shop</h1>
-    <p>Ваш надёжный магазин сумок, чемоданов и кошельков.</p>
-</section>
 
-<section class="about">
-    <h2>О магазине</h2>
-    <p>
-        EDVER Shop — это магазин, в котором каждый найдёт аксессуар на свой вкус.
-        Мы продаём сумки, чемоданы и кошельки для любых ситуаций: от повседневных
-        прогулок до дальних путешествий.
-    </p>
-    <p>
-        В нашем ассортименте только проверенные модели: практичные городские сумки,
-        вместительные и лёгкие чемоданы, а также стильные кошельки и портмоне.
-    </p>
-</section>
+    <!-- ===== СЛАЙДЕР ===== -->
+    <section class="hero-slider" aria-label="Акционные предложения">
+        <div class="slider" id="heroSlider">
+            {% for slide in slides %}
+                <div class="slide {% if forloop.first %}is-active{% endif %}"
+                     style="background: linear-gradient(135deg, {{ slide.bg }}, var(--color-accent-dark));">
+                    <div class="slide-inner container">
+                        <div class="slide-text">
+                            <h2 class="slide-title">{{ slide.title }}</h2>
+                            <p class="slide-subtitle">{{ slide.subtitle }}</p>
+                            <a href="{{ slide.href }}" class="btn btn--primary btn--lg">{{ slide.cta }}</a>
+                        </div>
+                        <div class="slide-visual" aria-hidden="true">
+                            <div class="slide-dot slide-dot--1"></div>
+                            <div class="slide-dot slide-dot--2"></div>
+                            <div class="slide-dot slide-dot--3"></div>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
 
-<section class="catalog-preview">
-    <h2>Что вы можете купить</h2>
-    <ul>
-        <li>Сумки — от компактных кроссбоди до просторных шопперов.</li>
-        <li>Чемоданы — разных размеров, для коротких и долгих поездок.</li>
-        <li>Кошельки и портмоне — для наличных, карт и мелочи.</li>
-    </ul>
-</section>
-
-<section class="advantages">
-    <h2>Почему выбирают нас</h2>
-    <p>Можно быть уверенным в качестве, ведь мы тщательно отбираем каждую модель.</p>
-    <ul>
-        <li>Удобные способы оплаты и доставки.</li>
-        <li>Помощь с выбором.</li>
-        <li>Все товары проверены перед продажей.</li>
-    </ul>
-</section>
-
-<section class="contacts">
-    <h2>Контакты</h2>
-    <p>Если остались вопросы, свяжитесь с нами любым удобным способом.</p>
-    <p>Мы всегда рады помочь с выбором идеальной сумки, чемодана или кошелька.</p>
+        <button class="slider-nav slider-nav--prev" id="heroPrev" aria-label="Предыдущий слайд">‹</button>
+        <button class="slider-nav slider-nav--next" id="heroNext" aria-label="Следующий слайд">›</button>
+        <div class="slider-dots" id="heroDots" role="tablist">
+            {% for slide in slides %}
+                <button class="slider-dot {% if forloop.first %}is-active{% endif %}"
+                        data-slide="{{ forloop.counter0 }}"
+                        role="tab" aria-label="Слайд {{ forloop.counter }}"></button>
+            {% endfor %}
+        </div>
     </section>
-</main>
 
+
+    <!-- ===== КАТЕГОРИИ ===== -->
+    {% if categories %}
+    <section class="section container">
+        <div class="section-head">
+            <h2 class="section-title">Категории каталога</h2>
+            <a href="/catalog/" class="section-link">Смотреть все →</a>
+        </div>
+        <div class="categories-grid">
+            {% for c in categories %}
+                <a href="{{ c.get_absolute_url }}" class="category-card"
+                   style="background: linear-gradient(135deg, var(--color-accent-light), var(--color-accent-dark));">
+                    <span class="category-card__emoji" aria-hidden="true">
+                        {% if 'сум' in c.name|lower %}👜
+                        {% elif 'чемод' in c.name|lower %}🧳
+                        {% elif 'кошел' in c.name|lower or 'портм' in c.name|lower or 'карт' in c.name|lower %}👛
+                        {% elif 'рюкз' in c.name|lower %}🎒
+                        {% elif 'аксес' in c.name|lower or 'ремн' in c.name|lower %}🎀
+                        {% elif 'путеше' in c.name|lower or 'дуфл' in c.name|lower or 'спорт' in c.name|lower %}💼
+                        {% else %}🛍️
+                        {% endif %}
+                    </span>
+                    <div class="category-card__name">{{ c.name }}</div>
+                    {% if c.children.exists %}
+                        <div class="category-card__count">{{ c.children.count }} подкатегорий</div>
+                    {% endif %}
+                </a>
+            {% endfor %}
+        </div>
+    </section>
+    {% endif %}
+
+
+    <!-- ===== НОВИНКИ ===== -->
+    {% if new_products %}
+    <section class="section container">
+        <div class="section-head">
+            <h2 class="section-title"><span class="badge badge--new">NEW</span> Новинки</h2>
+            <a href="/catalog/" class="section-link">Все новинки →</a>
+        </div>
+        <div class="products-grid">
+            {% for p in new_products %}
+                {% include 'app_catalog/_product_card.html' with product=p %}
+            {% endfor %}
+        </div>
+    </section>
+    {% endif %}
+
+
+    <!-- ===== ПОПУЛЯРНЫЕ ===== -->
+    {% if popular_products %}
+    <section class="section container">
+        <div class="section-head">
+            <h2 class="section-title"><span class="badge badge--popular">HOT</span> Популярные товары</h2>
+            <a href="/catalog/?sort=popular" class="section-link">Все популярные →</a>
+        </div>
+        <div class="products-grid">
+            {% for p in popular_products %}
+                {% include 'app_catalog/_product_card.html' with product=p %}
+            {% endfor %}
+        </div>
+    </section>
+    {% endif %}
+
+
+    <!-- ===== АКЦИИ ===== -->
+    {% if sale_products %}
+    <section class="section container section--sale">
+        <div class="section-head">
+            <h2 class="section-title"><span class="badge badge--sale">%</span> Скидки и акции</h2>
+            <a href="/catalog/?on_sale=1" class="section-link">Все акции →</a>
+        </div>
+        <div class="products-grid">
+            {% for p in sale_products %}
+                {% include 'app_catalog/_product_card.html' with product=p %}
+            {% endfor %}
+        </div>
+    </section>
+    {% endif %}
+
+
+    <!-- ===== ПРЕИМУЩЕСТВА ===== -->
+    <section class="section section--gray container">
+        <div class="section-head section-head--center">
+            <h2 class="section-title">Почему выбирают EDVER Shop</h2>
+            <p class="section-subtitle">Надёжно, удобно и с гарантией качества — каждый день.</p>
+        </div>
+        <div class="advantages-grid">
+            {% for icon, title, desc in advantages %}
+                <div class="advantage-card">
+                    <div class="advantage-card__icon">{{ icon }}</div>
+                    <h3 class="advantage-card__title">{{ title }}</h3>
+                    <p class="advantage-card__desc">{{ desc }}</p>
+                </div>
+            {% endfor %}
+        </div>
+    </section>
+
+</main>
 {% endblock %}

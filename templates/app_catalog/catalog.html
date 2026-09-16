@@ -1,0 +1,229 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}
+<title>{% if page_title %}{{ page_title }} — {% endif %}EDVER Shop каталог</title>
+{% endblock %}
+
+{% block content %}
+<main class="catalog-page">
+
+    <!-- Хлебные крошки -->
+    <div class="container breadcrumbs-wrap">
+        <nav class="breadcrumbs" aria-label="Навигация">
+            <a href="/">Главная</a>
+            {% for crumb in breadcrumbs %}
+                <span class="breadcrumbs__sep">/</span>
+                {% if crumb.1 %}
+                    <a href="{{ crumb.1 }}">{{ crumb.0 }}</a>
+                {% else %}
+                    <span class="breadcrumbs__current">{{ crumb.0 }}</span>
+                {% endif %}
+            {% endfor %}
+        </nav>
+    </div>
+
+    <!-- Заголовок + статистика -->
+    <section class="container catalog-head">
+        <div>
+            <h1 class="catalog-head__title">{{ category.name|default:page_title|default:"Каталог" }}</h1>
+            {% if category.description %}
+                <p class="catalog-head__desc">{{ category.description }}</p>
+            {% endif %}
+            {% if search_query %}
+                <p class="catalog-head__query">Поисковый запрос: «<b>{{ search_query }}</b>»</p>
+            {% endif %}
+        </div>
+        <div class="catalog-head__count">
+            <span class="counter">{{ total_count }}</span> товаров
+        </div>
+    </section>
+
+    <section class="container catalog-layout">
+
+        <!-- ===== ФИЛЬТРЫ (сайдбар) ===== -->
+        <aside class="filters" aria-label="Фильтры">
+            <div class="filters-card">
+                <div class="filters-card__head">
+                    <h3 class="filters-card__title">Фильтры</h3>
+                    <button type="button" class="filters-card__reset js-reset-filters"
+                            id="resetFiltersBtn" {% if not current_brands and not current_colors and not current_price_from and not current_price_to and not in_stock_checked and not on_sale_checked %}hidden{% endif %}>
+                        Сбросить
+                    </button>
+                </div>
+
+                <form method="get" id="filtersForm" class="filters-form">
+                    <!-- Сохраняем sort/query параметры -->
+                    {% if current_sort %}<input type="hidden" name="sort" value="{{ current_sort }}">{% endif %}
+                    {% if search_query %}<input type="hidden" name="q" value="{{ search_query }}">{% endif %}
+
+                    <!-- Цена -->
+                    <div class="filters-group">
+                        <div class="filters-group__name">Цена, ₽</div>
+                        <div class="price-inputs">
+                            <div class="price-inputs__cell">
+                                <label for="priceFrom" class="visually-hidden">От</label>
+                                <input id="priceFrom" name="price_from" type="number" min="0"
+                                       placeholder="от {{ price_min }}"
+                                       value="{{ current_price_from }}">
+                            </div>
+                            <span class="price-inputs__sep">—</span>
+                            <div class="price-inputs__cell">
+                                <label for="priceTo" class="visually-hidden">До</label>
+                                <input id="priceTo" name="price_to" type="number" min="0"
+                                       placeholder="до {{ price_max }}"
+                                       value="{{ current_price_to }}">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Быстрые фильтры -->
+                    <div class="filters-group">
+                        <label class="checkbox-row">
+                            <input type="checkbox" name="in_stock" value="1"
+                                   {% if in_stock_checked %}checked{% endif %}>
+                            <span>Только в наличии</span>
+                        </label>
+                        <label class="checkbox-row">
+                            <input type="checkbox" name="on_sale" value="1"
+                                   {% if on_sale_checked %}checked{% endif %}>
+                            <span>Скидки и акции</span>
+                        </label>
+                    </div>
+
+                    <!-- Категории -->
+                    {% if categories %}
+                    <div class="filters-group">
+                        <div class="filters-group__name">Категории</div>
+                        <ul class="filters-list">
+                            {% for c in categories %}
+                                <li>
+                                    <a href="{{ c.get_absolute_url }}" class="filters-list__item{% if category.id == c.id %} is-active{% endif %}">
+                                        {{ c.name }}
+                                        <span class="filters-list__arrow">›</span>
+                                    </a>
+                                    {% if c.children.exists %}
+                                        <ul class="filters-list filters-list--nested">
+                                            {% for sub in c.children.all|slice:":6" %}
+                                                <li>
+                                                    <a href="{{ sub.get_absolute_url }}"
+                                                       class="filters-list__item{% if category.id == sub.id %} is-active{% endif %}">
+                                                        {{ sub.name }}
+                                                    </a>
+                                                </li>
+                                            {% endfor %}
+                                        </ul>
+                                    {% endif %}
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                    {% endif %}
+
+                    <!-- Бренды -->
+                    {% if brands %}
+                    <div class="filters-group">
+                        <div class="filters-group__name">Бренд</div>
+                        <div class="filters-scroll">
+                            {% for b in brands %}
+                                <label class="checkbox-row">
+                                    <input type="checkbox" name="brands" value="{{ b.slug }}"
+                                           {% if b.slug in current_brands %}checked{% endif %}>
+                                    <span>{{ b.name }}</span>
+                                </label>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <!-- Цвета -->
+                    {% if colors %}
+                    <div class="filters-group">
+                        <div class="filters-group__name">Цвет</div>
+                        <div class="filters-scroll">
+                            {% for c in colors %}
+                                <label class="checkbox-row">
+                                    <input type="checkbox" name="colors" value="{{ c }}"
+                                           {% if c in current_colors %}checked{% endif %}>
+                                    <span>{{ c }}</span>
+                                </label>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <button type="submit" class="btn btn--primary btn--block">Применить фильтры</button>
+                </form>
+            </div>
+        </aside>
+
+        <!-- ===== СПИСОК ТОВАРОВ ===== -->
+        <div class="catalog-main">
+
+            <!-- Сортировка -->
+            <div class="catalog-toolbar">
+                <div class="catalog-toolbar__sort">
+                    <label for="sortSelect">Сортировка:</label>
+                    <select id="sortSelect" class="sort-select" form="filtersForm" name="sort">
+                        <option value="newest" {% if current_sort == 'newest' %}selected{% endif %}>По умолчанию (новые)</option>
+                        <option value="popular" {% if current_sort == 'popular' %}selected{% endif %}>Сначала популярные</option>
+                        <option value="price_asc" {% if current_sort == 'price_asc' %}selected{% endif %}>Цена: по возрастанию</option>
+                        <option value="price_desc" {% if current_sort == 'price_desc' %}selected{% endif %}>Цена: по убыванию</option>
+                    </select>
+                </div>
+                <div class="catalog-toolbar__view">
+                    <button type="button" class="view-btn is-active" id="gridView" aria-label="Сетка">▦</button>
+                    <button type="button" class="view-btn" id="listView" aria-label="Список">≡</button>
+                </div>
+            </div>
+
+            {% if products %}
+                <div class="products-grid" id="productsGrid">
+                    {% for p in products %}
+                        {% include 'app_catalog/_product_card.html' with product=p %}
+                    {% endfor %}
+                </div>
+
+                <!-- Пагинация -->
+                {% if paginator.num_pages > 1 %}
+                <nav class="pagination" aria-label="Пагинация">
+                    {% if page_obj.has_previous %}
+                        <a href="?page={{ page_obj.previous_page_number }}{% for k,v in request.GET.items %}{% if k != 'page' %}&{{ k }}={{ v }}{% endif %}{% endfor %}"
+                           class="pagination__btn pagination__btn--prev">‹ Назад</a>
+                    {% endif %}
+
+                    <div class="pagination__pages">
+                        {% for p in paginator.page_range %}
+                            {% if page_obj.number == p %}
+                                <span class="pagination__page is-current">{{ p }}</span>
+                            {% elif p >= page_obj.number|add:"-2" and p <= page_obj.number|add:"2" %}
+                                <a href="?page={{ p }}{% for k,v in request.GET.items %}{% if k != 'page' %}&{{ k }}={{ v }}{% endif %}{% endfor %}"
+                                   class="pagination__page">{{ p }}</a>
+                            {% elif p == 1 or p == paginator.num_pages %}
+                                <a href="?page={{ p }}{% for k,v in request.GET.items %}{% if k != 'page' %}&{{ k }}={{ v }}{% endif %}{% endfor %}"
+                                   class="pagination__page">{{ p }}</a>
+                            {% elif p == page_obj.number|add:"-3" or p == page_obj.number|add:"3" %}
+                                <span class="pagination__dots">…</span>
+                            {% endif %}
+                        {% endfor %}
+                    </div>
+
+                    {% if page_obj.has_next %}
+                        <a href="?page={{ page_obj.next_page_number }}{% for k,v in request.GET.items %}{% if k != 'page' %}&{{ k }}={{ v }}{% endif %}{% endfor %}"
+                           class="pagination__btn pagination__btn--next">Вперёд ›</a>
+                    {% endif %}
+                </nav>
+                {% endif %}
+
+            {% else %}
+                <div class="empty-state">
+                    <div class="empty-state__icon" aria-hidden="true">🔎</div>
+                    <h3 class="empty-state__title">Ничего не найдено</h3>
+                    <p class="empty-state__text">Попробуйте изменить параметры фильтрации или поисковый запрос.</p>
+                    <a href="/catalog/" class="btn btn--primary">Показать все товары</a>
+                </div>
+            {% endif %}
+        </div>
+    </section>
+</main>
+{% endblock %}
