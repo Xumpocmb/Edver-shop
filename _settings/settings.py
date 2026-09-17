@@ -25,7 +25,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'mptt',
+    
     
     "app_home.apps.AppHomeConfig",
     "app_catalog.apps.AppCatalogConfig",
@@ -62,6 +62,7 @@ TEMPLATES = [
                 'app_home.context_processors.instagram',
                 'app_home.context_processors.footer_info',
                 'app_home.context_processors.cart_count',
+                'app_home.context_processors.gender_categories',
             ],
         },
     },

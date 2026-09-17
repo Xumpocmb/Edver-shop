@@ -2,7 +2,7 @@
 {% load static %}
 
 {% block title %}
-<title>{{ product.name }} — купить в EDVER Shop</title>
+<title>{{ product.name }} {{ product.color }} — купить в EDVER Shop</title>
 {% endblock %}
 
 {% block content %}
@@ -13,12 +13,12 @@
         <nav class="breadcrumbs" aria-label="Навигация">
             <a href="/">Главная</a>
             {% for crumb in breadcrumbs %}
-                <span class="breadcrumbs__sep">/</span>
-                {% if crumb.1 %}
-                    <a href="{{ crumb.1 }}">{{ crumb.0 }}</a>
-                {% else %}
-                    <span class="breadcrumbs__current">{{ crumb.0 }}</span>
-                {% endif %}
+            <span class="breadcrumbs__sep">/</span>
+            {% if crumb.1 %}
+            <a href="{{ crumb.1 }}">{{ crumb.0 }}</a>
+            {% else %}
+            <span class="breadcrumbs__current">{{ crumb.0 }}</span>
+            {% endif %}
             {% endfor %}
         </nav>
     </div>
@@ -41,18 +41,18 @@
         <div class="product-gallery">
             <div class="product-gallery__main" id="galleryMain">
                 {% if images %}
-                    {% with main=images.0 %}
-                        <img src="{{ main.image.url }}"
-                             alt="{{ main.alt|default:product.name }}"
-                             id="mainImage" class="is-active">
-                    {% endwith %}
+                {% with main=images.0 %}
+                <img src="{{ main.image.url }}" alt="{{ main.alt|default:product.name }}" id="mainImage"
+                    class="is-active">
+                {% endwith %}
                 {% else %}
-                    <div class="product-gallery__empty">Нет изображений</div>
+                <div class="product-gallery__empty">Нет изображений</div>
                 {% endif %}
 
                 <div class="product-badges">
                     {% if product.is_new %}<span class="badge badge--new">NEW</span>{% endif %}
-                    {% if product.is_sale %}<span class="badge badge--sale">-{{ product.discount_percent }}%</span>{% endif %}
+                    {% if product.is_sale %}<span class="badge badge--sale">-{{ product.discount_percent_display
+                        }}%</span>{% endif %}
                     {% if product.is_popular %}<span class="badge badge--popular">HIT</span>{% endif %}
                 </div>
             </div>
@@ -60,13 +60,11 @@
             {% if images|length > 1 %}
             <div class="product-gallery__thumbs" id="galleryThumbs" role="listbox">
                 {% for img in images %}
-                    <button type="button" class="thumb {% if forloop.first %}is-active{% endif %}"
-                            data-image="{{ img.image.url }}"
-                            data-alt="{{ img.alt|default:product.name }}"
-                            data-index="{{ forloop.counter0 }}"
-                            role="option" aria-label="Фото {{ forloop.counter }}">
-                        <img src="{{ img.image.url }}" alt="" loading="lazy">
-                    </button>
+                <button type="button" class="thumb {% if forloop.first %}is-active{% endif %}"
+                    data-image="{{ img.image.url }}" data-alt="{{ img.alt|default:product.name }}"
+                    data-index="{{ forloop.counter0 }}" role="option" aria-label="Фото {{ forloop.counter }}">
+                    <img src="{{ img.image.url }}" alt="" loading="lazy">
+                </button>
                 {% endfor %}
             </div>
             {% endif %}
@@ -76,67 +74,96 @@
         <div class="product-info">
             <div class="product-info__top">
                 {% if product.brand %}
-                    <div class="product-info__brand">{{ product.brand.name }}</div>
+                <div class="product-info__brand">{{ product.brand.name }}</div>
                 {% endif %}
                 <h1 class="product-info__title">{{ product.name }}</h1>
                 {% if product.sku %}
-                    <div class="product-info__sku">Арт. {{ product.sku }}</div>
+                <div class="product-info__sku">Арт. {{ product.sku }}</div>
                 {% endif %}
 
                 <div class="product-info__rating">
                     <span class="stars stars--lg">
                         {% for i in '12345' %}
-                            {% if forloop.counter <= product.average_rating|default:0 %}★{% else %}☆{% endif %}
-                        {% endfor %}
-                    </span>
-                    <span class="rating-value">{{ product.average_rating }}</span>
-                    <a href="#reviews" class="reviews-link">({{ product.reviews_count }} отзывов)</a>
+                        {% if forloop.counter <= product.average_rating|default:0 %}★{% else %}☆{% endif %} {% endfor %}
+                            </span>
+                            <span class="rating-value">{{ product.average_rating }}</span>
+                            <a href="#reviews" class="reviews-link">({{ product.reviews_count }} отзывов)</a>
                 </div>
             </div>
 
-            <div class="product-info__price-block" id="priceBlock">
+            <div class="product-info__price-block">
                 <div class="price-row">
-                    <span class="price-main" id="currentPrice">{{ product.price }} ₽</span>
-                    {% if product.old_price and product.old_price > product.price %}
-                        <span class="price-old" id="oldPrice">{{ product.old_price }} ₽</span>
-                        <span class="price-discount" id="discountBadge">-{{ product.discount_percent }}%</span>
+                    <span class="price-main">{{ product.price }} сум</span>
+                    {% if product.effective_old_price and product.effective_old_price > product.price %}
+                    <span class="price-old">{{ product.effective_old_price }} сум</span>
+                    {% endif %}
+                    {% if product.discount_percent_display > 0 %}
+                    <span class="price-discount">-{{ product.discount_percent_display }}%</span>
                     {% endif %}
                 </div>
-
+                {% if product.cost_price %}
+                <div class="price-cost">Себестоимсть: {{ product.cost_price }} сум</div>
+                {% endif %}
                 <div class="status-row">
-                    {% if product.status == 'in_stock' and product.stock > 0 %}
-                        <span class="status status--ok" id="stockStatus">● В наличии ({{ product.stock }} шт.)</span>
+                    {% if product.is_active == False %}
+                    <span class="status status--bad">● Товар временно недоступен</span>
+                    {% elif product.status == 'in_stock' and product.stock > 0 %}
+                    <span class="status status--ok">● В наличии ({{ product.stock }} шт.)</span>
                     {% elif product.status == 'preorder' %}
-                        <span class="status status--warn" id="stockStatus">● Предзаказ</span>
+                    <span class="status status--warn">● Предзаказ</span>
                     {% else %}
-                        <span class="status status--bad" id="stockStatus">● Нет в наличии</span>
+                    <span class="status status--bad">● Нет в наличии</span>
                     {% endif %}
                 </div>
             </div>
 
-            <!-- Модификации товара -->
-            {% if variants %}
-            <div class="mods" id="variantSelector">
-                {% if variant_attrs %}
-                    {% for attr_name, values in variant_attrs.items %}
-                    <div class="mod mod--variant">
-                        <div class="mod__label">{{ attr_name }}:</div>
-                        <div class="mod__options" data-attribute="{{ attr_name }}">
-                            {% for val in values %}
-                            <button type="button"
-                                    class="mod__option-btn js-variant-option"
-                                    data-value="{{ val.value }}"
-                                    data-variant-ids="{{ val.variant_ids|join:',' }}">
-                                {{ val.value }}
-                            </button>
-                            {% endfor %}
-                        </div>
-                    </div>
+            <!-- Цвета (другие цвета той же модели) -->
+            {% if sibling_colors %}
+            <div class="mod mod--color-pick">
+                <div class="mod__label">Цвет:</div>
+                <div class="color-swatches">
+                    {% for sibling in sibling_colors %}
+                    <a href="{{ sibling.get_absolute_url }}"
+                        class="color-swatch {% if sibling.id == product.id %}is-active{% endif %}"
+                        title="{{ sibling.color }}" data-color="{{ sibling.color }}">
+                        <span class="color-swatch__inner" style="background-color: {{ sibling.color|lower }};"></span>
+                        <span class="color-swatch__label">{{ sibling.color }}</span>
+                    </a>
                     {% endfor %}
-                {% endif %}
-                <input type="hidden" name="selected_variant_id" id="selectedVariantId" value="">
+                    <!-- Текущий цвет (тоже ссылка, но не кликабельный) -->
+                    <span class="color-swatch is-current" title="{{ product.color }}">
+                        <span class="color-swatch__inner" style="background-color: {{ product.color|lower }};"></span>
+                        <span class="color-swatch__label">{{ product.color }}</span>
+                    </span>
+                </div>
             </div>
             {% endif %}
+
+            <!-- Характеристики -->
+            <div class="specs-rows">
+                {% if product.brand %}<div class="spec-row"><span class="spec-row__key">Бренд</span><span
+                        class="spec-row__val">{{ product.brand.name }}</span></div>{% endif %}
+                {% if product.sku %}<div class="spec-row"><span class="spec-row__key">Артикул</span><span
+                        class="spec-row__val">{{ product.sku }}</span></div>{% endif %}
+                {% if product.color %}<div class="spec-row"><span class="spec-row__key">Цвет</span><span
+                        class="spec-row__val">{{ product.color }}</span></div>{% endif %}
+                {% if product.material %}<div class="spec-row"><span class="spec-row__key">Материал</span><span
+                        class="spec-row__val">{{ product.material }}</span></div>{% endif %}
+                {% if product.gender %}<div class="spec-row"><span class="spec-row__key">Пол</span><span
+                        class="spec-row__val">{{ product.get_gender_display }}</span></div>{% endif %}
+                {% if product.dimensions %}<div class="spec-row"><span class="spec-row__key">Размеры</span><span
+                        class="spec-row__val">{{ product.dimensions }}</span></div>{% endif %}
+                {% if product.weight %}<div class="spec-row"><span class="spec-row__key">Вес</span><span
+                        class="spec-row__val">{{ product.weight }} кг</span></div>{% endif %}
+                {% if product.stock %}<div class="spec-row"><span class="spec-row__key">Остаток</span><span
+                        class="spec-row__val">{{ product.stock }} шт.</span></div>{% endif %}
+                {% if product.status %}<div class="spec-row"><span class="spec-row__key">Статус</span><span
+                        class="spec-row__val">{{ product.get_status_display }}</span></div>{% endif %}
+                <div class="spec-row"><span class="spec-row__key">Гарантия</span><span class="spec-row__val">50
+                        дней</span></div>
+                <div class="spec-row"><span class="spec-row__key">Производство</span><span
+                        class="spec-row__val">Китай</span></div>
+            </div>
 
             <!-- Кнопки добавления -->
             <div class="buy-block">
@@ -144,37 +171,61 @@
                     <label for="qtyInput" class="qty-row__label">Количество</label>
                     <div class="qty-counter" id="qtyCounter">
                         <button type="button" class="qty-btn qty-btn--minus" aria-label="Уменьшить">−</button>
-                        <input id="qtyInput" class="qty-input" type="number" min="1"
-                               max="{{ product.stock }}" value="1">
+                        <input id="qtyInput" class="qty-input" type="number" min="1" max="{{ product.stock }}"
+                            value="1">
                         <button type="button" class="qty-btn qty-btn--plus" aria-label="Увеличить">+</button>
                     </div>
                 </div>
 
                 <div class="buy-buttons">
                     <button type="button" class="btn btn--primary btn--lg js-add-to-cart"
-                            data-product-id="{{ product.id }}"
-                            data-product-name="{{ product.name }}"
-                            data-product-price="{{ product.price }}">
+                        data-product-id="{{ product.id }}" data-product-name="{{ product.name }} {{ product.color }}"
+                        data-product-price="{{ product.price }}">
                         🛒 Добавить в корзину
                     </button>
-                    <button type="button" class="btn btn--ghost js-fav-toggle"
-                            data-product-id="{{ product.id }}">
+                    <button type="button" class="btn btn--ghost js-fav-toggle" data-product-id="{{ product.id }}">
                         🤍 В избранное
                     </button>
                 </div>
             </div>
 
-            <!-- Характеристики сводка -->
-            {% if product.brand or product.material or product.color or product.dimensions or product.weight or product.sku %}
+            <!-- Сводная таблица характеристик -->
+            {% if product.brand or product.material or product.color or product.dimensions or product.weight or
+            product.sku %}
             <div class="specs-block">
                 <table class="specs-table">
-                    {% if product.brand %}<tr><th>Бренд</th><td>{{ product.brand.name }}</td></tr>{% endif %}
-                    {% if product.sku %}<tr><th>Артикул</th><td>{{ product.sku }}</td></tr>{% endif %}
-                    {% if product.color %}<tr><th>Цвет</th><td>{{ product.color }}</td></tr>{% endif %}
-                    {% if product.material %}<tr><th>Материал</th><td>{{ product.material }}</td></tr>{% endif %}
-                    {% if product.dimensions %}<tr><th>Размеры</th><td>{{ product.dimensions }}</td></tr>{% endif %}
-                    {% if product.weight %}<tr><th>Вес</th><td>{{ product.weight }} кг</td></tr>{% endif %}
-                    {% if product.stock %}<tr><th>Остаток</th><td>{{ product.stock }} шт.</td></tr>{% endif %}
+                    {% if product.brand %}<tr>
+                        <th>Бренд</th>
+                        <td>{{ product.brand.name }}</td>
+                    </tr>{% endif %}
+                    {% if product.sku %}<tr>
+                        <th>Артикул</th>
+                        <td>{{ product.sku }}</td>
+                    </tr>{% endif %}
+                    {% if product.color %}<tr>
+                        <th>Цвет</th>
+                        <td>{{ product.color }}</td>
+                    </tr>{% endif %}
+                    {% if product.material %}<tr>
+                        <th>Материал</th>
+                        <td>{{ product.material }}</td>
+                    </tr>{% endif %}
+                    {% if product.gender %}<tr>
+                        <th>Пол</th>
+                        <td>{{ product.get_gender_display }}</td>
+                    </tr>{% endif %}
+                    {% if product.dimensions %}<tr>
+                        <th>Размеры</th>
+                        <td>{{ product.dimensions }}</td>
+                    </tr>{% endif %}
+                    {% if product.weight %}<tr>
+                        <th>Вес</th>
+                        <td>{{ product.weight }} кг</td>
+                    </tr>{% endif %}
+                    {% if product.stock %}<tr>
+                        <th>Остаток</th>
+                        <td>{{ product.stock }} шт.</td>
+                    </tr>{% endif %}
                 </table>
             </div>
             {% endif %}
@@ -187,33 +238,69 @@
         <h2 class="product-section__title">Описание</h2>
         <div class="product-description">
             {% if product.short_description %}
-                <p class="product-description__lead">{{ product.short_description }}</p>
+            <p class="product-description__lead">{{ product.short_description }}</p>
             {% endif %}
             {% if product.description %}
-                <div class="product-description__body">{{ product.description|linebreaks }}</div>
+            <div class="product-description__body">{{ product.description|linebreaks }}</div>
             {% endif %}
         </div>
     </section>
     {% endif %}
 
     <!-- ХАРАКТЕРИСТИКИ ПОЛНЫЕ -->
-    {% if product.brand or product.material or product.color or product.dimensions or product.weight or product.sku %}
     <section class="container product-section">
         <h2 class="product-section__title">Характеристики</h2>
         <table class="specs-table specs-table--full">
-            {% if product.brand %}<tr><th>Бренд</th><td>{{ product.brand.name }}</td></tr>{% endif %}
-            {% if product.sku %}<tr><th>Артикул</th><td>{{ product.sku }}</td></tr>{% endif %}
-            {% if product.category %}<tr><th>Категория</th><td>{{ product.category }}</td></tr>{% endif %}
-            {% if product.color %}<tr><th>Цвет</th><td>{{ product.color }}</td></tr>{% endif %}
-            {% if product.material %}<tr><th>Материал</th><td>{{ product.material }}</td></tr>{% endif %}
-            {% if product.dimensions %}<tr><th>Размеры</th><td>{{ product.dimensions }}</td></tr>{% endif %}
-            {% if product.weight %}<tr><th>Вес</th><td>{{ product.weight }} кг</td></tr>{% endif %}
-            {% if product.stock %}<tr><th>Остаток на складе</th><td>{{ product.stock }} шт.</td></tr>{% endif %}
-            {% if product.status %}<tr><th>Статус</th><td>{{ product.get_status_display }}</td></tr>{% endif %}
-            <tr><th>Добавлен</th><td>{{ product.created_at|date:"d.m.Y" }}</td></tr>
+            {% if product.brand %}<tr>
+                <th>Бренд</th>
+                <td>{{ product.brand.name }}</td>
+            </tr>{% endif %}
+            {% if product.sku %}<tr>
+                <th>Артикул</th>
+                <td>{{ product.sku }}</td>
+            </tr>{% endif %}
+            {% if product.category %}<tr>
+                <th>Категория</th>
+                <td>{{ product.category }}</td>
+            </tr>{% endif %}
+            {% if product.color %}<tr>
+                <th>Цвет</th>
+                <td>{{ product.color }}</td>
+            </tr>{% endif %}
+            {% if product.material %}<tr>
+                <th>Материал</th>
+                <td>{{ product.material }}</td>
+            </tr>{% endif %}
+            {% if product.gender %}<tr>
+                <th>Пол</th>
+                <td>{{ product.get_gender_display }}</td>
+            </tr>{% endif %}
+            {% if product.dimensions %}<tr>
+                <th>Размеры</th>
+                <td>{{ product.dimensions }}</td>
+            </tr>{% endif %}
+            {% if product.weight %}<tr>
+                <th>Вес</th>
+                <td>{{ product.weight }} кг</td>
+            </tr>{% endif %}
+            {% if product.stock %}<tr>
+                <th>Остаток на складе</th>
+                <td>{{ product.stock }} шт.</td>
+            </tr>{% endif %}
+            {% if product.status %}<tr>
+                <th>Статус</th>
+                <td>{{ product.get_status_display }}</td>
+            </tr>{% endif %}
+            {% if product.cost_price %}<tr>
+                <th>Себестоимость</th>
+                <td>{{ product.cost_price }} ₽</td>
+            </tr>{% endif %}
+            <tr>
+                <th>Добавлен</th>
+                <td>{{ product.created_at|date:"d.m.Y" }}</td>
+            </tr>
         </table>
     </section>
-    {% endif %}
 
     <!-- КРОСС-ПРОДАЖИ -->
     {% if cross_sell_products %}
@@ -221,7 +308,7 @@
         <h2 class="product-section__title">С этим товаром покупают</h2>
         <div class="products-grid">
             {% for p in cross_sell_products %}
-                {% include 'app_catalog/_product_card.html' with product=p %}
+            {% include 'app_catalog/_product_card.html' with product=p %}
             {% endfor %}
         </div>
     </section>
@@ -233,7 +320,7 @@
         <h2 class="product-section__title">Похожие товары</h2>
         <div class="products-grid">
             {% for p in related_products %}
-                {% include 'app_catalog/_product_card.html' with product=p %}
+            {% include 'app_catalog/_product_card.html' with product=p %}
             {% endfor %}
         </div>
     </section>
@@ -249,10 +336,10 @@
         </h2>
 
         <div class="reviews-layout">
-            <!-- Форма -->
             <div class="review-form">
                 <h3 class="review-form__title">Оставить отзыв</h3>
-                <form method="post" action="{% url 'app_catalog:add_review' product.slug %}" class="form form--stacked" novalidate>
+                <form method="post" action="{% url 'app_catalog:add_review' product.slug %}" class="form form--stacked"
+                    novalidate>
                     {% csrf_token %}
                     <div class="form-row">
                         <label for="r-name">Ваше имя *</label>
@@ -266,9 +353,8 @@
                         <label>Оценка *</label>
                         <div class="rating-picker" id="ratingPicker" data-value="5">
                             {% for i in '12345' %}
-                                <button type="button" class="rating-picker__star"
-                                        data-value="{{ forloop.counter }}"
-                                        {% if forloop.counter <= 5 %}aria-pressed="true"{% endif %}>★</button>
+                            <button type="button" class="rating-picker__star" data-value="{{ forloop.counter }}" {% if
+                                forloop.counter <=5 %}aria-pressed="true" {% endif %}>★</button>
                             {% endfor %}
                         </div>
                         <input type="hidden" name="rating" id="ratingValue" value="5">
@@ -280,18 +366,16 @@
                     <div class="form-row">
                         <label for="r-text">Ваш отзыв *</label>
                         <textarea id="r-text" name="text" rows="5" required
-                                  placeholder="Поделитесь впечатлениями о товаре"></textarea>
+                            placeholder="Поделитесь впечатлениями о товаре"></textarea>
                     </div>
                     <div class="form-row grid-2">
                         <div>
                             <label for="r-pros">Достоинства</label>
-                            <textarea id="r-pros" name="pros" rows="2"
-                                      placeholder="Что понравилось?"></textarea>
+                            <textarea id="r-pros" name="pros" rows="2" placeholder="Что понравилось?"></textarea>
                         </div>
                         <div>
                             <label for="r-cons">Недостатки</label>
-                            <textarea id="r-cons" name="cons" rows="2"
-                                      placeholder="Что не понравилось?"></textarea>
+                            <textarea id="r-cons" name="cons" rows="2" placeholder="Что не понравилось?"></textarea>
                         </div>
                     </div>
                     <button type="submit" class="btn btn--primary">Отправить отзыв</button>
@@ -299,64 +383,38 @@
                 </form>
             </div>
 
-            <!-- Список отзывов -->
             <div class="reviews-list">
                 {% if reviews %}
-                    {% for r in reviews %}
-                        <article class="review">
-                            <header class="review__head">
-                                <div class="review__avatar">{{ r.name|slice:":1"|upper }}</div>
-                                <div class="review__meta">
-                                    <div class="review__name">{{ r.name }}</div>
-                                    <div class="review__date">{{ r.created_at|date:"d.m.Y" }}</div>
-                                </div>
-                                <div class="review__rating stars">
-                                    {% for i in '12345' %}
-                                        {% if forloop.counter <= r.rating %}★{% else %}☆{% endif %}
-                                    {% endfor %}
-                                </div>
-                            </header>
-                            {% if r.title %}
-                                <h4 class="review__title">{{ r.title }}</h4>
-                            {% endif %}
-                            <p class="review__text">{{ r.text|linebreaksbr }}</p>
-                            {% if r.pros %}<p class="review__pros"><b>Достоинства:</b> {{ r.pros }}</p>{% endif %}
-                            {% if r.cons %}<p class="review__cons"><b>Недостатки:</b> {{ r.cons }}</p>{% endif %}
-                        </article>
-                    {% endfor %}
+                {% for r in reviews %}
+                <article class="review">
+                    <header class="review__head">
+                        <div class="review__avatar">{{ r.name|slice:":1"|upper }}</div>
+                        <div class="review__meta">
+                            <div class="review__name">{{ r.name }}</div>
+                            <div class="review__date">{{ r.created_at|date:"d.m.Y" }}</div>
+                        </div>
+                        <div class="review__rating stars">
+                            {% for i in '12345' %}
+                            {% if forloop.counter <= r.rating %}★{% else %}☆{% endif %} {% endfor %} </div>
+                    </header>
+                    {% if r.title %}
+                    <h4 class="review__title">{{ r.title }}</h4>
+                    {% endif %}
+                    <p class="review__text">{{ r.text|linebreaksbr }}</p>
+                    {% if r.pros %}<p class="review__pros"><b>Достоинства:</b> {{ r.pros }}</p>{% endif %}
+                    {% if r.cons %}<p class="review__cons"><b>Недостатки:</b> {{ r.cons }}</p>{% endif %}
+                </article>
+                {% endfor %}
                 {% else %}
-                    <div class="empty-state empty-state--sm">
-                        <div class="empty-state__icon">💬</div>
-                        <h4 class="empty-state__title">Пока нет отзывов</h4>
-                        <p class="empty-state__text">Будьте первым, кто оставит отзыв об этом товаре.</p>
-                    </div>
+                <div class="empty-state empty-state--sm">
+                    <div class="empty-state__icon">💬</div>
+                    <h4 class="empty-state__title">Пока нет отзывов</h4>
+                    <p class="empty-state__text">Будьте первым, кто оставит отзыв об этом товаре.</p>
+                </div>
                 {% endif %}
             </div>
         </div>
     </section>
 
 </main>
-
-<!-- Variant data for JS -->
-{% if variants %}
-<script>
-window.__productVariants = [
-    {% for v in variants %}
-    {
-        id: {{ v.id }},
-        name: "{{ v.name|escapejs }}",
-        price: "{{ v.effective_price }}",
-        old_price: {% if v.effective_old_price %}"{{ v.effective_old_price }}"{% else %}null{% endif %},
-        stock: {{ v.stock }},
-        discount: {{ v.discount_percent }},
-        attrs: {
-            {% for av in v.attribute_values.all %}
-            "{{ av.attribute.name|escapejs }}": "{{ av.value|escapejs }}"{% if not forloop.last %},{% endif %}
-            {% endfor %}
-        }
-    }{% if not forloop.last %},{% endif %}
-    {% endfor %}
-];
-</script>
-{% endif %}
 {% endblock %}

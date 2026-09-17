@@ -1,9 +1,5 @@
 from django.contrib import admin
-from mptt.admin import MPTTModelAdmin
-from .models import (
-    Category, Brand, Product, ProductImage, ProductReview,
-    ProductVariant, VariantAttribute, VariantAttributeValue
-)
+from .models import Category, Brand, Product, ProductImage, ProductReview
 
 
 class ProductImageInline(admin.TabularInline):
@@ -19,26 +15,14 @@ class ProductReviewInline(admin.TabularInline):
     readonly_fields = ['created_at']
 
 
-class VariantAttributeValueInline(admin.TabularInline):
-    model = VariantAttributeValue
-    extra = 1
-    fields = ['attribute', 'value']
-
-
-class ProductVariantInline(admin.TabularInline):
-    model = ProductVariant
-    extra = 1
-    fields = ['name', 'sku', 'price', 'old_price', 'stock', 'is_active']
-    inlines = [VariantAttributeValueInline]
-
-
 @admin.register(Category)
-class CategoryAdmin(MPTTModelAdmin):
+class CategoryAdmin(admin.ModelAdmin):
     list_display = ['name', 'slug', 'parent', 'is_active', 'order']
     list_filter = ['is_active', 'parent']
     search_fields = ['name', 'slug', 'description']
     prepopulated_fields = {'slug': ('name',)}
     list_editable = ['order', 'is_active']
+    raw_id_fields = ['parent']
 
 
 @admin.register(Brand)
@@ -52,57 +36,40 @@ class BrandAdmin(admin.ModelAdmin):
 @admin.register(Product)
 class ProductAdmin(admin.ModelAdmin):
     list_display = [
-        'name', 'sku', 'category', 'brand', 'price', 'old_price',
-        'stock', 'status', 'is_popular', 'is_new', 'is_sale', 'is_active',
-        'views_count', 'created_at'
+        'name', 'color', 'sku', 'category', 'brand', 'gender', 'price',
+        'cost_price', 'old_price', 'discount_percent', 'stock', 'status', 'is_popular', 'is_new', 'is_sale',
+        'is_active', 'views_count', 'created_at'
     ]
     list_filter = [
-        'is_active', 'status', 'is_popular', 'is_new', 'is_sale',
-        'category', 'brand', 'color', 'created_at'
+        'is_active', 'status', 'gender', 'is_popular', 'is_new', 'is_sale',
+        'category', 'brand', 'color', 'material', 'created_at'
     ]
-    search_fields = ['name', 'slug', 'sku', 'description', 'short_description']
+    search_fields = ['name', 'slug', 'sku', 'description', 'short_description', 'color']
     prepopulated_fields = {'slug': ('name',)}
-    list_editable = ['price', 'old_price', 'stock', 'status', 'is_popular', 'is_new', 'is_sale', 'is_active']
-    inlines = [ProductImageInline, ProductVariantInline, ProductReviewInline]
+    list_editable = ['price', 'cost_price', 'old_price', 'discount_percent', 'stock', 'status', 'gender', 'is_popular', 'is_new', 'is_sale', 'is_active']
+    inlines = [ProductImageInline, ProductReviewInline]
     save_on_top = True
     fieldsets = (
         (None, {
-            'fields': (('name', 'slug'), ('sku', 'category', 'brand'), 'status')
+            'fields': (('name', 'slug'), ('sku', 'category', 'brand'), ('gender', 'group_id'), 'status')
         }),
         ('Цены и остатки', {
-            'fields': (('price', 'old_price'), 'stock')
+            'fields': (('price', 'cost_price'), ('old_price', 'discount_percent'), 'stock')
         }),
         ('Характеристики', {
             'fields': ('material', 'color', 'weight', 'dimensions'),
-            'classes': ('collapse',)
         }),
         ('Описание', {
             'fields': ('short_description', 'description'),
         }),
         ('Метки', {
             'fields': (('is_popular', 'is_new', 'is_sale'), 'is_active'),
-            'classes': ('collapse',)
         }),
         ('Статистика', {
             'fields': (('views_count', 'sales_count'),),
             'classes': ('collapse',),
         }),
     )
-
-
-@admin.register(ProductVariant)
-class ProductVariantAdmin(admin.ModelAdmin):
-    list_display = ['name', 'product', 'sku', 'price', 'old_price', 'stock', 'is_active']
-    list_filter = ['is_active', 'product__category']
-    search_fields = ['name', 'sku', 'product__name']
-    list_editable = ['price', 'old_price', 'stock', 'is_active']
-    inlines = [VariantAttributeValueInline]
-
-
-@admin.register(VariantAttribute)
-class VariantAttributeAdmin(admin.ModelAdmin):
-    list_display = ['name', 'slug']
-    prepopulated_fields = {'slug': ('name',)}
 
 
 @admin.register(ProductReview)

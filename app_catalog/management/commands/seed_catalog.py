@@ -1,13 +1,10 @@
-import os
+import uuid
 from decimal import Decimal
 from django.core.management.base import BaseCommand
 from django.core.files.base import ContentFile
 from django.utils.text import slugify
 
-from app_catalog.models import (
-    Brand, Category, Product, ProductImage, ProductReview,
-    ProductVariant, VariantAttribute, VariantAttributeValue
-)
+from app_catalog.models import Brand, Category, Product, ProductImage, ProductReview
 
 
 SVG_PLACEHOLDER = """<svg xmlns="http://www.w3.org/2000/svg" width="{w}" height="{h}" viewBox="0 0 {w} {h}">
@@ -41,8 +38,12 @@ def _svg(name, color_idx=0):
     return SVG_PLACEHOLDER.format(w=800, h=800, c1=c1, c2=c2, label=name[:20])
 
 
+def _slug(text):
+    return slugify(text, allow_unicode=True)
+
+
 class Command(BaseCommand):
-    help = "Seed demo data for catalog, categories, brands, products, images, reviews"
+    help = "Seed demo data: 8 categories, products with gender & color groups"
 
     def add_arguments(self, parser):
         parser.add_argument('--flush', action='store_true',
@@ -50,24 +51,12 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         if options.get('flush'):
-            VariantAttributeValue.objects.all().delete()
-            ProductVariant.objects.all().delete()
-            VariantAttribute.objects.all().delete()
             ProductImage.objects.all().delete()
             ProductReview.objects.all().delete()
             Product.objects.all().delete()
             Category.objects.all().delete()
             Brand.objects.all().delete()
             self.stdout.write(self.style.WARNING('Flushed catalog data'))
-
-        # ---------- Variant Attributes ----------
-        attr_color, _ = VariantAttribute.objects.get_or_create(
-            slug='color', defaults={'name': 'Цвет'}
-        )
-        attr_size, _ = VariantAttribute.objects.get_or_create(
-            slug='size', defaults={'name': 'Размер'}
-        )
-        self.stdout.write(self.style.SUCCESS(f'Attributes: {VariantAttribute.objects.count()}'))
 
         # ---------- Brands ----------
         brands_data = [
@@ -79,289 +68,432 @@ class Command(BaseCommand):
             ('Piquadro', 'Италия. Бизнес-аксессуары и портфели.'),
         ]
         brands = {}
-        for idx, (name, desc) in enumerate(brands_data):
+        for name, desc in brands_data:
             b, _ = Brand.objects.get_or_create(
                 name=name,
-                defaults={'slug': slugify(name, allow_unicode=True),
-                          'description': desc}
+                defaults={'slug': _slug(name), 'description': desc}
             )
             brands[name] = b
-            self.stdout.write(self.style.SUCCESS(f'Brand: {b.name}'))
 
-        # ---------- Categories (2-level tree) ----------
-        cat_top = [
-            ('Сумки', 'Кроссбоди, шопперы, городские сумки', 'bags'),
-            ('Чемоданы', 'Дорожные чемоданы разных размеров', 'luggage'),
-            ('Кошельки', 'Кошельки, портмоне, картхолдеры', 'wallets'),
-            ('Аксессуары', 'Ремни, ремешки, футляры', 'accessories'),
-            ('Рюкзаки', 'Городские, туристические, бизнес-рюкзаки', 'backpacks'),
-            ('Сумки для путешествий', 'Дуфл-сумки и дорожные сумки', 'travel'),
+        # ---------- Categories (корень + подкатегории) ----------
+        cats_data = [
+            ('Сумки', 'sumki', 0),
+            ('Кошельки', 'koshelki', 1),
+            ('Рюкзаки', 'ryukzaki', 2),
+            ('Ремни', 'remni', 3),
+            ('Зонты', 'zonty', 4),
+            ('Дорожные сумки', 'dorozhnye-sumki', 5),
+            ('Чемоданы', 'chemodany', 6),
+            ('Аксессуары', 'aksessuary', 7),
         ]
-        sub_cats = {
-            'Сумки': [
-                ('Женские сумки', 'women-bags'),
-                ('Мужские сумки', 'men-bags'),
-                ('Кроссбоди', 'crossbody'),
-                ('Шопперы', 'shoppers'),
-            ],
-            'Чемоданы': [
-                ('Средние (24")', 'midi-24'),
-                ('Крупные (28")', 'large-28'),
-                ('Кабинные (20")', 'cabin-20'),
-            ],
-            'Кошельки': [
-                ('Женские кошельки', 'w-wallets'),
-                ('Мужские портмоне', 'm-wallets'),
-                ('Картхолдеры', 'cardholders'),
-            ],
-            'Аксессуары': [
-                ('Ремни', 'belts'),
-                ('Пеналы и футляры', 'pens'),
-                ('Обложки для паспорта', 'passport'),
-            ],
-            'Рюкзаки': [
-                ('Городские', 'city-bp'),
-                ('Бизнес', 'business-bp'),
-            ],
-            'Сумки для путешествий': [
-                ('Дуфлы', 'duffles'),
-                ('Спортивные', 'sport-bags'),
-            ],
-        }
-
         cat_objs = {}
-        for i, (name, desc, slug) in enumerate(cat_top):
-            parent, _ = Category.objects.get_or_create(
+        for name, slug, order in cats_data:
+            c, _ = Category.objects.get_or_create(
                 slug=slug,
-                defaults={'name': name, 'description': desc, 'order': i, 'image': None}
+                defaults={'name': name, 'order': order, 'description': name}
             )
-            cat_objs[name] = parent
-            self.stdout.write(self.style.SUCCESS(f'Cat: {parent}'))
+            cat_objs[slug] = c
 
-            for j, (sc_name, sc_slug) in enumerate(sub_cats.get(name, [])):
-                sub, _ = Category.objects.get_or_create(
-                    slug=sc_slug,
+        # Подкатегории мужские/женские для всех категорий
+        sub_data = {
+            'sumki': [('Сумки мужские', 'sumki-muzhskie'), ('Сумки женские', 'sumki-zhenskie')],
+            'koshelki': [('Кошельки мужские', 'koshelki-muzhskie'), ('Кошельки женские', 'koshelki-zhenskie')],
+            'ryukzaki': [('Рюкзаки мужские', 'ryukzaki-muzhskie'), ('Рюкзаки женские', 'ryukzaki-zhenskie')],
+            'remni': [('Ремни мужские', 'remni-muzhskie'), ('Ремни женские', 'remni-zhenskie')],
+            'zonty': [('Зонты мужские', 'zonty-muzhskie'), ('Зонты женские', 'zonty-zhenskie')],
+            'dorozhnye-sumki': [('Дорожные сумки мужские', 'dorozhnye-sumki-muzhskie'), ('Дорожные сумки женские', 'dorozhnye-sumki-zhenskie')],
+            'chemodany': [('Чемоданы мужские', 'chemodany-muzhskie'), ('Чемоданы женские', 'chemodany-zhenskie')],
+            'aksessuary': [('Аксессуары мужские', 'aksessuary-muzhskie'), ('Аксессуары женские', 'aksessuary-zhenskie')],
+        }
+        for parent_slug, children in sub_data.items():
+            parent = cat_objs[parent_slug]
+            for child_name, child_slug in children:
+                child, _ = Category.objects.get_or_create(
+                    slug=child_slug,
+                    defaults={'name': child_name, 'parent': parent, 'description': child_name}
+                )
+                if child.parent_id != parent.id:
+                    child.parent = parent
+                    child.save()
+                cat_objs[child_slug] = child
+
+        # =====================================================
+        # ТОВАРЫ
+        # Формат: (category_slug, brand, name, gender, color, material,
+        #          price, old_price, dims, weight, flags)
+        # group_id одинаковый для одного товара в разных цветах
+        # =====================================================
+
+        products_seed = [
+            # ===== СУМКИ =====
+            {
+                'group': 'sumki-lacoste-nf2148',
+                'items': [
+                    ('sumki', 'Lacoste', 'Сумка-шоппер Lacoste NF.2148', 'F', 'Бордовый', 'Хлопок',
+                     Decimal('12990'), Decimal('15990'), '38x30x14', Decimal('0.45'), {'is_popular': True, 'is_sale': True}),
+                    ('sumki', 'Lacoste', 'Сумка-шоппер Lacoste NF.2148', 'F', 'Чёрный', 'Хлопок',
+                     Decimal('12990'), None, '38x30x14', Decimal('0.45'), {'is_popular': True}),
+                    ('sumki', 'Lacoste', 'Сумка-шоппер Lacoste NF.2148', 'F', 'Синий', 'Хлопок',
+                     Decimal('12990'), None, '38x30x14', Decimal('0.45'), {}),
+                ],
+            },
+            {
+                'group': 'sumki-tous-crossbody',
+                'items': [
+                    ('sumki', 'Tous', 'Кожаная сумка Tous Mini Crossbody', 'F', 'Кремовый', 'Натуральная кожа',
+                     Decimal('18500'), None, '22x18x8', Decimal('0.38'), {'is_new': True, 'is_popular': True}),
+                    ('sumki', 'Tous', 'Кожаная сумка Tous Mini Crossbody', 'F', 'Розовый', 'Натуральная кожа',
+                     Decimal('18500'), None, '22x18x8', Decimal('0.38'), {'is_new': True}),
+                    ('sumki', 'Tous', 'Кожаная сумка Tous Mini Crossbody', 'F', 'Чёрный', 'Натуральная кожа',
+                     Decimal('18500'), None, '22x18x8', Decimal('0.38'), {}),
+                ],
+            },
+            {
+                'group': 'sumki-piquadro-briefcase',
+                'items': [
+                    ('sumki', 'Piquadro', 'Портфель Piquadro Briefcase', 'M', 'Чёрный', 'Натуральная кожа',
+                     Decimal('42990'), Decimal('49990'), '40x30x10', Decimal('1.1'), {'is_popular': True, 'is_sale': True}),
+                    ('sumki', 'Piquadro', 'Портфель Piquadro Briefcase', 'M', 'Тёмно-коричневый', 'Натуральная кожа',
+                     Decimal('42990'), None, '40x30x10', Decimal('1.1'), {'is_popular': True}),
+                ],
+            },
+            {
+                'group': 'sumki-braun-siena',
+                'items': [
+                    ('sumki', 'Braun Büffel', 'Кроссбоди Braun Büffel Siena', 'F', 'Тёмно-коричневый', 'Натуральная кожа',
+                     Decimal('23890'), None, '24x18x6', Decimal('0.4'), {'is_new': True}),
+                    ('sumki', 'Braun Büffel', 'Кроссбоди Braun Büffel Siena', 'F', 'Чёрный', 'Натуральная кожа',
+                     Decimal('23890'), None, '24x18x6', Decimal('0.4'), {}),
+                ],
+            },
+            {
+                'group': 'sumki-lacoste-shopper',
+                'items': [
+                    ('sumki', 'Lacoste', 'Шоппер Lacoste L.12.12', 'F', 'Зелёный', 'ПВХ',
+                     Decimal('8990'), Decimal('10990'), '35x34x12', Decimal('0.35'), {'is_sale': True, 'is_popular': True}),
+                    ('sumki', 'Lacoste', 'Шоппер Lacoste L.12.12', 'F', 'Чёрный', 'ПВХ',
+                     Decimal('8990'), None, '35x34x12', Decimal('0.35'), {}),
+                    ('sumki', 'Lacoste', 'Шоппер Lacoste L.12.12', 'F', 'Белый', 'ПВХ',
+                     Decimal('8990'), None, '35x34x12', Decimal('0.35'), {}),
+                ],
+            },
+            {
+                'group': 'sumki-tous-kaos',
+                'items': [
+                    ('sumki', 'Tous', 'Шоппер Tous Kaos Mini', 'F', 'Кремовый', 'Натуральная кожа',
+                     Decimal('10490'), None, '28x24x10', Decimal('0.35'), {'is_new': True}),
+                    ('sumki', 'Tous', 'Шоппер Tous Kaos Mini', 'F', 'Розовый', 'Натуральная кожа',
+                     Decimal('10490'), None, '28x24x10', Decimal('0.35'), {}),
+                ],
+            },
+
+            # ===== КОШЕЛЬКИ =====
+            {
+                'group': 'kosh-tous-long',
+                'items': [
+                    ('koshelki', 'Tous', 'Кошелёк Tous Logo Long', 'F', 'Розовый', 'Натуральная кожа',
+                     Decimal('7990'), None, '19x10x3', Decimal('0.15'), {'is_new': True}),
+                    ('koshelki', 'Tous', 'Кошелёк Tous Logo Long', 'F', 'Бежевый', 'Натуральная кожа',
+                     Decimal('7990'), None, '19x10x3', Decimal('0.15'), {}),
+                ],
+            },
+            {
+                'group': 'kosh-braun-vasco',
+                'items': [
+                    ('koshelki', 'Braun Büffel', 'Портмоне Braun Büffel Vasco', 'M', 'Коричневый', 'Натуральная кожа',
+                     Decimal('11490'), Decimal('13490'), '12x9.5x2', Decimal('0.12'), {'is_popular': True, 'is_sale': True}),
+                    ('koshelki', 'Braun Büffel', 'Портмоне Braun Büffel Vasco', 'M', 'Чёрный', 'Натуральная кожа',
+                     Decimal('11490'), None, '12x9.5x2', Decimal('0.12'), {'is_popular': True}),
+                ],
+            },
+            {
+                'group': 'kosh-piquadro-slider',
+                'items': [
+                    ('koshelki', 'Piquadro', 'Картхолдер Piquadro Slider', 'M', 'Чёрный', 'Натуральная кожа',
+                     Decimal('5990'), None, '10.5x7.5x1', Decimal('0.06'), {'is_popular': True, 'is_new': True}),
+                    ('koshelki', 'Piquadro', 'Картхолдер Piquadro Slider', 'M', 'Синий', 'Натуральная кожа',
+                     Decimal('5990'), None, '10.5x7.5x1', Decimal('0.06'), {}),
+                ],
+            },
+            {
+                'group': 'kosh-lacoste-zip',
+                'items': [
+                    ('koshelki', 'Lacoste', 'Кошелёк Lacoste Zip', 'F', 'Белый', 'ПВХ',
+                     Decimal('6490'), Decimal('7990'), '19x11x3', Decimal('0.14'), {'is_sale': True}),
+                    ('koshelki', 'Lacoste', 'Кошелёк Lacoste Zip', 'F', 'Чёрный', 'ПВХ',
+                     Decimal('6490'), None, '19x11x3', Decimal('0.14'), {}),
+                ],
+            },
+
+            # ===== РЮКЗАКИ =====
+            {
+                'group': 'bp-lacoste-neocroc',
+                'items': [
+                    ('ryukzaki', 'Lacoste', 'Рюкзак Lacoste Neocroc', 'M', 'Синий', 'ПВХ',
+                     Decimal('15990'), Decimal('18990'), '30x40x12', Decimal('0.5'), {'is_sale': True, 'is_popular': True}),
+                    ('ryukzaki', 'Lacoste', 'Рюкзак Lacoste Neocroc', 'M', 'Чёрный', 'ПВХ',
+                     Decimal('15990'), None, '30x40x12', Decimal('0.5'), {}),
+                ],
+            },
+            {
+                'group': 'bp-piquadro-business',
+                'items': [
+                    ('ryukzaki', 'Piquadro', 'Рюкзак Piquadro Business 15.6"', 'M', 'Чёрный', 'Натуральная кожа',
+                     Decimal('36990'), None, '42x32x14', Decimal('1.05'), {'is_popular': True, 'is_new': True}),
+                    ('ryukzaki', 'Piquadro', 'Рюкзак Piquadro Business 15.6"', 'M', 'Тёмно-коричневый', 'Натуральная кожа',
+                     Decimal('36990'), None, '42x32x14', Decimal('1.05'), {}),
+                ],
+            },
+            {
+                'group': 'bp-samsonite-guardit',
+                'items': [
+                    ('ryukzaki', 'Samsonite', 'Рюкзак Samsonite Guardit 2.0', 'M', 'Чёрный', 'Полиэстер',
+                     Decimal('12490'), None, '44x32x15', Decimal('0.7'), {'is_popular': True}),
+                    ('ryukzaki', 'Samsonite', 'Рюкзак Samsonite Guardit 2.0', 'M', 'Серый', 'Полиэстер',
+                     Decimal('12490'), None, '44x32x15', Decimal('0.7'), {}),
+                ],
+            },
+
+            # ===== РЕМНИ =====
+            {
+                'group': 'rem-braun-classic',
+                'items': [
+                    ('remni', 'Braun Büffel', 'Ремень Braun Büffel Classic', 'M', 'Коричневый', 'Натуральная кожа',
+                     Decimal('6990'), None, 'на ремень', Decimal('0.18'), {'is_popular': True}),
+                    ('remni', 'Braun Büffel', 'Ремень Braun Büffel Classic', 'M', 'Чёрный', 'Натуральная кожа',
+                     Decimal('6990'), None, 'на ремень', Decimal('0.18'), {}),
+                    ('remni', 'Braun Büffel', 'Ремень Braun Büffel Classic', 'M', 'Тёмно-синий', 'Натуральная кожа',
+                     Decimal('6990'), None, 'на ремень', Decimal('0.18'), {}),
+                ],
+            },
+
+            # ===== ЗОНТЫ =====
+            {
+                'group': 'zont-samsonite-auto',
+                'items': [
+                    ('zonty', 'Samsonite', 'Зонт Samsonite Auto Open', 'M', 'Чёрный', 'Полиэстер',
+                     Decimal('4990'), None, 'D=100', Decimal('0.4'), {'is_popular': True}),
+                    ('zonty', 'Samsonite', 'Зонт Samsonite Auto Open', 'M', 'Тёмно-синий', 'Полиэстер',
+                     Decimal('4990'), None, 'D=100', Decimal('0.4'), {}),
+                ],
+            },
+            {
+                'group': 'zont-lacoste-auto',
+                'items': [
+                    ('zonty', 'Lacoste', 'Зонт Lacoste Compact', 'F', 'Бордовый', 'Полиэстер',
+                     Decimal('5990'), None, 'D=95', Decimal('0.35'), {'is_new': True}),
+                    ('zonty', 'Lacoste', 'Зонт Lacoste Compact', 'F', 'Чёрный', 'Полиэстер',
+                     Decimal('5990'), None, 'D=95', Decimal('0.35'), {}),
+                    ('zonty', 'Lacoste', 'Зонт Lacoste Compact', 'F', 'Кремовый', 'Полиэстер',
+                     Decimal('5990'), None, 'D=95', Decimal('0.35'), {}),
+                ],
+            },
+
+            # ===== ДОРОЖНЫЕ СУМКИ =====
+            {
+                'group': 'duff-samsonite-midtown',
+                'items': [
+                    ('dorozhnye-sumki', 'Samsonite', 'Дуфл Samsonite Midtown', 'M', 'Тёмно-синий', 'Полиэстер',
+                     Decimal('9990'), Decimal('12490'), '50x28x26', Decimal('0.9'), {'is_sale': True, 'is_new': True}),
+                    ('dorozhnye-sumki', 'Samsonite', 'Дуфл Samsonite Midtown', 'M', 'Чёрный', 'Полиэстер',
+                     Decimal('9990'), None, '50x28x26', Decimal('0.9'), {}),
+                ],
+            },
+            {
+                'group': 'duff-lacoste-sport',
+                'items': [
+                    ('dorozhnye-sumki', 'Lacoste', 'Спортивная сумка Lacoste Sport', 'M', 'Бордовый', 'Полиэстер',
+                     Decimal('8490'), None, '52x26x24', Decimal('0.6'), {}),
+                    ('dorozhnye-sumki', 'Lacoste', 'Спортивная сумка Lacoste Sport', 'M', 'Чёрный', 'Полиэстер',
+                     Decimal('8490'), None, '52x26x24', Decimal('0.6'), {}),
+                ],
+            },
+
+            # ===== ЧЕМОДАНЫ =====
+            {
+                'group': 'chem-samsonite-lite20',
+                'items': [
+                    ('chemodany', 'Samsonite', 'Чемодан Samsonite Lite-Shock 20"', 'M', 'Синий', 'Полипропилен',
+                     Decimal('32990'), Decimal('38990'), '55x40x20', Decimal('2.1'), {'is_popular': True, 'is_sale': True}),
+                    ('chemodany', 'Samsonite', 'Чемодан Samsonite Lite-Shock 20"', 'M', 'Чёрный', 'Полипропилен',
+                     Decimal('32990'), None, '55x40x20', Decimal('2.1'), {'is_popular': True}),
+                ],
+            },
+            {
+                'group': 'chem-samsonite-clite24',
+                'items': [
+                    ('chemodany', 'Samsonite', 'Чемодан Samsonite C-Lite 24"', 'M', 'Чёрный', 'Curv',
+                     Decimal('41990'), None, '67x45x28', Decimal('2.7'), {'is_popular': True}),
+                    ('chemodany', 'Samsonite', 'Чемодан Samsonite C-Lite 24"', 'M', 'Серый', 'Curv',
+                     Decimal('41990'), None, '67x45x28', Decimal('2.7'), {}),
+                ],
+            },
+            {
+                'group': 'chem-roncato-young28',
+                'items': [
+                    ('chemodany', 'Roncato', 'Чемодан Roncato Young 28"', 'M', 'Красный', 'Makrolon',
+                     Decimal('29890'), Decimal('34990'), '77x52x30', Decimal('3.4'), {'is_new': True, 'is_sale': True}),
+                    ('chemodany', 'Roncato', 'Чемодан Roncato Young 28"', 'M', 'Чёрный', 'Makrolon',
+                     Decimal('29890'), None, '77x52x30', Decimal('3.4'), {}),
+                ],
+            },
+            {
+                'group': 'chem-roncato-box20',
+                'items': [
+                    ('chemodany', 'Roncato', 'Чемодан Roncato Box 2.0 Cabin 20"', 'M', 'Тёмно-зелёный', 'Makrolon',
+                     Decimal('25990'), None, '55x40x20', Decimal('2.3'), {'is_popular': True}),
+                    ('chemodany', 'Roncato', 'Чемодан Roncato Box 2.0 Cabin 20"', 'M', 'Серый', 'Makrolon',
+                     Decimal('25990'), None, '55x40x20', Decimal('2.3'), {}),
+                ],
+            },
+            {
+                'group': 'chem-samsonite-base28',
+                'items': [
+                    ('chemodany', 'Samsonite', 'Чемодан Samsonite Base Boost 28"', 'M', 'Серый', 'Полиэстер',
+                     Decimal('27490'), Decimal('32990'), '78x52x31', Decimal('3.8'), {'is_sale': True}),
+                    ('chemodany', 'Samsonite', 'Чемодан Samsonite Base Boost 28"', 'M', 'Синий', 'Полиэстер',
+                     Decimal('27490'), None, '78x52x31', Decimal('3.8'), {}),
+                ],
+            },
+            {
+                'group': 'chem-roncato-ironik24',
+                'items': [
+                    ('chemodany', 'Roncato', 'Чемодан Roncato Ironik 24"', 'M', 'Чёрный', 'Makrolon',
+                     Decimal('31990'), Decimal('36990'), '65x42x27', Decimal('2.8'), {'is_popular': True, 'is_sale': True}),
+                    ('chemodany', 'Roncato', 'Чемодан Roncato Ironik 24"', 'M', 'Красный', 'Makrolon',
+                     Decimal('31990'), None, '65x42x27', Decimal('2.8'), {}),
+                ],
+            },
+
+            # ===== АКСЕССУАРЫ =====
+            {
+                'group': 'acc-piquadro-passport',
+                'items': [
+                    ('aksessuary', 'Piquadro', 'Обложка на паспорт Piquadro', 'M', 'Чёрный', 'Натуральная кожа',
+                     Decimal('4290'), Decimal('4990'), '14x10x1', Decimal('0.05'), {'is_new': True, 'is_sale': True}),
+                    ('aksessuary', 'Piquadro', 'Обложка на паспорт Piquadro', 'M', 'Коричневый', 'Натуральная кожа',
+                     Decimal('4290'), None, '14x10x1', Decimal('0.05'), {}),
+                ],
+            },
+            {
+                'group': 'acc-tous-pen',
+                'items': [
+                    ('aksessuary', 'Tous', 'Пенал Tous Mini', 'F', 'Бежевый', 'ПВХ',
+                     Decimal('3490'), None, '20x8x5', Decimal('0.09'), {}),
+                    ('aksessuary', 'Tous', 'Пенал Tous Mini', 'F', 'Розовый', 'ПВХ',
+                     Decimal('3490'), None, '20x8x5', Decimal('0.09'), {}),
+                ],
+            },
+        ]
+
+        review_templates = [
+            ('Отличное качество!',
+             'Очень понравилось. Доставка быстрая, упаковка хорошая. Рекомендую.',
+             'Всё супер!', 'Нет', 5),
+            ('Хорошее соотношение цена/качество',
+             'Пользуюсь уже две недели, выглядит достойно. Покупкой доволен/льна.',
+             'Приятный материал, хороший цвет.', 'Нет', 4),
+            ('Супер покупка',
+             'Лучшая покупка за последнее время. Все друзья уже спросили где купила.',
+             'Многофункциональность, дизайн.', 'Нет', 5),
+            ('Сделано на совесть',
+             'Материал приятный, швы ровные, фурнитура крепкая. Беру второе изделие этого бренда.',
+             'Качество, бренд.', 'Нет', 5),
+        ]
+
+        product_idx = 0
+        for group_data in products_seed:
+            group_uuid = uuid.uuid4()
+            for (cat_slug, brand_name, pname, gender, color, material,
+                 price, old_price, dims, weight, flags) in group_data['items']:
+
+                # Переносим товары из корня в подкатегорию по полу
+                effective_slug = cat_slug
+                if cat_slug in sub_data:
+                    effective_slug = f'{cat_slug}-{"muzhskie" if gender == "M" else "zhenskie"}'
+                category = cat_objs.get(effective_slug)
+                if not category:
+                    self.stderr.write(f'Skip {pname}: no category {effective_slug}')
+                    continue
+                brand = brands.get(brand_name)
+
+                slug_base = _slug(f'{pname} {color}')
+                slug = slug_base
+                counter = 1
+                while Product.objects.filter(slug=slug).exists():
+                    slug = f'{slug_base}-{counter}'
+                    counter += 1
+
+                p, created = Product.objects.get_or_create(
+                    slug=slug,
                     defaults={
-                        'name': sc_name,
-                        'parent': parent,
-                        'description': f'Подкатегория: {sc_name}',
-                        'order': j,
+                        'name': pname,
+                        'category': category,
+                        'brand': brand,
+                        'gender': gender,
+                        'group_id': group_uuid,
+                        'price': price,
+                        'old_price': old_price,
+                        'cost_price': (price * Decimal('0.6')).quantize(price),
+                        'discount_percent': (int((old_price - price) / old_price * 100) if old_price and old_price > price else 0),
+                        'stock': 15 + product_idx % 30,
+                        'sku': f'EDV-{1000 + product_idx:04d}',
+                        'short_description': f'{pname} — качественное изделие от бренда {brand_name}. '
+                                             f'Материал: {material}. Цвет: {color}.',
+                        'description': (
+                            f'{pname} — модель от бренда {brand_name}.\n\n'
+                            f'Основные характеристики:\n'
+                            f'• Материал: {material}\n'
+                            f'• Цвет: {color}\n'
+                            f'• Размеры: {dims}\n'
+                            f'• Вес: {weight} кг\n'
+                            f'• Пол: {"Мужской" if gender == "M" else "Женский"}\n\n'
+                            f'Идеальный вариант для повседневного использования или путешествий. '
+                            f'Качественная фурнитура, усиленные швы, гарантия производителя.'
+                        ),
+                        'color': color,
+                        'material': material,
+                        'dimensions': dims,
+                        'weight': weight,
+                        'status': 'in_stock',
+                        **flags,
                     }
                 )
-                cat_objs[sc_name] = sub
+                if not created:
+                    continue
 
-        # ---------- Product matrix ----------
-        products_seed = [
-            # Сумки
-            ('women-bags', 'Lacoste', 'Сумка-шоппер Lacoste NF.2148',
-             Decimal('12990'), Decimal('15990'), 'Бордовый', 'Хлопок', '38x30x14 см', Decimal('0.45'),
-             {'is_popular': True, 'is_sale': True}),
-            ('women-bags', 'Tous', 'Кожаная сумка Tous Mini Crossbody',
-             Decimal('18500'), None, 'Кремовый', 'Натуральная кожа', '22x18x8 см', Decimal('0.38'),
-             {'is_new': True, 'is_popular': True}),
-            ('men-bags', 'Piquadro', 'Портфель Piquadro Briefcase',
-             Decimal('42990'), Decimal('49990'), 'Чёрный', 'Натуральная кожа', '40x30x10 см', Decimal('1.1'),
-             {'is_popular': True, 'is_sale': True}),
-            ('crossbody', 'Braun Büffel', 'Кроссбоди Braun Büffel Siena',
-             Decimal('23890'), None, 'Тёмно-коричневый', 'Натуральная кожа', '24x18x6 см', Decimal('0.4'),
-             {'is_new': True}),
-            ('shoppers', 'Lacoste', 'Шоппер Lacoste L.12.12',
-             Decimal('8990'), Decimal('10990'), 'Зелёный', 'ПВХ', '35x34x12 см', Decimal('0.35'),
-             {'is_sale': True, 'is_popular': True}),
-
-            # Чемоданы
-            ('cabin-20', 'Samsonite', 'Чемодан Samsonite Lite-Shock 20"',
-             Decimal('32990'), Decimal('38990'), 'Синий', 'Полипропилен', '55x40x20 см', Decimal('2.1'),
-             {'is_popular': True, 'is_sale': True}),
-            ('midi-24', 'Samsonite', 'Чемодан Samsonite C-Lite 24"',
-             Decimal('41990'), None, 'Чёрный', 'Curv', '67x45x28 см', Decimal('2.7'),
-             {'is_popular': True}),
-            ('large-28', 'Roncato', 'Чемодан Roncato Young 28"',
-             Decimal('29890'), Decimal('34990'), 'Красный', 'Makrolon', '77x52x30 см', Decimal('3.4'),
-             {'is_new': True, 'is_sale': True}),
-            ('cabin-20', 'Roncato', 'Чемодан Roncato Box 2.0 Cabin 20"',
-             Decimal('25990'), None, 'Тёмно-зелёный', 'Makrolon', '55x40x20 см', Decimal('2.3'),
-             {'is_popular': True}),
-            ('large-28', 'Samsonite', 'Чемодан Samsonite Base Boost 28"',
-             Decimal('27490'), Decimal('32990'), 'Серый', 'Полиэстер', '78x52x31 см', Decimal('3.8'),
-             {'is_sale': True}),
-
-            # Кошельки
-            ('w-wallets', 'Tous', 'Кошелёк Tous Logo Long',
-             Decimal('7990'), None, 'Розовый', 'Натуральная кожа', '19x10x3 см', Decimal('0.15'),
-             {'is_new': True}),
-            ('m-wallets', 'Braun Büffel', 'Портмоне Braun Büffel Vasco',
-             Decimal('11490'), Decimal('13490'), 'Коричневый', 'Натуральная кожа', '12x9.5x2 см', Decimal('0.12'),
-             {'is_popular': True, 'is_sale': True}),
-            ('cardholders', 'Piquadro', 'Картхолдер Piquadro Slider',
-             Decimal('5990'), None, 'Чёрный', 'Натуральная кожа', '10.5x7.5x1 см', Decimal('0.06'),
-             {'is_popular': True, 'is_new': True}),
-            ('w-wallets', 'Lacoste', 'Кошелёк Lacoste Zip',
-             Decimal('6490'), Decimal('7990'), 'Белый', 'ПВХ', '19x11x3 см', Decimal('0.14'),
-             {'is_sale': True}),
-
-            # Аксессуары
-            ('belts', 'Braun Büffel', 'Ремень Braun Büffel Classic',
-             Decimal('6990'), None, 'Коричневый', 'Натуральная кожа', 'на ремень', Decimal('0.18'),
-             {'is_popular': True}),
-            ('passport', 'Piquadro', 'Обложка на паспорт Piquadro',
-             Decimal('4290'), Decimal('4990'), 'Чёрный', 'Натуральная кожа', '14x10x1 см', Decimal('0.05'),
-             {'is_new': True, 'is_sale': True}),
-            ('pens', 'Tous', 'Пенал Tous Mini',
-             Decimal('3490'), None, 'Бежевый', 'ПВХ', '20x8x5 см', Decimal('0.09'),
-             {}),
-
-            # Рюкзаки
-            ('city-bp', 'Lacoste', 'Рюкзак Lacoste Neocroc',
-             Decimal('15990'), Decimal('18990'), 'Синий', 'ПВХ', '30x40x12 см', Decimal('0.5'),
-             {'is_sale': True, 'is_popular': True}),
-            ('business-bp', 'Piquadro', 'Рюкзак Piquadro Business 15.6"',
-             Decimal('36990'), None, 'Чёрный', 'Натуральная кожа', '42x32x14 см', Decimal('1.05'),
-             {'is_popular': True, 'is_new': True}),
-            ('city-bp', 'Samsonite', 'Рюкзак Samsonite Guardit 2.0',
-             Decimal('12490'), None, 'Чёрный', 'Полиэстер', '44x32x15 см', Decimal('0.7'),
-             {'is_popular': True}),
-
-            # Travel
-            ('duffles', 'Samsonite', 'Дуфл Samsonite Midtown',
-             Decimal('9990'), Decimal('12490'), 'Тёмно-синий', 'Полиэстер', '50x28x26 см', Decimal('0.9'),
-             {'is_sale': True, 'is_new': True}),
-            ('sport-bags', 'Lacoste', 'Спортивная сумка Lacoste Sport',
-             Decimal('8490'), None, 'Бордовый', 'Полиэстер', '52x26x24 см', Decimal('0.6'),
-             {}),
-
-            # Ещё
-            ('shoppers', 'Tous', 'Шоппер Tous Kaos Mini',
-             Decimal('10490'), None, 'Кремовый', 'Натуральная кожа', '28x24x10 см', Decimal('0.35'),
-             {'is_new': True}),
-            ('midi-24', 'Roncato', 'Чемодан Roncato Ironik 24"',
-             Decimal('31990'), Decimal('36990'), 'Чёрный', 'Makrolon', '65x42x27 см', Decimal('2.8'),
-             {'is_popular': True, 'is_sale': True}),
-        ]
-
-        # Products with variants (color variants for certain products)
-        variant_products = {
-            0: {'colors': ['Бордовый', 'Чёрный', 'Синий']},           # Lacoste NF.2148
-            1: {'colors': ['Кремовый', 'Чёрный', 'Розовый']},         # Tous Mini Crossbody
-            4: {'colors': ['Зелёный', 'Чёрный', 'Белый']},            # Lacoste L.12.12
-            18: {'colors': ['Чёрный', 'Серый', 'Синий']},             # Lacoste Neocroc
-            21: {'colors': ['Тёмно-синий', 'Чёрный', 'Красный']},     # Samsonite Midtown
-        }
-
-        for idx, (cat_slug, brand_name, pname, price, old_price,
-                  color, material, dims, weight, flags) in enumerate(products_seed):
-            category = cat_objs.get(cat_slug) or Category.objects.filter(slug=cat_slug).first()
-            if not category:
-                self.stderr.write(f'skip product {pname}: no category {cat_slug}')
-                continue
-            brand = brands.get(brand_name)
-            slug_base = slugify(pname, allow_unicode=True)
-            slug = slug_base
-            counter = 1
-            while Product.objects.filter(slug=slug).exists():
-                slug = f'{slug_base}-{counter}'
-                counter += 1
-
-            p, created = Product.objects.get_or_create(
-                slug=slug,
-                defaults={
-                    'name': pname,
-                    'category': category,
-                    'brand': brand,
-                    'price': price,
-                    'old_price': old_price,
-                    'stock': 25 + idx % 50,
-                    'sku': f'EDV-{1000 + idx:04d}',
-                    'short_description': f'{pname} — качественное изделие от бренда {brand_name}. '
-                                         f'Материал: {material}. Цвет: {color}.',
-                    'description': (
-                        f'{pname} — модель от бренда {brand_name}.\n\n'
-                        f'Основные характеристики:\n'
-                        f'• Материал: {material}\n'
-                        f'• Цвет: {color}\n'
-                        f'• Размеры: {dims}\n'
-                        f'• Вес: {weight} кг\n\n'
-                        f'Идеальный вариант для повседневного использования или путешествий. '
-                        f'Качественная фурнитура, усиленные швы, гарантия производителя.'
-                    ),
-                    'color': color,
-                    'material': material,
-                    'dimensions': dims,
-                    'weight': weight,
-                    'status': 'in_stock',
-                    **flags,
-                }
-            )
-            if not created:
-                continue
-
-            # ---------- Product images (3 SVG placeholders) ----------
-            colors_idx = [idx, idx + 1, idx + 2]
-            for img_pos, ci in enumerate(colors_idx):
-                svg_bytes = _svg(pname[:18] + f' [{img_pos+1}]', ci).encode('utf-8')
-                ProductImage.objects.create(
-                    product=p,
-                    image=ContentFile(svg_bytes, name=f'{slug}-{img_pos+1}.svg'),
-                    alt=f'{pname} — фото {img_pos + 1}',
-                    is_main=(img_pos == 0),
-                    order=img_pos,
-                )
-
-            # ---------- Variants for certain products ----------
-            if idx in variant_products:
-                vp = variant_products[idx]
-                for ci, var_color in enumerate(vp.get('colors', [])):
-                    variant, _ = ProductVariant.objects.get_or_create(
+                for img_pos in range(3):
+                    svg_bytes = _svg(pname[:18] + f' [{img_pos+1}]', product_idx + img_pos).encode('utf-8')
+                    ProductImage.objects.create(
                         product=p,
-                        name=var_color,
-                        defaults={
-                            'sku': f'{p.sku}-{ci+1:02d}' if p.sku else None,
-                            'stock': 10 + ci * 5,
-                            'is_active': True,
-                        }
-                    )
-                    VariantAttributeValue.objects.get_or_create(
-                        variant=variant,
-                        attribute=attr_color,
-                        defaults={'value': var_color}
+                        image=ContentFile(svg_bytes, name=f'{slug}-{img_pos+1}.svg'),
+                        alt=f'{pname} {color} — фото {img_pos + 1}',
+                        is_main=(img_pos == 0),
+                        order=img_pos,
                     )
 
-            # ---------- Reviews ----------
-            review_templates = [
-                ('Отличное качество!',
-                 'Очень понравилось. Доставка быстрая, упаковка хорошая. Рекомендую.',
-                 'Всё супер!', 'Нет', 5),
-                ('Хорошее соотношение цена/качество',
-                 'Пользуюсь уже две недели, выглядит достойно. Покупкой доволен/льна.',
-                 'Приятный материал, хороший цвет.', 'Нет', 4),
-                ('Супер покупка',
-                 'Лучшая покупка за последнее время. Все друзья уже спросили где купила.',
-                 'Многофункциональность, дизайн.', 'Нет', 5),
-                ('Сделано на совесть',
-                 'Материал приятный, швы ровные, фурнитура крепкая. Беру второе изделие этого бренда.',
-                 'Качество, бренд.', 'Нет', 5),
-            ]
-            for k, (rt_title, rt_text, rt_pros, rt_cons, rt_rating) in enumerate(review_templates):
-                if (idx + k) % 3 == 0:
-                    ProductReview.objects.create(
-                        product=p,
-                        name=['Анна С.', 'Иван П.', 'Мария К.', 'Дмитрий В.'][k],
-                        email=f'user{idx}_{k}@example.com',
-                        rating=rt_rating,
-                        title=rt_title,
-                        text=rt_text,
-                        pros=rt_pros,
-                        cons=rt_cons,
-                        is_approved=True,
-                    )
+                if product_idx % 3 == 0:
+                    for k, (rt_title, rt_text, rt_pros, rt_cons, rt_rating) in enumerate(review_templates):
+                        if (product_idx + k) % 2 == 0:
+                            ProductReview.objects.create(
+                                product=p,
+                                name=['Анна С.', 'Иван П.', 'Мария К.', 'Дмитрий В.'][k],
+                                email=f'user{product_idx}_{k}@example.com',
+                                rating=rt_rating,
+                                title=rt_title,
+                                text=rt_text,
+                                pros=rt_pros,
+                                cons=rt_cons,
+                                is_approved=True,
+                            )
 
-            self.stdout.write(self.style.SUCCESS(f'Product: {p.name}'))
+                self.stdout.write(self.style.SUCCESS(f'  {p.name} — {p.color}'))
+                product_idx += 1
 
         self.stdout.write(self.style.SUCCESS(
-            f'Seed complete: Brands={Brand.objects.count()}, '
+            f'\nSeed complete: Brands={Brand.objects.count()}, '
             f'Categories={Category.objects.count()}, '
             f'Products={Product.objects.count()}, '
             f'Images={ProductImage.objects.count()}, '
-            f'Variants={ProductVariant.objects.count()}, '
             f'Reviews={ProductReview.objects.count()}.'
         ))

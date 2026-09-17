@@ -21,6 +21,15 @@ def footer_info(request):
     return {'footer_info': info}
 
 
+def gender_categories(request):
+    from app_catalog.models import Category
+    cats = Category.objects.filter(is_active=True).order_by('order', 'name')
+    return {
+        'categories_men': cats.filter(products__gender='M').distinct(),
+        'categories_women': cats.filter(products__gender='F').distinct(),
+    }
+
+
 def cart_count(request):
     try:
         from app_cart.models import Cart

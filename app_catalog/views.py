@@ -4,11 +4,12 @@ from django.db.models import Q, Avg, Count, Min, Max
 from django.contrib import messages
 from django.views.decorators.http import require_POST
 
-from .models import Product, Category, Brand, ProductReview, ProductVariant
+from .models import Product, Category, Brand, ProductReview
 
 
 def _apply_filters(queryset, request):
     get = request.GET
+
     price_from = get.get('price_from')
     price_to = get.get('price_to')
     if price_from:
@@ -26,6 +27,10 @@ def _apply_filters(queryset, request):
     if brands:
         queryset = queryset.filter(brand__slug__in=brands)
 
+    gender = get.get('gender')
+    if gender in ('M', 'F'):
+        queryset = queryset.filter(gender=gender)
+
     in_stock = get.get('in_stock')
     if in_stock == '1':
         queryset = queryset.filter(status='in_stock', stock__gt=0)
@@ -34,12 +39,12 @@ def _apply_filters(queryset, request):
     if on_sale == '1':
         queryset = queryset.filter(is_sale=True)
 
-    colors = get.getlist('colors')
-    if colors:
-        q_colors = Q()
-        for c in colors:
-            q_colors |= Q(color__iexact=c)
-        queryset = queryset.filter(q_colors)
+    materials = get.getlist('materials')
+    if materials:
+        q_mat = Q()
+        for m in materials:
+            q_mat |= Q(material__iexact=m)
+        queryset = queryset.filter(q_mat)
 
     sort = get.get('sort', 'newest')
     if sort == 'price_asc':
@@ -59,20 +64,21 @@ def _get_filter_context(request, base_qs):
     price_agg = base_qs.aggregate(min_p=Avg('price') * 0, max_p=Avg('price') * 0)
     if base_qs.exists():
         price_agg = base_qs.aggregate(Min('price'), Max('price'))
-    colors = sorted(
-        [c for c in base_qs.values_list('color', flat=True).distinct() if c]
+    materials = sorted(
+        [m for m in base_qs.values_list('material', flat=True).distinct() if m]
     )
     return {
         'brands': brands,
         'categories': categories,
         'price_min': price_agg.get('price__min', 0) or 0,
         'price_max': price_agg.get('price__max', 0) or 0,
-        'colors': colors,
+        'materials': materials,
         'current_sort': request.GET.get('sort', 'newest'),
         'current_price_from': request.GET.get('price_from', ''),
         'current_price_to': request.GET.get('price_to', ''),
         'current_brands': request.GET.getlist('brands'),
-        'current_colors': request.GET.getlist('colors'),
+        'current_materials': request.GET.getlist('materials'),
+        'current_gender': request.GET.get('gender', ''),
         'in_stock_checked': request.GET.get('in_stock') == '1',
         'on_sale_checked': request.GET.get('on_sale') == '1',
     }
@@ -146,6 +152,8 @@ def search_results(request):
             | Q(sku__icontains=query)
             | Q(category__name__icontains=query)
             | Q(brand__name__icontains=query)
+            | Q(color__icontains=query)
+            | Q(material__icontains=query)
         ).distinct()
     qs = _apply_filters(qs, request)
     ctx = _get_filter_context(request, qs)
@@ -173,7 +181,7 @@ def search_results(request):
 
 def product_detail(request, slug):
     product = get_object_or_404(
-        Product.objects.select_related('category', 'brand').prefetch_related('images', 'variants'),
+        Product.objects.select_related('category', 'brand').prefetch_related('images'),
         slug=slug, is_active=True
     )
 
@@ -181,6 +189,7 @@ def product_detail(request, slug):
     product.save(update_fields=['views_count'])
 
     reviews = product.reviews.filter(is_approved=True)[:10]
+
     related = Product.objects.filter(
         is_active=True, category=product.category
     ).exclude(id=product.id).select_related('brand').prefetch_related('images')[:8]
@@ -189,24 +198,7 @@ def product_detail(request, slug):
         is_active=True, is_popular=True
     ).exclude(id=product.id).select_related('brand').prefetch_related('images')[:4]
 
-    variants = product.variants.filter(is_active=True).prefetch_related(
-        'attribute_values__attribute'
-    )
-
-    variant_attrs = {}
-    for v in variants:
-        for av in v.attribute_values.select_related('attribute'):
-            attr_name = av.attribute.name
-            if attr_name not in variant_attrs:
-                variant_attrs[attr_name] = []
-            if av.value not in [x['value'] for x in variant_attrs[attr_name]]:
-                variant_attrs[attr_name].append({
-                    'value': av.value,
-                    'variant_ids': [],
-                })
-            for item in variant_attrs[attr_name]:
-                if item['value'] == av.value:
-                    item['variant_ids'].append(v.id)
+    sibling_colors = product.get_siblings()
 
     crumbs = [('Каталог', '/catalog/')]
     c = product.category
@@ -218,18 +210,15 @@ def product_detail(request, slug):
         crumbs.append((cat.name, cat.get_absolute_url()))
     crumbs.append((product.name, None))
 
-    review_form_data = None
-
     context = {
         'product': product,
         'images': product.images.all(),
         'reviews': reviews,
         'related_products': related,
         'cross_sell_products': cross_sell,
+        'sibling_colors': sibling_colors,
         'breadcrumbs': crumbs,
         'page_title': product.name,
-        'variants': variants,
-        'variant_attrs': variant_attrs,
     }
     return render(request, 'app_catalog/product_detail.html', context)
 

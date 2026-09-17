@@ -46,16 +46,50 @@
             <div class="filters-card">
                 <div class="filters-card__head">
                     <h3 class="filters-card__title">Фильтры</h3>
-                    <button type="button" class="filters-card__reset js-reset-filters"
-                            id="resetFiltersBtn" {% if not current_brands and not current_colors and not current_price_from and not current_price_to and not in_stock_checked and not on_sale_checked %}hidden{% endif %}>
+                    <button type="button" class="btn btn--text filters-card__reset js-reset-filters"
+                            id="resetFiltersBtn" {% if not current_brands and not current_materials and not current_price_from and not current_price_to and not in_stock_checked and not on_sale_checked %}hidden{% endif %}>
                         Сбросить
                     </button>
                 </div>
 
                 <form method="get" id="filtersForm" class="filters-form">
-                    <!-- Сохраняем sort/query параметры -->
                     {% if current_sort %}<input type="hidden" name="sort" value="{{ current_sort }}">{% endif %}
                     {% if search_query %}<input type="hidden" name="q" value="{{ search_query }}">{% endif %}
+
+                    <!-- Категории -->
+                    {% if categories %}
+                    <div class="filters-group">
+                        <div class="filters-group__name">Все категории</div>
+                        <ul class="cat-filter">
+                            {% for c in categories %}
+                                <li class="cat-filter__item">
+                                    <button type="button" class="cat-filter__toggle{% if category.id == c.id %} is-active{% endif %}" data-target="cat-{{ c.id }}">
+                                        <span>{{ c.name }}</span>
+                                        {% if c.children.all %}<span class="cat-filter__arrow">‹</span>{% endif %}
+                                    </button>
+                                    <ul class="cat-filter__sub" id="cat-{{ c.id }}">
+                                        {% if c.children.all %}
+                                            {% for child in c.children.all %}
+                                                <li>
+                                                    <a href="{{ child.get_absolute_url }}"
+                                                       class="cat-filter__link{% if category.id == child.id %} is-active{% endif %}">
+                                                        {{ child.name }}
+                                                    </a>
+                                                </li>
+                                            {% endfor %}
+                                        {% endif %}
+                                        <li>
+                                            <a href="{{ c.get_absolute_url }}"
+                                               class="cat-filter__link cat-filter__link--all{% if category.id == c.id and not category.parent %} is-active{% endif %}">
+                                                Все {{ c.name }}
+                                            </a>
+                                        </li>
+                                    </ul>
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                    {% endif %}
 
                     <!-- Цена -->
                     <div class="filters-group">
@@ -91,35 +125,6 @@
                         </label>
                     </div>
 
-                    <!-- Категории -->
-                    {% if categories %}
-                    <div class="filters-group">
-                        <div class="filters-group__name">Категории</div>
-                        <ul class="filters-list">
-                            {% for c in categories %}
-                                <li>
-                                    <a href="{{ c.get_absolute_url }}" class="filters-list__item{% if category.id == c.id %} is-active{% endif %}">
-                                        {{ c.name }}
-                                        <span class="filters-list__arrow">›</span>
-                                    </a>
-                                    {% if c.children.exists %}
-                                        <ul class="filters-list filters-list--nested">
-                                            {% for sub in c.children.all|slice:":6" %}
-                                                <li>
-                                                    <a href="{{ sub.get_absolute_url }}"
-                                                       class="filters-list__item{% if category.id == sub.id %} is-active{% endif %}">
-                                                        {{ sub.name }}
-                                                    </a>
-                                                </li>
-                                            {% endfor %}
-                                        </ul>
-                                    {% endif %}
-                                </li>
-                            {% endfor %}
-                        </ul>
-                    </div>
-                    {% endif %}
-
                     <!-- Бренды -->
                     {% if brands %}
                     <div class="filters-group">
@@ -136,16 +141,16 @@
                     </div>
                     {% endif %}
 
-                    <!-- Цвета -->
-                    {% if colors %}
+                    <!-- Материал -->
+                    {% if materials %}
                     <div class="filters-group">
-                        <div class="filters-group__name">Цвет</div>
+                        <div class="filters-group__name">Материал</div>
                         <div class="filters-scroll">
-                            {% for c in colors %}
+                            {% for m in materials %}
                                 <label class="checkbox-row">
-                                    <input type="checkbox" name="colors" value="{{ c }}"
-                                           {% if c in current_colors %}checked{% endif %}>
-                                    <span>{{ c }}</span>
+                                    <input type="checkbox" name="materials" value="{{ m }}"
+                                           {% if m in current_materials %}checked{% endif %}>
+                                    <span>{{ m }}</span>
                                 </label>
                             {% endfor %}
                         </div>

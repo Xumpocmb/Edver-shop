@@ -9,14 +9,25 @@
         </a>
     </div>
 
-    <form class="header-search" action="/catalog/search/" method="get" role="search">
-        <input type="search" name="q" placeholder="Поиск по каталогу…"
-               value="{{ search_query|default:'' }}" class="header-search-input" aria-label="Поиск">
-        <button type="submit" class="header-search-btn" aria-label="Искать">🔍</button>
-    </form>
-
     <nav class="header-center">
-        <a href="/catalog/">Каталог</a>
+        <div class="dropdown">
+            <button class="dropdown-toggle" type="button">Мужчинам ▾</button>
+            <div class="dropdown-menu">
+                {% for cat in categories_men %}
+                    <a href="/catalog/{{ cat.slug }}/?gender=M" class="dropdown-item">{{ cat.name }}</a>
+                {% endfor %}
+                <a href="/catalog/?gender=M" class="dropdown-item dropdown-item--all">Все мужское →</a>
+            </div>
+        </div>
+        <div class="dropdown">
+            <button class="dropdown-toggle" type="button">Женщинам ▾</button>
+            <div class="dropdown-menu">
+                {% for cat in categories_women %}
+                    <a href="/catalog/{{ cat.slug }}/?gender=F" class="dropdown-item">{{ cat.name }}</a>
+                {% endfor %}
+                <a href="/catalog/?gender=F" class="dropdown-item dropdown-item--all">Все женское →</a>
+            </div>
+        </div>
         <a href="/about/">О нас</a>
         <a href="/contacts/">Контакты</a>
     </nav>
@@ -40,10 +51,20 @@
         </button>
     </div>
     <nav class="header-menu" id="main-nav">
-        <a href="/catalog/">Каталог</a>
-        <a href="/catalog/?is_popular=1">Популярное</a>
-        <a href="/catalog/?is_new=1">Новинки</a>
-        <a href="/catalog/?on_sale=1">Акции и скидки</a>
+        <button class="header-menu-toggle" type="button" data-target="menu-men">Мужчинам</button>
+        <div class="header-menu-dropdown" id="menu-men">
+            {% for cat in categories_men %}
+                <a href="/catalog/{{ cat.slug }}/?gender=M">{{ cat.name }}</a>
+            {% endfor %}
+            <a href="/catalog/?gender=M" class="header-menu-more">Все мужское →</a>
+        </div>
+        <button class="header-menu-toggle" type="button" data-target="menu-women">Женщинам</button>
+        <div class="header-menu-dropdown" id="menu-women">
+            {% for cat in categories_women %}
+                <a href="/catalog/{{ cat.slug }}/?gender=F">{{ cat.name }}</a>
+            {% endfor %}
+            <a href="/catalog/?gender=F" class="header-menu-more">Все женское →</a>
+        </div>
         <a href="/about/">О нас</a>
         <a href="/contacts/">Контакты</a>
         <a href="/payment/">Оплата</a>

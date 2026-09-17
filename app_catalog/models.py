@@ -2,15 +2,15 @@ from django.db import models
 from django.urls import reverse
 from django.utils.text import slugify
 from django.contrib.auth import get_user_model
-from mptt.models import MPTTModel, TreeForeignKey, TreeManager
+import uuid
 
 User = get_user_model()
 
 
-class Category(MPTTModel):
+class Category(models.Model):
     name = models.CharField(max_length=255, verbose_name="Название")
     slug = models.SlugField(max_length=255, unique=True, db_index=True)
-    parent = TreeForeignKey(
+    parent = models.ForeignKey(
         'self',
         on_delete=models.CASCADE,
         null=True,
@@ -39,15 +39,12 @@ class Category(MPTTModel):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
-    objects = TreeManager()
-
-    class MPTTMeta:
-        order_insertion_by = ['order', 'name']
+    objects = models.Manager()
 
     class Meta:
         verbose_name = "Категория"
         verbose_name_plural = "Категории"
-        ordering = ['tree_id', 'lft']
+        ordering = ['order', 'name']
 
     def __str__(self):
         if self.parent:
@@ -58,9 +55,11 @@ class Category(MPTTModel):
         return reverse('app_catalog:category_detail', kwargs={'slug': self.slug})
 
     def get_descendants_ids(self):
-        return list(
-            self.get_descendants(include_self=True).filter(is_active=True).values_list('id', flat=True)
-        )
+        """Рекурсивный сбор ID всех подкатегорий (включая себя)."""
+        ids = [self.id]
+        for child in self.children.filter(is_active=True):
+            ids.extend(child.get_descendants_ids())
+        return ids
 
 
 class Brand(models.Model):
@@ -92,6 +91,11 @@ class Product(models.Model):
         ('preorder', 'Предзаказ'),
     ]
 
+    GENDER_CHOICES = [
+        ('M', 'Мужской'),
+        ('F', 'Женский'),
+    ]
+
     name = models.CharField(max_length=500, verbose_name="Название товара")
     slug = models.SlugField(max_length=500, unique=True, db_index=True)
     sku = models.CharField(
@@ -115,6 +119,20 @@ class Product(models.Model):
         related_name='products',
         verbose_name="Бренд"
     )
+
+    gender = models.CharField(
+        max_length=1,
+        choices=GENDER_CHOICES,
+        default='M',
+        verbose_name="Пол"
+    )
+
+    group_id = models.UUIDField(
+        default=uuid.uuid4,
+        db_index=True,
+        verbose_name="Группа товаров (одна модель — разные цвета)"
+    )
+
     short_description = models.TextField(
         blank=True,
         verbose_name="Краткое описание"
@@ -126,7 +144,14 @@ class Product(models.Model):
     price = models.DecimalField(
         max_digits=12,
         decimal_places=2,
-        verbose_name="Цена"
+        verbose_name="Цена продажи"
+    )
+    cost_price = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name="Себестоимость"
     )
     old_price = models.DecimalField(
         max_digits=12,
@@ -134,6 +159,10 @@ class Product(models.Model):
         null=True,
         blank=True,
         verbose_name="Старая цена"
+    )
+    discount_percent = models.SmallIntegerField(
+        default=0,
+        verbose_name="Процент скидки"
     )
     stock = models.PositiveIntegerField(default=0, verbose_name="Остаток")
     status = models.CharField(
@@ -185,19 +214,35 @@ class Product(models.Model):
             models.Index(fields=['category']),
             models.Index(fields=['price']),
             models.Index(fields=['-created_at']),
+            models.Index(fields=['group_id']),
+            models.Index(fields=['gender']),
         ]
 
     def __str__(self):
-        return f"{self.name} ({self.price})"
+        return f"{self.name} — {self.color} ({self.price})"
 
     def get_absolute_url(self):
         return reverse('app_catalog:product_detail', kwargs={'slug': self.slug})
 
     @property
-    def discount_percent(self):
+    def discount_percent_display(self):
+        """Процент скидки для отображения (из поля или вычисляемый)."""
+        if self.discount_percent > 0:
+            return self.discount_percent
         if self.old_price and self.old_price > self.price:
             return int(100 - (self.price / self.old_price * 100))
         return 0
+
+    @property
+    def effective_old_price(self):
+        """Старая цена: явная old_price или вычисленная из скидки."""
+        if self.old_price and self.old_price > self.price:
+            return self.old_price
+        if self.discount_percent > 0:
+            return (self.price / (1 - self.discount_percent / 100)).quantize(
+                self.price, rounding=None
+            )
+        return None
 
     @property
     def main_image(self):
@@ -218,133 +263,19 @@ class Product(models.Model):
     def reviews_count(self):
         return self.reviews.filter(is_approved=True).count()
 
-    @property
-    def has_variants(self):
-        return self.variants.filter(is_active=True).exists()
+    def get_siblings(self):
+        """Все цвета той же модели (без текущего товара)."""
+        return Product.objects.filter(
+            group_id=self.group_id,
+            is_active=True,
+        ).exclude(id=self.id).select_related('brand').prefetch_related('images')
 
-    @property
-    def available_stock(self):
-        if self.has_variants:
-            return sum(v.stock for v in self.variants.filter(is_active=True))
-        return self.stock
-
-    def get_variant_display(self):
-        variants = self.variants.filter(is_active=True)
-        if not variants.exists():
-            return None
-        attrs = {}
-        for v in variants:
-            for av in v.attribute_values.select_related('attribute'):
-                attr_name = av.attribute.name
-                if attr_name not in attrs:
-                    attrs[attr_name] = set()
-                attrs[attr_name].add(av.value)
-        return {k: sorted(v) for k, v in attrs.items()}
-
-
-class ProductVariant(models.Model):
-    product = models.ForeignKey(
-        Product,
-        on_delete=models.CASCADE,
-        related_name='variants',
-        verbose_name="Товар"
-    )
-    name = models.CharField(
-        max_length=255,
-        verbose_name="Название модификации"
-    )
-    sku = models.CharField(
-        max_length=100,
-        unique=True,
-        blank=True,
-        null=True,
-        verbose_name="Артикул модификации"
-    )
-    price = models.DecimalField(
-        max_digits=12,
-        decimal_places=2,
-        null=True,
-        blank=True,
-        verbose_name="Цена модификации"
-    )
-    old_price = models.DecimalField(
-        max_digits=12,
-        decimal_places=2,
-        null=True,
-        blank=True,
-        verbose_name="Старая цена модификации"
-    )
-    stock = models.PositiveIntegerField(default=0, verbose_name="Остаток")
-    is_active = models.BooleanField(default=True, verbose_name="Активна")
-    image = models.ImageField(
-        upload_to='products/variants/%Y/%m/',
-        null=True,
-        blank=True,
-        verbose_name="Изображение модификации"
-    )
-    created_at = models.DateTimeField(auto_now_add=True)
-
-    class Meta:
-        verbose_name = "Модификация товара"
-        verbose_name_plural = "Модификации товаров"
-        ordering = ['name']
-
-    def __str__(self):
-        return f"{self.product.name} — {self.name}"
-
-    @property
-    def effective_price(self):
-        return self.price if self.price is not None else self.product.price
-
-    @property
-    def effective_old_price(self):
-        if self.old_price is not None:
-            return self.old_price
-        return self.product.old_price
-
-    @property
-    def discount_percent(self):
-        old = self.effective_old_price
-        if old and old > self.effective_price:
-            return int(100 - (self.effective_price / old * 100))
-        return 0
-
-
-class VariantAttribute(models.Model):
-    name = models.CharField(max_length=100, verbose_name="Название атрибута")
-    slug = models.SlugField(max_length=100, unique=True, db_index=True)
-
-    class Meta:
-        verbose_name = "Атрибут модификации"
-        verbose_name_plural = "Атрибуты модификаций"
-        ordering = ['name']
-
-    def __str__(self):
-        return self.name
-
-
-class VariantAttributeValue(models.Model):
-    variant = models.ForeignKey(
-        ProductVariant,
-        on_delete=models.CASCADE,
-        related_name='attribute_values',
-        verbose_name="Модификация"
-    )
-    attribute = models.ForeignKey(
-        VariantAttribute,
-        on_delete=models.CASCADE,
-        related_name='values',
-        verbose_name="Атрибут"
-    )
-    value = models.CharField(max_length=255, verbose_name="Значение")
-
-    class Meta:
-        verbose_name = "Значение атрибута модификации"
-        verbose_name_plural = "Значения атрибутов модификаций"
-        unique_together = ['variant', 'attribute']
-
-    def __str__(self):
-        return f"{self.attribute.name}: {self.value}"
+    def get_all_colors(self):
+        """Все цвета той же модели (включая текущий)."""
+        return Product.objects.filter(
+            group_id=self.group_id,
+            is_active=True,
+        ).select_related('brand').prefetch_related('images')
 
 
 class ProductImage(models.Model):

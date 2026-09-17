@@ -32,9 +32,7 @@
                     </div>
                     <div class="cart-item__info">
                         <a href="{{ item.product.get_absolute_url }}" class="cart-item__name">{{ item.product.name }}</a>
-                        {% if item.variant %}
-                            <div class="cart-item__variant">{{ item.variant.name }}</div>
-                        {% endif %}
+                        <div class="cart-item__variant">{{ item.product.color }}</div>
                         {% if item.product.brand %}
                             <div class="cart-item__brand">{{ item.product.brand.name }}</div>
                         {% endif %}

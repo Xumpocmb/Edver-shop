@@ -14,7 +14,7 @@
 
             <div class="product-card__badges">
                 {% if product.is_new %}<span class="badge badge--new">NEW</span>{% endif %}
-                {% if product.is_sale %}<span class="badge badge--sale">-{{ product.discount_percent }}%</span>{% endif %}
+                {% if product.is_sale %}<span class="badge badge--sale">-{{ product.discount_percent_display }}%</span>{% endif %}
                 {% if product.is_popular %}<span class="badge badge--popular">HIT</span>{% endif %}
             </div>
 

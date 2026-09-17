@@ -165,8 +165,18 @@
             burger.classList.toggle('active', isOpen);
             burger.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
         });
-        $$('a', nav).forEach(function (a) {
-            a.addEventListener('click', closeMenu);
+        nav.addEventListener('click', function (e) {
+            var btn = e.target.closest('.header-menu-toggle');
+            if (btn) {
+                e.stopPropagation();
+                var targetId = btn.getAttribute('data-target');
+                var target = document.getElementById(targetId);
+                if (!target) return;
+                var isOpen = target.classList.toggle('open');
+                btn.classList.toggle('open', isOpen);
+                return;
+            }
+            if (e.target.closest('a')) closeMenu();
         });
     }
 
@@ -297,6 +307,20 @@
                 form.submit();
             });
         }
+    }
+
+// ====== Аккордеон категорий в фильтре ======
+    function initCatAccordion() {
+        document.addEventListener('click', function (e) {
+            var btn = e.target.closest('.cat-filter__toggle');
+            if (!btn) return;
+            var targetId = btn.getAttribute('data-target');
+            if (!targetId) return;
+            var sub = document.getElementById(targetId);
+            if (!sub || !sub.classList.contains('cat-filter__sub')) return;
+            var isOpen = sub.classList.toggle('open');
+            btn.classList.toggle('open', isOpen);
+        });
     }
 
     // ====== Variant Selector ======
@@ -487,6 +511,7 @@
         initQtyCounter();
         initRatingPicker();
         initFilters();
+        initCatAccordion();
         initVariantSelector();
         initCartPage();
         bindCatalogClicks();

@@ -1,9 +1,8 @@
-import uuid
+from decimal import Decimal
 from django.db import models
 from django.conf import settings
-from django.utils import timezone
 
-from app_catalog.models import Product, ProductVariant
+from app_catalog.models import Product
 
 
 class Cart(models.Model):
@@ -79,35 +78,23 @@ class CartItem(models.Model):
         on_delete=models.CASCADE,
         verbose_name="Товар"
     )
-    variant = models.ForeignKey(
-        ProductVariant,
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
-        verbose_name="Модификация"
-    )
     quantity = models.PositiveIntegerField(default=1, verbose_name="Количество")
     added_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         verbose_name = "Элемент корзины"
         verbose_name_plural = "Элементы корзины"
-        unique_together = ['cart', 'product', 'variant']
+        unique_together = ['cart', 'product']
 
     def __str__(self):
-        variant_str = f" ({self.variant})" if self.variant else ""
-        return f"{self.product.name}{variant_str} x{self.quantity}"
+        return f"{self.product.name} ({self.product.color}) x{self.quantity}"
 
     @property
     def unit_price(self):
-        if self.variant:
-            return self.variant.effective_price
         return self.product.price
 
     @property
     def old_unit_price(self):
-        if self.variant:
-            return self.variant.effective_old_price
         return self.product.old_price
 
     @property
@@ -123,6 +110,4 @@ class CartItem(models.Model):
 
     @property
     def available_stock(self):
-        if self.variant:
-            return self.variant.stock
         return self.product.stock
