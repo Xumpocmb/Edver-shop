@@ -1459,6 +1459,9 @@ input, select, textarea, button { font-family: inherit; font-size: 15px; color: 
     .footer { grid-template-columns: 1fr; padding: 2rem 20px; }
     .grid-2 { grid-template-columns: 1fr; }
     .mod { grid-template-columns: 1fr; gap: .15rem; }
+.spec-row { grid-template-columns: 1fr; gap: .15rem; }
+.spec-row__key { font-weight: 600; color: var(--color-text); }
+.spec-row__val { color: var(--color-text-muted); font-weight: 400; }
 }
 
 @media (min-width: 900px) {
