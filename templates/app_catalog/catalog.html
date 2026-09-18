@@ -23,22 +23,6 @@
         </nav>
     </div>
 
-    <!-- Заголовок + статистика -->
-    <section class="container catalog-head">
-        <div>
-            <h1 class="catalog-head__title">{{ category.name|default:page_title|default:"Каталог" }}</h1>
-            {% if category.description %}
-                <p class="catalog-head__desc">{{ category.description }}</p>
-            {% endif %}
-            {% if search_query %}
-                <p class="catalog-head__query">Поисковый запрос: «<b>{{ search_query }}</b>»</p>
-            {% endif %}
-        </div>
-        <div class="catalog-head__count">
-            <span class="counter">{{ total_count }}</span> товаров
-        </div>
-    </section>
-
     <section class="container catalog-layout">
 
         <!-- ===== ФИЛЬТРЫ (сайдбар) ===== -->

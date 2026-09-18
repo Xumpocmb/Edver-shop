@@ -17,11 +17,6 @@
                 {% if product.is_sale %}<span class="badge badge--sale">-{{ product.discount_percent_display }}%</span>{% endif %}
                 {% if product.is_popular %}<span class="badge badge--popular">HIT</span>{% endif %}
             </div>
-
-            <button type="button"
-                    class="product-card__fav js-fav-toggle"
-                    data-product-id="{{ product.id }}"
-                    aria-label="Добавить в избранное">🤍</button>
         </div>
     </a>
 

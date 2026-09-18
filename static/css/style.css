@@ -848,25 +848,6 @@ button {
     z-index: 2;
 }
 
-.product-card__fav {
-    position: absolute;
-    top: 8px;
-    right: 8px;
-    z-index: 2;
-    width: 36px;
-    height: 36px;
-    border-radius: 50%;
-    background: rgba(255, 255, 255, .92);
-    font-size: 1rem;
-    box-shadow: var(--shadow-sm);
-    transition: background .2s, transform .15s;
-}
-
-.product-card__fav:hover {
-    background: #fff;
-    transform: scale(1.08);
-}
-
 .product-card__body {
     padding: 1rem;
     display: flex;
@@ -1068,47 +1049,6 @@ button {
 .breadcrumbs__current {
     color: var(--color-text);
     font-weight: 500;
-}
-
-.catalog-head {
-    padding-top: 1.5rem;
-    padding-bottom: 1.5rem;
-    display: flex;
-    align-items: flex-end;
-    justify-content: space-between;
-    gap: 1rem;
-    flex-wrap: wrap;
-}
-
-.catalog-head__title {
-    font-size: clamp(1.6rem, 2.5vw, 2.2rem);
-    font-weight: 800;
-    letter-spacing: -0.01em;
-    margin-bottom: .35rem;
-}
-
-.catalog-head__desc {
-    color: var(--color-text-muted);
-    font-size: .95rem;
-    max-width: 40rem;
-}
-
-.catalog-head__query {
-    margin-top: .35rem;
-    font-size: .95rem;
-}
-
-.catalog-head__count {
-    padding: .5rem .9rem;
-    background: var(--color-accent-soft);
-    color: var(--color-accent);
-    border-radius: 999px;
-    font-weight: 600;
-    font-size: .9rem;
-}
-
-.catalog-head__count .counter {
-    font-weight: 800;
 }
 
 .catalog-layout {
@@ -1657,14 +1597,6 @@ button {
 .rating-value {
     color: var(--color-text);
     font-weight: 700;
-}
-
-.reviews-link {
-    text-decoration: underline;
-}
-
-.reviews-link:hover {
-    color: var(--color-accent);
 }
 
 .product-info__price-block {

@@ -114,42 +114,6 @@
         .catch(function () { toast('Ошибка удаления', 'error'); });
     }
 
-    // ====== Избранное (localStorage) ======
-    var FAV_KEY = 'edver_fav_v1';
-
-    function readFav() {
-        try {
-            var raw = localStorage.getItem(FAV_KEY);
-            return raw ? JSON.parse(raw) : [];
-        } catch (_) { return []; }
-    }
-    function writeFav(list) {
-        localStorage.setItem(FAV_KEY, JSON.stringify(list || []));
-        updateFavBadge();
-    }
-    function updateFavBadge() {
-        var badge = $('#fav-badge');
-        if (!badge) return;
-        var n = readFav().length;
-        badge.textContent = String(n);
-        badge.hidden = n <= 0;
-    }
-    function toggleFav(productId, btn) {
-        var id = String(productId);
-        var f = readFav();
-        var idx = f.indexOf(id);
-        if (idx >= 0) {
-            f.splice(idx, 1);
-            if (btn) btn.textContent = '🤍';
-            toast('Удалено из избранного');
-        } else {
-            f.push(id);
-            if (btn) btn.textContent = '❤️';
-            toast('Добавлено в избранное', 'success');
-        }
-        writeFav(f);
-    }
-
     // ====== Бургер-меню ======
     function initBurger() {
         var burger = $('#burger');
@@ -462,7 +426,7 @@
         });
     }
 
-    // ====== Делегат: корзина / избранное по data-* ======
+    // ====== Делегат: корзина по data-* ======
     function bindCatalogClicks() {
         document.addEventListener('click', function (e) {
             var target = e.target;
@@ -481,13 +445,6 @@
                 if (variantInput && variantInput.value) variantId = variantInput.value;
                 addToCart(id, name, qty, variantId);
                 return;
-            }
-
-            var favBtn = target.closest('.js-fav-toggle');
-            if (favBtn) {
-                e.preventDefault();
-                var fid = favBtn.getAttribute('data-product-id');
-                toggleFav(fid, favBtn);
             }
         });
     }
@@ -516,16 +473,7 @@
         initCartPage();
         bindCatalogClicks();
         fetchCartCount();
-        updateFavBadge();
         initAlerts();
-
-        var fav = readFav();
-        if (fav.length) {
-            $$('.js-fav-toggle').forEach(function (btn) {
-                var id = String(btn.getAttribute('data-product-id'));
-                if (fav.indexOf(id) >= 0) btn.textContent = '❤️';
-            });
-        }
     });
 
 })();

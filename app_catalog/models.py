@@ -1,10 +1,7 @@
 from django.db import models
 from django.urls import reverse
 from django.utils.text import slugify
-from django.contrib.auth import get_user_model
 import uuid
-
-User = get_user_model()
 
 
 class Category(models.Model):
@@ -251,18 +248,6 @@ class Product(models.Model):
             first = self.images.first()
         return first
 
-    @property
-    def average_rating(self):
-        reviews = self.reviews.filter(is_approved=True)
-        if not reviews.exists():
-            return 0
-        avg = reviews.aggregate(models.Avg('rating'))['rating__avg']
-        return round(avg, 1) if avg else 0
-
-    @property
-    def reviews_count(self):
-        return self.reviews.filter(is_approved=True).count()
-
     def get_siblings(self):
         """Все цвета той же модели (без текущего товара)."""
         return Product.objects.filter(
@@ -304,45 +289,3 @@ class ProductImage(models.Model):
 
     def __str__(self):
         return f"Изображение для {self.product.name}"
-
-
-class ProductReview(models.Model):
-    product = models.ForeignKey(
-        Product,
-        on_delete=models.CASCADE,
-        related_name='reviews',
-        verbose_name="Товар"
-    )
-    user = models.ForeignKey(
-        User,
-        on_delete=models.CASCADE,
-        null=True,
-        blank=True,
-        related_name='reviews',
-        verbose_name="Пользователь"
-    )
-    name = models.CharField(max_length=150, verbose_name="Имя")
-    email = models.EmailField(verbose_name="Email")
-    rating = models.PositiveSmallIntegerField(
-        default=5,
-        choices=[(i, str(i)) for i in range(1, 6)],
-        verbose_name="Оценка"
-    )
-    title = models.CharField(
-        max_length=255,
-        blank=True,
-        verbose_name="Заголовок отзыва"
-    )
-    text = models.TextField(verbose_name="Текст отзыва")
-    pros = models.TextField(blank=True, verbose_name="Достоинства")
-    cons = models.TextField(blank=True, verbose_name="Недостатки")
-    is_approved = models.BooleanField(default=False, verbose_name="Одобрен")
-    created_at = models.DateTimeField(auto_now_add=True, verbose_name="Создан")
-
-    class Meta:
-        verbose_name = "Отзыв на товар"
-        verbose_name_plural = "Отзывы на товары"
-        ordering = ['-created_at']
-
-    def __str__(self):
-        return f"Отзыв {self.rating}★ на {self.product.name} от {self.name}"

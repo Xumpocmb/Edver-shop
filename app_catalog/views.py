@@ -1,10 +1,8 @@
-from django.shortcuts import render, get_object_or_404, redirect
+from django.shortcuts import render, get_object_or_404
 from django.core.paginator import Paginator
-from django.db.models import Q, Avg, Count, Min, Max
-from django.contrib import messages
-from django.views.decorators.http import require_POST
+from django.db.models import Q, Avg, Min, Max
 
-from .models import Product, Category, ProductReview
+from .models import Product, Category
 
 
 def _apply_filters(queryset, request):
@@ -79,7 +77,6 @@ def catalog_list(request):
         'page_obj': page_obj,
         'products': page_obj.object_list,
         'paginator': paginator,
-        'total_count': paginator.count,
         'breadcrumbs': breadcrumbs,
         'page_title': 'Каталог',
     }
@@ -114,7 +111,6 @@ def category_detail(request, slug):
         'page_obj': page_obj,
         'products': page_obj.object_list,
         'paginator': paginator,
-        'total_count': paginator.count,
         'breadcrumbs': crumbs,
         'page_title': category.name,
     }
@@ -151,7 +147,6 @@ def search_results(request):
         'page_obj': page_obj,
         'products': page_obj.object_list,
         'paginator': paginator,
-        'total_count': paginator.count,
         'search_query': query,
         'breadcrumbs': breadcrumbs,
         'page_title': f'Поиск: {query}' if query else 'Поиск',
@@ -168,8 +163,6 @@ def product_detail(request, slug):
 
     product.views_count += 1
     product.save(update_fields=['views_count'])
-
-    reviews = product.reviews.filter(is_approved=True)[:10]
 
     related = Product.objects.filter(
         is_active=True, category=product.category
@@ -194,7 +187,6 @@ def product_detail(request, slug):
     context = {
         'product': product,
         'images': product.images.all(),
-        'reviews': reviews,
         'related_products': related,
         'cross_sell_products': cross_sell,
         'sibling_colors': sibling_colors,
@@ -202,49 +194,3 @@ def product_detail(request, slug):
         'page_title': product.name,
     }
     return render(request, 'app_catalog/product_detail.html', context)
-
-
-@require_POST
-def add_review(request, slug):
-    product = get_object_or_404(Product, slug=slug, is_active=True)
-
-    name = request.POST.get('name', '').strip()
-    email = request.POST.get('email', '').strip()
-    rating = request.POST.get('rating', 5)
-    title = request.POST.get('title', '').strip()
-    text = request.POST.get('text', '').strip()
-    pros = request.POST.get('pros', '').strip()
-    cons = request.POST.get('cons', '').strip()
-
-    errors = []
-    if not name:
-        errors.append('Введите ваше имя.')
-    if not email:
-        errors.append('Введите email.')
-    if not text:
-        errors.append('Напишите текст отзыва.')
-
-    try:
-        rating = int(rating)
-        if rating < 1 or rating > 5:
-            raise ValueError
-    except (TypeError, ValueError):
-        rating = 5
-
-    if errors:
-        messages.error(request, ' '.join(errors))
-        return redirect(product.get_absolute_url() + '#reviews')
-
-    ProductReview.objects.create(
-        product=product,
-        name=name,
-        email=email,
-        rating=rating,
-        title=title,
-        text=text,
-        pros=pros,
-        cons=cons,
-        is_approved=False,
-    )
-    messages.success(request, 'Спасибо! Ваш отзыв отправлен на модерацию.')
-    return redirect(product.get_absolute_url() + '#reviews')

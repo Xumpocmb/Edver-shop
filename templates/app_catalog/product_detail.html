@@ -180,9 +180,6 @@
                         data-product-price="{{ product.price }}">
                         🛒 Добавить в корзину
                     </button>
-                    <button type="button" class="btn btn--ghost js-fav-toggle" data-product-id="{{ product.id }}">
-                        🤍 В избранное
-                    </button>
                 </div>
             </div>
         </div>
@@ -281,8 +278,6 @@
         </div>
     </section>
     {% endif %}
-
-    {% include 'app_catalog/_reviews_section.html' %}
 
 </div>
 {% endblock %}

@@ -1,18 +1,11 @@
 from django.contrib import admin
-from .models import Category, Brand, Product, ProductImage, ProductReview
+from .models import Category, Brand, Product, ProductImage
 
 
 class ProductImageInline(admin.TabularInline):
     model = ProductImage
     extra = 3
     fields = ['image', 'alt', 'is_main', 'order']
-
-
-class ProductReviewInline(admin.TabularInline):
-    model = ProductReview
-    extra = 0
-    fields = ['name', 'email', 'rating', 'title', 'text', 'is_approved', 'created_at']
-    readonly_fields = ['created_at']
 
 
 @admin.register(Category)
@@ -47,7 +40,7 @@ class ProductAdmin(admin.ModelAdmin):
     search_fields = ['name', 'slug', 'sku', 'description', 'short_description', 'color']
     prepopulated_fields = {'slug': ('name',)}
     list_editable = ['price', 'cost_price', 'old_price', 'discount_percent', 'stock', 'status', 'gender', 'is_popular', 'is_new', 'is_sale', 'is_active']
-    inlines = [ProductImageInline, ProductReviewInline]
+    inlines = [ProductImageInline]
     save_on_top = True
     fieldsets = (
         (None, {
@@ -70,13 +63,3 @@ class ProductAdmin(admin.ModelAdmin):
             'classes': ('collapse',),
         }),
     )
-
-
-@admin.register(ProductReview)
-class ProductReviewAdmin(admin.ModelAdmin):
-    list_display = ['product', 'name', 'email', 'rating', 'is_approved', 'created_at']
-    list_filter = ['is_approved', 'rating', 'created_at']
-    search_fields = ['name', 'email', 'title', 'text', 'product__name']
-    list_editable = ['is_approved']
-    date_hierarchy = 'created_at'
-    readonly_fields = ['created_at']

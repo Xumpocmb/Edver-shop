@@ -36,10 +36,6 @@
         <a href="tel:{{ phone.number }}" class="header-icon header-icon--label" aria-label="Телефон">
             <span>📞</span><span class="header-icon-text">{{ phone.number }}</span>
         </a>
-        <a href="/favorites/" class="header-icon" aria-label="Избранное">
-            <span>🤍</span>
-            <span class="header-badge" id="fav-badge" hidden>0</span>
-        </a>
         <a href="/cart/" class="header-icon" aria-label="Корзина">
             <span>🛒</span>
             <span class="header-badge" id="cart-badge" {% if not cart_total_items %}hidden{% endif %}>{{ cart_total_items|default:"0" }}</span>
