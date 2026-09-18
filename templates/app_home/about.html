@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}
+<title>О нас — EDVER Shop</title>
+{% endblock %}
+
+{% block content %}
+<div class="catalog-page">
+
+    <div class="container breadcrumbs-wrap">
+        <nav class="breadcrumbs" aria-label="Навигация">
+            <a href="/">Главная</a>
+            <span class="breadcrumbs__sep">/</span>
+            <span class="breadcrumbs__current">О нас</span>
+        </nav>
+    </div>
+
+    <section class="container" style="padding: 2rem 20px 1rem;">
+        <h1 class="catalog-head__title">О нас</h1>
+        <p class="catalog-head__desc">EDVER Shop — это магазин сумок, чемоданов, кошельков и дорожных аксессуаров.
+            Мы отбираем только проверенную продукцию известных брендов, чтобы каждая покупка радовала долгие годы.</p>
+    </section>
+
+    <!-- ===== ПРЕИМУЩЕСТВА ===== -->
+    <section class="section section--gray container">
+        <div class="section-head section-head--center">
+            <h2 class="section-title">Почему выбирают EDVER Shop</h2>
+            <p class="section-subtitle">Надёжно, удобно и с гарантией качества — каждый день.</p>
+        </div>
+        <div class="advantages-grid">
+            {% for icon, title, desc in advantages %}
+                <div class="advantage-card">
+                    <div class="advantage-card__icon">{{ icon }}</div>
+                    <h3 class="advantage-card__title">{{ title }}</h3>
+                    <p class="advantage-card__desc">{{ desc }}</p>
+                </div>
+            {% endfor %}
+        </div>
+    </section>
+
+</div>
+{% endblock %}

@@ -2299,6 +2299,7 @@ button {
     flex-direction: column;
     gap: .2rem;
     min-width: 0;
+    margin-left: .75rem;
 }
 
 .cart-item__name {

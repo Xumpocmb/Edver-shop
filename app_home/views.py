@@ -54,9 +54,24 @@ def home(request):
         'new_products': new_products,
         'sale_products': sale,
         'categories': categories,
-        'advantages': advantages,
     }
     return render(request, 'app_home/home.html', context)
+
+
+def about(request):
+    advantages = [
+        ('✓', 'Гарантия качества', 'Все товары сертифицированы и проверены перед продажей'),
+        ('🚚', 'Быстрая доставка', 'Отправляем по всей России в течение 1-2 рабочих дней'),
+        ('💳', 'Удобная оплата', 'Оплата картой, СБП, наличными при получении'),
+        ('↩️', 'Возврат 14 дней', 'Вернём товар без вопросов в течение двух недель'),
+        ('🎁', 'Бонусы и акции', 'Регулярные скидки, распродажи и акции для постоянных клиентов'),
+        ('💬', 'Поддержка 24/7', 'Всегда готовы ответить на вопросы и помочь с выбором'),
+    ]
+
+    context = {
+        'advantages': advantages,
+    }
+    return render(request, 'app_home/about.html', context)
 
 
 def site_reviews(request):
