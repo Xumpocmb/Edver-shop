@@ -273,6 +273,17 @@
         }
     }
 
+// ====== Сворачивание фильтров (мобильные) ======
+    function initFiltersToggle() {
+        var toggle = $('#filtersToggle');
+        var card = toggle ? toggle.closest('.filters-card') : null;
+        if (!toggle || !card) return;
+        toggle.addEventListener('click', function () {
+            var isOpen = card.classList.toggle('is-open');
+            toggle.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+        });
+    }
+
 // ====== Аккордеон категорий в фильтре ======
     function initCatAccordion() {
         document.addEventListener('click', function (e) {
@@ -468,6 +479,7 @@
         initQtyCounter();
         initRatingPicker();
         initFilters();
+        initFiltersToggle();
         initCatAccordion();
         initVariantSelector();
         initCartPage();

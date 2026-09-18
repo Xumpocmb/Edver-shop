@@ -29,7 +29,11 @@
         <aside class="filters" aria-label="Фильтры">
             <div class="filters-card">
                 <div class="filters-card__head">
-                    <h3 class="filters-card__title">Фильтры</h3>
+                    <button type="button" class="filters-card__toggle" id="filtersToggle"
+                            aria-expanded="false" aria-controls="filtersForm">
+                        <span class="filters-card__title">Фильтры</span>
+                        <span class="filters-card__arrow" aria-hidden="true">▾</span>
+                    </button>
                     <button type="button" class="btn btn--text filters-card__reset js-reset-filters"
                             id="resetFiltersBtn" {% if not current_price_from and not current_price_to and not in_stock_checked and not on_sale_checked %}hidden{% endif %}>
                         Сбросить
@@ -127,10 +131,6 @@
                         <option value="price_asc" {% if current_sort == 'price_asc' %}selected{% endif %}>Цена: по возрастанию</option>
                         <option value="price_desc" {% if current_sort == 'price_desc' %}selected{% endif %}>Цена: по убыванию</option>
                     </select>
-                </div>
-                <div class="catalog-toolbar__view">
-                    <button type="button" class="view-btn is-active" id="gridView" aria-label="Сетка">▦</button>
-                    <button type="button" class="view-btn" id="listView" aria-label="Список">≡</button>
                 </div>
             </div>
 
