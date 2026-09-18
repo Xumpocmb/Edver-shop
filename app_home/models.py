@@ -1,4 +1,5 @@
 from django.db import models
+from django.core.validators import MinValueValidator, MaxValueValidator
 
 
 class SiteLogo(models.Model):
@@ -71,3 +72,22 @@ class FooterInfo(models.Model):
     class Meta:
         verbose_name = 'Информация в футере'
         verbose_name_plural = 'Информация в футере'
+
+
+class SiteReview(models.Model):
+    name = models.CharField(max_length=100, verbose_name='Имя')
+    text = models.TextField(verbose_name='Текст отзыва')
+    rating = models.PositiveSmallIntegerField(
+        validators=[MinValueValidator(1), MaxValueValidator(5)],
+        verbose_name='Оценка',
+    )
+    is_published = models.BooleanField(default=False, verbose_name='Опубликован')
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name='Дата создания')
+
+    def __str__(self):
+        return f'{self.name} — {self.rating}/5'
+
+    class Meta:
+        verbose_name = 'Отзыв о сайте'
+        verbose_name_plural = 'Отзывы о сайте'
+        ordering = ['-created_at']

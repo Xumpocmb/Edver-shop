@@ -31,17 +31,6 @@
         {% endif %}
         <a href="{{ product.get_absolute_url }}" class="product-card__name">{{ product.name }}</a>
 
-        <div class="product-card__rating" aria-label="Рейтинг {{ product.average_rating }}">
-            <span class="stars">
-                {% for i in '12345' %}
-                    {% if forloop.counter <= product.average_rating|default:0 %}★{% else %}☆{% endif %}
-                {% endfor %}
-            </span>
-            {% if product.reviews_count %}
-                <span class="product-card__reviews">({{ product.reviews_count }})</span>
-            {% endif %}
-        </div>
-
         <div class="product-card__price-row">
             <span class="product-card__price">{{ product.price }} ₽</span>
             {% if product.old_price and product.old_price > product.price %}

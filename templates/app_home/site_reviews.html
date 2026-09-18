@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+
+{% block title %}
+<title>Отзывы о сайте — EDVER Shop</title>
+{% endblock %}
+
+{% block content %}
+<div class="catalog-page">
+
+    <div class="container breadcrumbs-wrap">
+        <nav class="breadcrumbs" aria-label="Навигация">
+            <a href="/">Главная</a>
+            <span class="breadcrumbs__sep">/</span>
+            <span class="breadcrumbs__current">Отзывы о сайте</span>
+        </nav>
+    </div>
+
+    <section class="container" style="padding: 2rem 20px 4rem;">
+        <h1 class="catalog-head__title">Отзывы о сайте</h1>
+
+        {% if messages %}
+        <div class="messages" style="margin-top: 1rem;">
+            {% for msg in messages %}
+            <div class="alert alert--{{ msg.tags }}">{{ msg }}</div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <div class="reviews-layout" style="margin-top: 2rem;">
+            <div class="review-form">
+                <h3 class="review-form__title">Оставить отзыв о сайте</h3>
+                <form method="post" class="form form--stacked" novalidate>
+                    {% csrf_token %}
+                    <div class="form-row">
+                        <label for="sr-name">Ваше имя *</label>
+                        <input id="sr-name" name="name" type="text" required placeholder="Как к вам обращаться?">
+                    </div>
+                    <div class="form-row">
+                        <label>Оценка *</label>
+                        <div class="rating-picker" id="ratingPicker" data-value="5">
+                            {% for i in '12345' %}
+                            <button type="button" class="rating-picker__star" data-value="{{ forloop.counter }}" {% if forloop.counter <= 5 %}aria-pressed="true"{% endif %}>★</button>
+                            {% endfor %}
+                        </div>
+                        <input type="hidden" name="rating" id="ratingValue" value="5">
+                    </div>
+                    <div class="form-row">
+                        <label for="sr-text">Ваш отзыв *</label>
+                        <textarea id="sr-text" name="text" rows="5" required
+                            placeholder="Расскажите о вашем опыте покупки на сайте"></textarea>
+                    </div>
+                    <button type="submit" class="btn btn--primary">Отправить отзыв</button>
+                    <p class="form-note">Отзыв появится после модерации.</p>
+                </form>
+            </div>
+
+            <div class="reviews-list">
+                {% if reviews %}
+                {% for r in reviews %}
+                <article class="review">
+                    <header class="review__head">
+                        <div class="review__avatar">{{ r.name|slice:":1"|upper }}</div>
+                        <div class="review__meta">
+                            <div class="review__name">{{ r.name }}</div>
+                            <div class="review__date">{{ r.created_at|date:"d.m.Y" }}</div>
+                        </div>
+                        <div class="review__rating stars">
+                            {% for i in '12345' %}
+                            {% if forloop.counter <= r.rating %}★{% else %}☆{% endif %}{% endfor %}
+                        </div>
+                    </header>
+                    <p class="review__text">{{ r.text|linebreaksbr }}</p>
+                </article>
+                {% endfor %}
+                {% else %}
+                <div class="empty-state empty-state--sm">
+                    <div class="empty-state__icon">💬</div>
+                    <h4 class="empty-state__title">Пока нет отзывов</h4>
+                    <p class="empty-state__text">Будьте первым, кто оставит отзыв о нашем сайте.</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </section>
+</div>
+{% endblock %}

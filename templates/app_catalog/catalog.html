@@ -6,7 +6,7 @@
 {% endblock %}
 
 {% block content %}
-<main class="catalog-page">
+<div class="catalog-page">
 
     <!-- Хлебные крошки -->
     <div class="container breadcrumbs-wrap">
@@ -47,7 +47,7 @@
                 <div class="filters-card__head">
                     <h3 class="filters-card__title">Фильтры</h3>
                     <button type="button" class="btn btn--text filters-card__reset js-reset-filters"
-                            id="resetFiltersBtn" {% if not current_brands and not current_materials and not current_price_from and not current_price_to and not in_stock_checked and not on_sale_checked %}hidden{% endif %}>
+                            id="resetFiltersBtn" {% if not current_price_from and not current_price_to and not in_stock_checked and not on_sale_checked %}hidden{% endif %}>
                         Сбросить
                     </button>
                 </div>
@@ -125,38 +125,6 @@
                         </label>
                     </div>
 
-                    <!-- Бренды -->
-                    {% if brands %}
-                    <div class="filters-group">
-                        <div class="filters-group__name">Бренд</div>
-                        <div class="filters-scroll">
-                            {% for b in brands %}
-                                <label class="checkbox-row">
-                                    <input type="checkbox" name="brands" value="{{ b.slug }}"
-                                           {% if b.slug in current_brands %}checked{% endif %}>
-                                    <span>{{ b.name }}</span>
-                                </label>
-                            {% endfor %}
-                        </div>
-                    </div>
-                    {% endif %}
-
-                    <!-- Материал -->
-                    {% if materials %}
-                    <div class="filters-group">
-                        <div class="filters-group__name">Материал</div>
-                        <div class="filters-scroll">
-                            {% for m in materials %}
-                                <label class="checkbox-row">
-                                    <input type="checkbox" name="materials" value="{{ m }}"
-                                           {% if m in current_materials %}checked{% endif %}>
-                                    <span>{{ m }}</span>
-                                </label>
-                            {% endfor %}
-                        </div>
-                    </div>
-                    {% endif %}
-
                     <button type="submit" class="btn btn--primary btn--block">Применить фильтры</button>
                 </form>
             </div>
@@ -230,5 +198,5 @@
             {% endif %}
         </div>
     </section>
-</main>
+</div>
 {% endblock %}

@@ -11,18 +11,19 @@
     {% endblock %}
 </head>
 
-<body>
-    <!-- Header -->
+<body class="site-body">
     {% include "header.html" %}
 
-    {% block content %}
+    <main class="site-main">
+        {% block content %}
+        {% endblock %}
+    </main>
 
+    {% include "footer.html" %}
+
+    {% block scripts %}
+    <script src="{% static 'js/main.js' %}"></script>
     {% endblock %}
 </body>
-<!-- Footer -->
-{% include "footer.html" %}
-{% block scripts %}
-<script src="{% static 'js/main.js' %}"></script>
-{% endblock %}
 
 </html>

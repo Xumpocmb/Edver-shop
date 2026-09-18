@@ -1,6 +1,6 @@
 from django.contrib import admin
 from django.utils.html import format_html
-from .models import FooterInfo, Instagram, PhoneNumber, SiteLogo
+from .models import FooterInfo, Instagram, PhoneNumber, SiteLogo, SiteReview
 
 
 @admin.register(SiteLogo)
@@ -30,3 +30,10 @@ class InstagramAdmin(admin.ModelAdmin):
 @admin.register(FooterInfo)
 class FooterInfoAdmin(admin.ModelAdmin):
     list_display = ('id', 'text')
+
+
+@admin.register(SiteReview)
+class SiteReviewAdmin(admin.ModelAdmin):
+    list_display = ('id', 'name', 'rating', 'is_published', 'created_at')
+    list_filter = ('is_published', 'rating')
+    list_editable = ('is_published',)

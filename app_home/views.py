@@ -1,5 +1,7 @@
-from django.shortcuts import render
+from django.shortcuts import render, redirect
+from django.contrib import messages
 from app_catalog.models import Product, Category
+from .models import SiteReview
 
 
 def home(request):
@@ -55,3 +57,30 @@ def home(request):
         'advantages': advantages,
     }
     return render(request, 'app_home/home.html', context)
+
+
+def site_reviews(request):
+    reviews = SiteReview.objects.filter(is_published=True)[:20]
+
+    if request.method == 'POST':
+        name = request.POST.get('name', '').strip()
+        text = request.POST.get('text', '').strip()
+        rating = request.POST.get('rating')
+
+        if name and text and rating:
+            try:
+                rating = int(rating)
+                if 1 <= rating <= 5:
+                    SiteReview.objects.create(
+                        name=name,
+                        text=text,
+                        rating=rating,
+                    )
+                    messages.success(request, 'Спасибо! Ваш отзыв появится после модерации.')
+                    return redirect('site_reviews')
+            except (ValueError, TypeError):
+                pass
+        messages.error(request, 'Заполните все обязательные поля.')
+
+    context = {'reviews': reviews}
+    return render(request, 'app_home/site_reviews.html', context)

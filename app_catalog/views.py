@@ -4,7 +4,7 @@ from django.db.models import Q, Avg, Count, Min, Max
 from django.contrib import messages
 from django.views.decorators.http import require_POST
 
-from .models import Product, Category, Brand, ProductReview
+from .models import Product, Category, ProductReview
 
 
 def _apply_filters(queryset, request):
@@ -23,10 +23,6 @@ def _apply_filters(queryset, request):
         except (TypeError, ValueError):
             pass
 
-    brands = get.getlist('brands')
-    if brands:
-        queryset = queryset.filter(brand__slug__in=brands)
-
     gender = get.get('gender')
     if gender in ('M', 'F'):
         queryset = queryset.filter(gender=gender)
@@ -38,13 +34,6 @@ def _apply_filters(queryset, request):
     on_sale = get.get('on_sale')
     if on_sale == '1':
         queryset = queryset.filter(is_sale=True)
-
-    materials = get.getlist('materials')
-    if materials:
-        q_mat = Q()
-        for m in materials:
-            q_mat |= Q(material__iexact=m)
-        queryset = queryset.filter(q_mat)
 
     sort = get.get('sort', 'newest')
     if sort == 'price_asc':
@@ -59,25 +48,17 @@ def _apply_filters(queryset, request):
 
 
 def _get_filter_context(request, base_qs):
-    brands = Brand.objects.filter(is_active=True)
     categories = Category.objects.filter(is_active=True, parent=None).prefetch_related('children')
     price_agg = base_qs.aggregate(min_p=Avg('price') * 0, max_p=Avg('price') * 0)
     if base_qs.exists():
         price_agg = base_qs.aggregate(Min('price'), Max('price'))
-    materials = sorted(
-        [m for m in base_qs.values_list('material', flat=True).distinct() if m]
-    )
     return {
-        'brands': brands,
         'categories': categories,
         'price_min': price_agg.get('price__min', 0) or 0,
         'price_max': price_agg.get('price__max', 0) or 0,
-        'materials': materials,
         'current_sort': request.GET.get('sort', 'newest'),
         'current_price_from': request.GET.get('price_from', ''),
         'current_price_to': request.GET.get('price_to', ''),
-        'current_brands': request.GET.getlist('brands'),
-        'current_materials': request.GET.getlist('materials'),
         'current_gender': request.GET.get('gender', ''),
         'in_stock_checked': request.GET.get('in_stock') == '1',
         'on_sale_checked': request.GET.get('on_sale') == '1',

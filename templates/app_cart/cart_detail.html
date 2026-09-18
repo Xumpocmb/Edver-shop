@@ -6,7 +6,7 @@
 {% endblock %}
 
 {% block content %}
-<main class="catalog-page">
+<div class="catalog-page">
 
     <div class="container breadcrumbs-wrap">
         <nav class="breadcrumbs" aria-label="Навигация">
@@ -19,7 +19,17 @@
     <section class="container" style="padding: 2rem 20px 4rem;">
         <h1 class="catalog-head__title">Корзина</h1>
 
+        {% if messages %}
+        <div class="messages" style="margin-top: 1rem;">
+            {% for msg in messages %}
+            <div class="alert alert--{{ msg.tags }}">{{ msg }}</div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
         {% if items %}
+            <form method="post" action="{% url 'app_cart:checkout' %}" id="checkoutForm">
+            {% csrf_token %}
             <div class="cart-items" style="margin-top: 1.5rem;">
                 {% for item in items %}
                 <div class="cart-item" data-item-id="{{ item.id }}">
@@ -60,26 +70,101 @@
                 {% endfor %}
             </div>
 
-            <div class="cart-summary">
-                <div class="cart-summary__row">
-                    <span>Товаров:</span>
-                    <span>{{ cart.total_items }} шт.</span>
-                </div>
-                {% if cart.total_discount > 0 %}
-                <div class="cart-summary__row cart-summary__row--discount">
-                    <span>Скидка:</span>
-                    <span>-{{ cart.total_discount }} ₽</span>
-                </div>
-                {% endif %}
-                <div class="cart-summary__row cart-summary__row--total">
-                    <span>Итого:</span>
-                    <span>{{ cart.total_price }} ₽</span>
-                </div>
-                <div class="cart-summary__actions">
-                    <a href="/catalog/" class="btn btn--ghost">Продолжить покупки</a>
-                    <button type="button" class="btn btn--primary btn--lg" disabled>Оформить заказ</button>
+            <div class="cart-layout">
+                <div class="cart-summary">
+                    <div class="cart-summary__row">
+                        <span>Товаров:</span>
+                        <span>{{ cart.total_items }} шт.</span>
+                    </div>
+                    {% if cart.total_discount > 0 %}
+                    <div class="cart-summary__row cart-summary__row--discount">
+                        <span>Скидка на товары:</span>
+                        <span>-{{ cart.total_discount }} ₽</span>
+                    </div>
+                    {% endif %}
+
+                    {% if cart.promo_code %}
+                    <div class="cart-summary__row cart-summary__row--discount">
+                        <span>Промокод ({{ cart.promo_code.code }}):</span>
+                        <span>-{{ cart.promo_discount }} ₽</span>
+                    </div>
+                    <button type="button" class="btn btn--text btn--sm js-remove-promo"
+                            style="align-self: flex-start;">Удалить промокод</button>
+                    {% else %}
+                    <div class="promo-row">
+                        <input type="text" name="promo_code_input" id="promoInput"
+                               placeholder="Промокод" class="promo-input">
+                        <button type="button" class="btn btn--ghost btn--sm" id="applyPromoBtn">Применить</button>
+                    </div>
+                    {% endif %}
+
+                    <div class="cart-summary__row cart-summary__row--total">
+                        <span>Итого:</span>
+                        <span id="grandTotal">{{ cart.grand_total }} ₽</span>
+                    </div>
                 </div>
             </div>
+
+            <div class="checkout-section">
+                <h2 class="checkout-section__title">Данные для доставки</h2>
+
+                <div class="form-grid">
+                    <div class="form-row">
+                        <label for="fullName">ФИО *</label>
+                        <input id="fullName" name="full_name" type="text" required
+                               placeholder="Иванов Иван Иванович">
+                    </div>
+                    <div class="form-row">
+                        <label for="phone">Телефон *</label>
+                        <input id="phone" name="phone" type="tel" required
+                               placeholder="+375 (XX) XXX-XX-XX">
+                    </div>
+                </div>
+
+                <div class="form-row" style="margin-top: 1.5rem;">
+                    <label>Способ доставки *</label>
+                    <div class="delivery-picker" id="deliveryPicker">
+                        <label class="delivery-option">
+                            <input type="radio" name="delivery_type" value="belpochta" checked>
+                            <span class="delivery-option__label">Белпочта</span>
+                            <span class="delivery-option__desc">Доставка по адресу</span>
+                        </label>
+                        <label class="delivery-option">
+                            <input type="radio" name="delivery_type" value="evropochta">
+                            <span class="delivery-option__label">Европочта</span>
+                            <span class="delivery-option__desc">Отделение / ПВЗ</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="delivery-fields" id="deliveryFields">
+                    <div class="form-row" id="belpochtaField">
+                        <label for="address">Адрес доставки *</label>
+                        <textarea id="address" name="address" rows="2"
+                                  placeholder="Город, улица, дом, квартира"></textarea>
+                    </div>
+                    <div class="form-row" id="evropochtaField" style="display: none;">
+                        <label for="branchSearch">Отделение Европочты *</label>
+                        <input type="text" id="branchSearch" placeholder="Введите название города или отделения..."
+                               autocomplete="off">
+                        <input type="hidden" name="evropochta_branch_id" id="branchId">
+                        <input type="hidden" name="evropochta_branch_name" id="branchName">
+                        <div class="branch-list" id="branchList" style="display: none;"></div>
+                    </div>
+                </div>
+
+                <div class="form-row" style="margin-top: 1rem;">
+                    <label for="comment">Комментарий к заказу</label>
+                    <textarea id="comment" name="comment" rows="2"
+                              placeholder="Пожелания по доставке, время звонка и т.д."></textarea>
+                </div>
+
+                <div class="cart-summary__actions" style="margin-top: 1.5rem;">
+                    <a href="/catalog/" class="btn btn--ghost">Продолжить покупки</a>
+                    <button type="submit" class="btn btn--primary btn--lg">Оформить заказ</button>
+                </div>
+            </div>
+            </form>
         {% else %}
             <div class="empty-state" style="margin-top: 2rem;">
                 <div class="empty-state__icon">🛒</div>
@@ -89,5 +174,126 @@
             </div>
         {% endif %}
     </section>
-</main>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{{ block.super }}
+<script>
+(function() {
+    'use strict';
+
+    function getCookie(name) {
+        var cookies = document.cookie.split(';');
+        for (var i = 0; i < cookies.length; i++) {
+            var c = cookies[i].trim();
+            if (c.substring(0, name.length + 1) === (name + '=')) {
+                return decodeURIComponent(c.substring(name.length + 1));
+            }
+        }
+        return null;
+    }
+    var CSRF = getCookie('csrftoken') || '';
+
+    // Promo code
+    var applyBtn = document.getElementById('applyPromoBtn');
+    var removeBtn = document.querySelector('.js-remove-promo');
+    var promoInput = document.getElementById('promoInput');
+
+    if (applyBtn) {
+        applyBtn.addEventListener('click', function() {
+            var code = promoInput ? promoInput.value.trim() : '';
+            if (!code) return;
+            var fd = new FormData();
+            fd.append('promo_code', code);
+            fetch('{% url "app_cart:apply_promo" %}', {
+                method: 'POST',
+                headers: { 'X-CSRFToken': CSRF, 'Accept': 'application/json' },
+                body: fd
+            }).then(function(r) { return r.json(); }).then(function(data) {
+                if (data.success) location.reload();
+                else alert(data.message || 'Ошибка');
+            });
+        });
+    }
+
+    if (removeBtn) {
+        removeBtn.addEventListener('click', function() {
+            var fd = new FormData();
+            fetch('{% url "app_cart:remove_promo" %}', {
+                method: 'POST',
+                headers: { 'X-CSRFToken': CSRF, 'Accept': 'application/json' },
+                body: fd
+            }).then(function() { location.reload(); });
+        });
+    }
+
+    // Delivery type toggle
+    var deliveryPicker = document.getElementById('deliveryPicker');
+    var belpochtaField = document.getElementById('belpochtaField');
+    var evropochtaField = document.getElementById('evropochtaField');
+
+    if (deliveryPicker) {
+        deliveryPicker.addEventListener('change', function() {
+            var val = deliveryPicker.querySelector('input:checked').value;
+            if (val === 'evropochta') {
+                belpochtaField.style.display = 'none';
+                evropochtaField.style.display = '';
+            } else {
+                belpochtaField.style.display = '';
+                evropochtaField.style.display = 'none';
+            }
+        });
+    }
+
+    // Evropochta branch search
+    var branchSearch = document.getElementById('branchSearch');
+    var branchList = document.getElementById('branchList');
+    var branchIdInput = document.getElementById('branchId');
+    var branchNameInput = document.getElementById('branchName');
+    var branches = [];
+
+    fetch('/cart/branches/')
+        .then(function(r) { return r.json(); })
+        .then(function(data) { branches = data.branches || []; })
+        .catch(function() {});
+
+    if (branchSearch) {
+        branchSearch.addEventListener('input', function() {
+            var q = branchSearch.value.toLowerCase().trim();
+            branchIdInput.value = '';
+            branchNameInput.value = '';
+            if (q.length < 2) { branchList.style.display = 'none'; return; }
+
+            var filtered = branches.filter(function(b) {
+                return b.name.toLowerCase().indexOf(q) >= 0 ||
+                       b.address.toLowerCase().indexOf(q) >= 0;
+            }).slice(0, 30);
+
+            if (!filtered.length) { branchList.style.display = 'none'; return; }
+
+            branchList.innerHTML = '';
+            filtered.forEach(function(b) {
+                var div = document.createElement('div');
+                div.className = 'branch-option';
+                div.textContent = b.name + ' — ' + b.address;
+                div.addEventListener('click', function() {
+                    branchSearch.value = b.name;
+                    branchIdInput.value = b.id;
+                    branchNameInput.value = b.name + ' — ' + b.address;
+                    branchList.style.display = 'none';
+                });
+                branchList.appendChild(div);
+            });
+            branchList.style.display = 'block';
+        });
+
+        document.addEventListener('click', function(e) {
+            if (!branchList.contains(e.target) && e.target !== branchSearch) {
+                branchList.style.display = 'none';
+            }
+        });
+    }
+})();
+</script>
 {% endblock %}

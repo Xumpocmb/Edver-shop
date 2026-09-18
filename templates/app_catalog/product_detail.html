@@ -6,7 +6,7 @@
 {% endblock %}
 
 {% block content %}
-<main class="product-page">
+<div class="product-page">
 
     <!-- Хлебные крошки -->
     <div class="container breadcrumbs-wrap">
@@ -31,7 +31,8 @@
             <div class="product-gallery__main" id="galleryMain">
                 {% if images %}
                 {% with main=images.0 %}
-                <img src="{{ main.image.url }}" alt="{{ main.alt|default:product.name }}" id="mainImage" class="is-active">
+                <img src="{{ main.image.url }}" alt="{{ main.alt|default:product.name }}" id="mainImage"
+                    class="is-active">
                 {% endwith %}
                 {% else %}
                 <div class="product-gallery__empty">Нет изображений</div>
@@ -39,7 +40,8 @@
 
                 <div class="product-badges">
                     {% if product.is_new %}<span class="badge badge--new">NEW</span>{% endif %}
-                    {% if product.is_sale and product.discount_percent_display > 0 %}<span class="badge badge--sale">-{{ product.discount_percent_display }}%</span>{% endif %}
+                    {% if product.is_sale and product.discount_percent_display > 0 %}<span class="badge badge--sale">-{{
+                        product.discount_percent_display }}%</span>{% endif %}
                     {% if product.is_popular %}<span class="badge badge--popular">HIT</span>{% endif %}
                 </div>
             </div>
@@ -67,15 +69,6 @@
                 {% if product.sku %}
                 <div class="product-info__sku">Арт. {{ product.sku }}</div>
                 {% endif %}
-
-                <div class="product-info__rating">
-                    <span class="stars stars--lg">
-                        {% for i in '12345' %}
-                        {% if forloop.counter <= product.average_rating %}★{% else %}☆{% endif %}{% endfor %}
-                    </span>
-                    <span class="rating-value">{{ product.average_rating }}</span>
-                    <a href="#reviews" class="reviews-link">({{ product.reviews_count }} отзывов)</a>
-                </div>
             </div>
 
             <div class="product-info__price-block">
@@ -112,9 +105,11 @@
                 <div class="color-swatches">
                     {% for sibling in sibling_colors %}
                     {% if sibling.id != product.id %}
-                    <a href="{{ sibling.get_absolute_url }}" class="color-swatch"
-                        title="{{ sibling.color }}" data-color="{{ sibling.color }}">
-                        <span class="color-swatch__inner" style="background-color: {{ sibling.color|lower }};"></span>
+                    <a href="{{ sibling.get_absolute_url }}" class="color-swatch" title="{{ sibling.color }}"
+                        data-color="{{ sibling.color }}">
+                        <span class="color-swatch__inner"
+                            style="background-color: {{ sibling.color|lower|default:'#888888' }};"></span>
+
                         <span class="color-swatch__label">{{ sibling.color }}</span>
                     </a>
                     {% endif %}
@@ -173,15 +168,15 @@
                     <label for="qtyInput" class="qty-row__label">Количество</label>
                     <div class="qty-counter" id="qtyCounter">
                         <button type="button" class="qty-btn qty-btn--minus" aria-label="Уменьшить">−</button>
-                        <input id="qtyInput" class="qty-input" type="number" min="1" max="{{ product.stock }}" value="1">
+                        <input id="qtyInput" class="qty-input" type="number" min="1" max="{{ product.stock }}"
+                            value="1">
                         <button type="button" class="qty-btn qty-btn--plus" aria-label="Увеличить">+</button>
                     </div>
                 </div>
 
                 <div class="buy-buttons">
                     <button type="button" class="btn btn--primary btn--lg js-add-to-cart"
-                        data-product-id="{{ product.id }}"
-                        data-product-name="{{ product.name }} {{ product.color }}"
+                        data-product-id="{{ product.id }}" data-product-name="{{ product.name }} {{ product.color }}"
                         data-product-price="{{ product.price }}">
                         🛒 Добавить в корзину
                     </button>
@@ -212,21 +207,66 @@
     <section class="container product-section">
         <h2 class="product-section__title">Характеристики</h2>
         <table class="specs-table">
-            {% if product.brand %}<tr><th>Бренд</th><td>{{ product.brand.name }}</td></tr>{% endif %}
-            {% if product.sku %}<tr><th>Артикул</th><td>{{ product.sku }}</td></tr>{% endif %}
-            {% if product.category %}<tr><th>Категория</th><td>{{ product.category.name }}</td></tr>{% endif %}
-            {% if product.color %}<tr><th>Цвет</th><td>{{ product.color }}</td></tr>{% endif %}
-            {% if product.material %}<tr><th>Материал</th><td>{{ product.material }}</td></tr>{% endif %}
-            {% if product.gender %}<tr><th>Пол</th><td>{{ product.get_gender_display }}</td></tr>{% endif %}
-            {% if product.dimensions %}<tr><th>Размеры</th><td>{{ product.dimensions }}</td></tr>{% endif %}
-            {% if product.weight %}<tr><th>Вес</th><td>{{ product.weight }} кг</td></tr>{% endif %}
-            {% if product.stock %}<tr><th>Остаток</th><td>{{ product.stock }} шт.</td></tr>{% endif %}
-            {% if product.status %}<tr><th>Статус</th><td>{{ product.get_status_display }}</td></tr>{% endif %}
-            <tr><th>Цена продажи</th><td>{{ product.price }} ₽</td></tr>
-            {% if product.old_price %}<tr><th>Старая цена</th><td>{{ product.old_price }} ₽</td></tr>{% endif %}
-            {% if product.cost_price %}<tr><th>Себестоимость</th><td>{{ product.cost_price }} ₽</td></tr>{% endif %}
-            {% if product.discount_percent %}<tr><th>Скидка</th><td>{{ product.discount_percent }}%</td></tr>{% endif %}
-            <tr><th>Добавлен</th><td>{{ product.created_at|date:"d.m.Y" }}</td></tr>
+            {% if product.brand %}<tr>
+                <th>Бренд</th>
+                <td>{{ product.brand.name }}</td>
+            </tr>{% endif %}
+            {% if product.sku %}<tr>
+                <th>Артикул</th>
+                <td>{{ product.sku }}</td>
+            </tr>{% endif %}
+            {% if product.category %}<tr>
+                <th>Категория</th>
+                <td>{{ product.category.name }}</td>
+            </tr>{% endif %}
+            {% if product.color %}<tr>
+                <th>Цвет</th>
+                <td>{{ product.color }}</td>
+            </tr>{% endif %}
+            {% if product.material %}<tr>
+                <th>Материал</th>
+                <td>{{ product.material }}</td>
+            </tr>{% endif %}
+            {% if product.gender %}<tr>
+                <th>Пол</th>
+                <td>{{ product.get_gender_display }}</td>
+            </tr>{% endif %}
+            {% if product.dimensions %}<tr>
+                <th>Размеры</th>
+                <td>{{ product.dimensions }}</td>
+            </tr>{% endif %}
+            {% if product.weight %}<tr>
+                <th>Вес</th>
+                <td>{{ product.weight }} кг</td>
+            </tr>{% endif %}
+            {% if product.stock %}<tr>
+                <th>Остаток</th>
+                <td>{{ product.stock }} шт.</td>
+            </tr>{% endif %}
+            {% if product.status %}<tr>
+                <th>Статус</th>
+                <td>{{ product.get_status_display }}</td>
+            </tr>{% endif %}
+            <tr>
+                <th>Цена продажи</th>
+                <td>{{ product.price }} ₽</td>
+            </tr>
+            {% if product.old_price %}<tr>
+                <th>Старая цена</th>
+                <td>{{ product.old_price }} ₽</td>
+            </tr>{% endif %}
+            {% if product.cost_price %}<tr>
+                <th>Себестоимость</th>
+                <td>{{ product.cost_price }} ₽</td>
+            </tr>{% endif %}
+            {% if product.discount_percent %}<tr>
+                <th>Скидка</th>
+                <td>{{ product.discount_percent }}%</td>
+            </tr>{% endif %}
+            <tr>
+                <th>Добавлен</th>
+                <td>{{ product.created_at|date:"d.m.Y" }}</td>
+            </tr>
         </table>
     </section>
 
@@ -242,106 +282,7 @@
     </section>
     {% endif %}
 
-    <!-- РЕКОМЕНДАЦИИ -->
-    {% if related_products %}
-    <section class="container product-section">
-        <h2 class="product-section__title">Похожие товары</h2>
-        <div class="products-grid">
-            {% for p in related_products %}
-            {% include 'app_catalog/_product_card.html' with product=p %}
-            {% endfor %}
-        </div>
-    </section>
-    {% endif %}
+    {% include 'app_catalog/_reviews_section.html' %}
 
-    <!-- ОТЗЫВЫ -->
-    <section class="container product-section" id="reviews">
-        <h2 class="product-section__title">
-            Отзывы
-            <span class="product-section__sub">
-                {{ product.reviews_count }} · рейтинг {{ product.average_rating }}/5
-            </span>
-        </h2>
-
-        <div class="reviews-layout">
-            <div class="review-form">
-                <h3 class="review-form__title">Оставить отзыв</h3>
-                <form method="post" action="{% url 'app_catalog:add_review' product.slug %}" class="form form--stacked" novalidate>
-                    {% csrf_token %}
-                    <div class="form-row">
-                        <label for="r-name">Ваше имя *</label>
-                        <input id="r-name" name="name" type="text" required placeholder="Как к вам обращаться?">
-                    </div>
-                    <div class="form-row">
-                        <label for="r-email">Email *</label>
-                        <input id="r-email" name="email" type="email" required placeholder="example@mail.ru">
-                    </div>
-                    <div class="form-row">
-                        <label>Оценка *</label>
-                        <div class="rating-picker" id="ratingPicker" data-value="5">
-                            {% for i in '12345' %}
-                            <button type="button" class="rating-picker__star" data-value="{{ forloop.counter }}"
-                                {% if forloop.counter <= 5 %}aria-pressed="true"{% endif %}>★</button>
-                            {% endfor %}
-                        </div>
-                        <input type="hidden" name="rating" id="ratingValue" value="5">
-                    </div>
-                    <div class="form-row">
-                        <label for="r-title">Заголовок отзыва</label>
-                        <input id="r-title" name="title" type="text" placeholder="Краткое резюме">
-                    </div>
-                    <div class="form-row">
-                        <label for="r-text">Ваш отзыв *</label>
-                        <textarea id="r-text" name="text" rows="5" required placeholder="Поделитесь впечатлениями о товаре"></textarea>
-                    </div>
-                    <div class="form-row grid-2">
-                        <div>
-                            <label for="r-pros">Достоинства</label>
-                            <textarea id="r-pros" name="pros" rows="2" placeholder="Что понравилось?"></textarea>
-                        </div>
-                        <div>
-                            <label for="r-cons">Недостатки</label>
-                            <textarea id="r-cons" name="cons" rows="2" placeholder="Что не понравилось?"></textarea>
-                        </div>
-                    </div>
-                    <button type="submit" class="btn btn--primary">Отправить отзыв</button>
-                    <p class="form-note">Отзыв появится после модерации.</p>
-                </form>
-            </div>
-
-            <div class="reviews-list">
-                {% if reviews %}
-                {% for r in reviews %}
-                <article class="review">
-                    <header class="review__head">
-                        <div class="review__avatar">{{ r.name|slice:":1"|upper }}</div>
-                        <div class="review__meta">
-                            <div class="review__name">{{ r.name }}</div>
-                            <div class="review__date">{{ r.created_at|date:"d.m.Y" }}</div>
-                        </div>
-                        <div class="review__rating stars">
-                            {% for i in '12345' %}
-                            {% if forloop.counter <= r.rating %}★{% else %}☆{% endif %}{% endfor %}
-                        </div>
-                    </header>
-                    {% if r.title %}
-                    <h4 class="review__title">{{ r.title }}</h4>
-                    {% endif %}
-                    <p class="review__text">{{ r.text|linebreaksbr }}</p>
-                    {% if r.pros %}<p class="review__pros"><b>Достоинства:</b> {{ r.pros }}</p>{% endif %}
-                    {% if r.cons %}<p class="review__cons"><b>Недостатки:</b> {{ r.cons }}</p>{% endif %}
-                </article>
-                {% endfor %}
-                {% else %}
-                <div class="empty-state empty-state--sm">
-                    <div class="empty-state__icon">💬</div>
-                    <h4 class="empty-state__title">Пока нет отзывов</h4>
-                    <p class="empty-state__text">Будьте первым, кто оставит отзыв об этом товаре.</p>
-                </div>
-                {% endif %}
-            </div>
-        </div>
-    </section>
-
-</main>
+</div>
 {% endblock %}

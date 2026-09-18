@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+
+{% block title %}
+<title>Заказ оформлен — EDVER Shop</title>
+{% endblock %}
+
+{% block content %}
+<div class="catalog-page">
+    <div class="container breadcrumbs-wrap">
+        <nav class="breadcrumbs" aria-label="Навигация">
+            <a href="/">Главная</a>
+            <span class="breadcrumbs__sep">/</span>
+            <span class="breadcrumbs__current">Заказ оформлен</span>
+        </nav>
+    </div>
+
+    <section class="container" style="padding: 3rem 20px 4rem; max-width: 640px; text-align: center;">
+        <div style="font-size: 3rem; margin-bottom: 1rem;">✅</div>
+        <h1 class="catalog-head__title">Заказ #{{ order.pk }} оформлен!</h1>
+        <p style="margin-top: 1rem; color: var(--color-text-muted); font-size: 1.05rem;">
+            Спасибо за покупку! Мы свяжемся с вами для подтверждения заказа.
+        </p>
+
+        <div class="order-details" style="text-align: left; margin-top: 2rem; background: var(--color-bg-soft); padding: 1.5rem; border-radius: var(--radius);">
+            <div class="spec-row">
+                <span class="spec-row__key">ФИО</span>
+                <span class="spec-row__val">{{ order.full_name }}</span>
+            </div>
+            <div class="spec-row">
+                <span class="spec-row__key">Телефон</span>
+                <span class="spec-row__val">{{ order.phone }}</span>
+            </div>
+            <div class="spec-row">
+                <span class="spec-row__key">Доставка</span>
+                <span class="spec-row__val">{{ order.get_delivery_type_display }}</span>
+            </div>
+            {% if order.delivery_type == 'belpochta' %}
+            <div class="spec-row">
+                <span class="spec-row__key">Адрес</span>
+                <span class="spec-row__val">{{ order.address }}</span>
+            </div>
+            {% else %}
+            <div class="spec-row">
+                <span class="spec-row__key">Отделение</span>
+                <span class="spec-row__val">{{ order.evropochta_branch_name }}</span>
+            </div>
+            {% endif %}
+            <div class="spec-row">
+                <span class="spec-row__key">Оплата</span>
+                <span class="spec-row__val">{{ order.grand_total }} ₽</span>
+            </div>
+        </div>
+
+        <div style="margin-top: 2rem;">
+            <a href="/catalog/" class="btn btn--primary">Продолжить покупки</a>
+        </div>
+    </section>
+</div>
+{% endblock %}
