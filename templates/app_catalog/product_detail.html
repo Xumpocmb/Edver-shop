@@ -2,7 +2,7 @@
 {% load static %}
 
 {% block title %}
-<title>{{ product.name }} {{ product.color }} — купить в EDVER Shop</title>
+<title>{{ product.name }} {{ variant.color }} — купить в EDVER Shop</title>
 {% endblock %}
 
 {% block content %}
@@ -40,8 +40,9 @@
 
                 <div class="product-badges">
                     {% if product.is_new %}<span class="badge badge--new">NEW</span>{% endif %}
-                    {% if product.is_sale and product.discount_percent_display > 0 %}<span class="badge badge--sale">-{{
-                        product.discount_percent_display }}%</span>{% endif %}
+                    {% if variant and variant.discount_percent_display > 0 %}
+                    <span class="badge badge--sale" id="galleryBadgeDiscount">-{{ variant.discount_percent_display }}%</span>
+                    {% endif %}
                     {% if product.is_popular %}<span class="badge badge--popular">HIT</span>{% endif %}
                 </div>
             </div>
@@ -56,6 +57,8 @@
                 </button>
                 {% endfor %}
             </div>
+            {% else %}
+            <div class="product-gallery__thumbs" id="galleryThumbs" role="listbox" style="display: none;"></div>
             {% endif %}
         </div>
 
@@ -66,58 +69,49 @@
                 <div class="product-info__brand">{{ product.brand.name }}</div>
                 {% endif %}
                 <h1 class="product-info__title">{{ product.name }}</h1>
-                {% if product.sku %}
-                <div class="product-info__sku">Арт. {{ product.sku }}</div>
-                {% endif %}
             </div>
 
             <div class="product-info__price-block">
                 <div class="price-row">
-                    <span class="price-main">{{ product.price }} ₽</span>
-                    {% if product.effective_old_price and product.effective_old_price > product.price %}
-                    <span class="price-old">{{ product.effective_old_price }} ₽</span>
-                    {% endif %}
-                    {% if product.discount_percent_display > 0 %}
-                    <span class="price-discount">-{{ product.discount_percent_display }}%</span>
-                    {% endif %}
+                    <span class="price-main" id="currentPrice">{{ variant.sale_price }} ₽</span>
+                    <span class="price-old" id="basePrice"
+                          {% if variant.discount_percent_display <= 0 %}style="display: none;"{% endif %}>
+                        {{ variant.price }} ₽
+                    </span>
+                    <span class="price-discount" id="discountBadge"
+                          {% if variant.discount_percent_display <= 0 %}style="display: none;"{% endif %}>
+                        -{{ variant.discount_percent_display }}%
+                    </span>
                 </div>
-                {% if product.cost_price %}
-                <div class="price-cost">Себестоимость: {{ product.cost_price }} ₽</div>
-                {% endif %}
 
                 <div class="status-row">
-                    {% if not product.is_active %}
-                    <span class="status status--bad">● Товар временно недоступен</span>
-                    {% elif product.status == 'in_stock' and product.stock > 0 %}
-                    <span class="status status--ok">● В наличии ({{ product.stock }} шт.)</span>
-                    {% elif product.status == 'preorder' %}
-                    <span class="status status--warn">● Предзаказ</span>
-                    {% else %}
-                    <span class="status status--bad">● Нет в наличии</span>
-                    {% endif %}
+                    <span class="status status--{{ variant.status }}" id="stockStatus"
+                        {% if not variant %}style="display: none;"{% endif %}>
+                        {% if variant.status == 'preorder' %}
+                        ● Предзаказ
+                        {% elif variant.stock > 0 %}
+                        ● В наличии ({{ variant.stock }} шт.)
+                        {% else %}
+                        ● Нет в наличии
+                        {% endif %}
+                    </span>
                 </div>
             </div>
 
-            <!-- Цвета (другие цвета той же модели) -->
-            {% if sibling_colors %}
+            <!-- Цвета (варианты) -->
+            {% if variants|length > 1 %}
             <div class="mod mod--color-pick">
                 <div class="mod__label">Цвет:</div>
-                <div class="color-swatches">
-                    {% for sibling in sibling_colors %}
-                    {% if sibling.id != product.id %}
-                    <a href="{{ sibling.get_absolute_url }}" class="color-swatch" title="{{ sibling.color }}"
-                        data-color="{{ sibling.color }}">
+                <div class="color-swatches" id="variantSwatches">
+                    {% for v in variants %}
+                    <button type="button"
+                            class="color-swatch js-variant-swatch {% if variant.id == v.id %}is-current{% endif %}"
+                            data-variant-id="{{ v.id }}" title="{{ v.color }}">
                         <span class="color-swatch__inner"
-                            style="background-color: {{ sibling.color|lower|default:'#888888' }};"></span>
-
-                        <span class="color-swatch__label">{{ sibling.color }}</span>
-                    </a>
-                    {% endif %}
+                              style="background-color: {{ v.color_hex|default:'#cccccc' }};"></span>
+                        <span class="color-swatch__label">{{ v.color }}</span>
+                    </button>
                     {% endfor %}
-                    <span class="color-swatch is-current" title="{{ product.color }}">
-                        <span class="color-swatch__inner" style="background-color: {{ product.color|lower }};"></span>
-                        <span class="color-swatch__label">{{ product.color }}</span>
-                    </span>
                 </div>
             </div>
             {% endif %}
@@ -130,12 +124,10 @@
                     <span class="spec-row__val">{{ product.brand.name }}</span>
                 </div>
                 {% endif %}
-                {% if product.color %}
                 <div class="spec-row">
                     <span class="spec-row__key">Цвет</span>
-                    <span class="spec-row__val">{{ product.color }}</span>
+                    <span class="spec-row__val" id="specColor">{{ variant.color }}</span>
                 </div>
-                {% endif %}
                 {% if product.material %}
                 <div class="spec-row">
                     <span class="spec-row__key">Материал</span>
@@ -168,16 +160,17 @@
                     <label for="qtyInput" class="qty-row__label">Количество</label>
                     <div class="qty-counter" id="qtyCounter">
                         <button type="button" class="qty-btn qty-btn--minus" aria-label="Уменьшить">−</button>
-                        <input id="qtyInput" class="qty-input" type="number" min="1" max="{{ product.stock }}"
-                            value="1">
+                        <input id="qtyInput" class="qty-input" type="number" min="1"
+                               max="{{ variant.stock|default:999 }}" value="1">
                         <button type="button" class="qty-btn qty-btn--plus" aria-label="Увеличить">+</button>
                     </div>
                 </div>
 
                 <div class="buy-buttons">
-                    <button type="button" class="btn btn--primary btn--lg js-add-to-cart"
-                        data-product-id="{{ product.id }}" data-product-name="{{ product.name }} {{ product.color }}"
-                        data-product-price="{{ product.price }}">
+                    <button type="button" id="addToCartBtn"
+                            class="btn btn--primary btn--lg js-add-to-cart"
+                            data-variant-id="{{ variant.id }}"
+                            data-product-name="{{ product.name }} {{ variant.color }}">
                         🛒 Добавить в корзину
                     </button>
                 </div>
@@ -208,18 +201,14 @@
                 <th>Бренд</th>
                 <td>{{ product.brand.name }}</td>
             </tr>{% endif %}
-            {% if product.sku %}<tr>
-                <th>Артикул</th>
-                <td>{{ product.sku }}</td>
-            </tr>{% endif %}
             {% if product.category %}<tr>
                 <th>Категория</th>
                 <td>{{ product.category.name }}</td>
             </tr>{% endif %}
-            {% if product.color %}<tr>
+            <tr>
                 <th>Цвет</th>
-                <td>{{ product.color }}</td>
-            </tr>{% endif %}
+                <td id="specColor2">{{ variant.color }}</td>
+            </tr>
             {% if product.material %}<tr>
                 <th>Материал</th>
                 <td>{{ product.material }}</td>
@@ -236,30 +225,26 @@
                 <th>Вес</th>
                 <td>{{ product.weight }} кг</td>
             </tr>{% endif %}
-            {% if product.stock %}<tr>
-                <th>Остаток</th>
-                <td>{{ product.stock }} шт.</td>
-            </tr>{% endif %}
-            {% if product.status %}<tr>
-                <th>Статус</th>
-                <td>{{ product.get_status_display }}</td>
-            </tr>{% endif %}
             <tr>
-                <th>Цена продажи</th>
-                <td>{{ product.price }} ₽</td>
+                <th>Остаток</th>
+                <td id="specStock">{{ variant.stock }} шт.</td>
             </tr>
-            {% if product.old_price %}<tr>
-                <th>Старая цена</th>
-                <td>{{ product.old_price }} ₽</td>
-            </tr>{% endif %}
-            {% if product.cost_price %}<tr>
-                <th>Себестоимость</th>
-                <td>{{ product.cost_price }} ₽</td>
-            </tr>{% endif %}
-            {% if product.discount_percent %}<tr>
+            <tr>
+                <th>Статус</th>
+                <td id="specStatus">{{ variant.get_status_display }}</td>
+            </tr>
+            <tr>
+                <th>Цена</th>
+                <td id="specBasePrice">{{ variant.price }} ₽</td>
+            </tr>
+            <tr>
+                <th>Цена со скидкой</th>
+                <td id="specPrice">{{ variant.sale_price }} ₽</td>
+            </tr>
+            <tr>
                 <th>Скидка</th>
-                <td>{{ product.discount_percent }}%</td>
-            </tr>{% endif %}
+                <td id="specDiscount">{{ variant.discount_percent_display }}%</td>
+            </tr>
             <tr>
                 <th>Добавлен</th>
                 <td>{{ product.created_at|date:"d.m.Y" }}</td>
@@ -280,4 +265,6 @@
     {% endif %}
 
 </div>
+
+{{ variants_data|json_script:"product-variants" }}
 {% endblock %}

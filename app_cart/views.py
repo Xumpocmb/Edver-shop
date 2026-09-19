@@ -4,7 +4,7 @@ from django.http import JsonResponse
 from django.views.decorators.http import require_POST
 from django.contrib import messages
 
-from app_catalog.models import Product
+from app_catalog.models import ProductVariant
 from .models import Cart, CartItem, PromoCode, Order, OrderItem, EvropochtaBranch
 
 
@@ -19,16 +19,16 @@ def _cart_response(request, cart, message=None, success=True):
             'items': [
                 {
                     'id': item.id,
-                    'product_id': item.product_id,
-                    'product_name': item.product.name,
-                    'product_slug': item.product.slug,
-                    'product_color': item.product.color,
+                    'variant_id': item.variant_id,
+                    'product_name': item.variant.product.name,
+                    'product_slug': item.variant.product.slug,
+                    'product_color': item.variant.color,
                     'quantity': item.quantity,
                     'unit_price': str(item.unit_price),
                     'line_total': str(item.line_total),
-                    'image_url': item.product.main_image.image.url if item.product.main_image else None,
+                    'image_url': item.variant.main_image.image.url if item.variant.main_image else None,
                 }
-                for item in cart.items.select_related('product').prefetch_related('product__images')
+                for item in cart.items.select_related('variant__product').prefetch_related('variant__images')
             ],
         }
         return JsonResponse(data)
@@ -37,23 +37,28 @@ def _cart_response(request, cart, message=None, success=True):
 
 @require_POST
 def add_to_cart(request):
-    product_id = request.POST.get('product_id') or request.headers.get('X-Product-Id')
+    variant_id = request.POST.get('variant_id') or request.headers.get('X-Product-Id')
     quantity = int(request.POST.get('quantity', 1) or request.headers.get('X-Quantity', 1))
 
-    product = get_object_or_404(Product, id=product_id, is_active=True)
+    variant = get_object_or_404(
+        ProductVariant.objects.select_related('product'),
+        id=variant_id,
+        is_active=True,
+        product__is_active=True,
+    )
 
     cart = Cart.get_or_create(request)
 
     item, created = CartItem.objects.get_or_create(
         cart=cart,
-        product=product,
+        variant=variant,
         defaults={'quantity': quantity}
     )
     if not created:
         item.quantity += quantity
         item.save(update_fields=['quantity'])
 
-    return _cart_response(request, cart, f'{product.name} ({product.color}) добавлен в корзину')
+    return _cart_response(request, cart, f'{variant.product.name} ({variant.color}) добавлен в корзину')
 
 
 @require_POST
@@ -74,8 +79,11 @@ def update_cart_item(request, item_id):
 @require_POST
 def remove_from_cart(request, item_id):
     cart = Cart.get_or_create(request)
-    item = get_object_or_404(CartItem, id=item_id, cart=cart)
-    product_name = f'{item.product.name} ({item.product.color})'
+    item = get_object_or_404(
+        CartItem.objects.select_related('variant__product'),
+        id=item_id, cart=cart,
+    )
+    product_name = f'{item.variant.product.name} ({item.variant.color})'
     item.delete()
     return _cart_response(request, cart, f'{product_name} удалён из корзины')
 
@@ -127,7 +135,7 @@ def remove_promo(request):
 
 def cart_detail(request):
     cart = Cart.get_or_create(request)
-    items = cart.items.select_related('product').prefetch_related('product__images')
+    items = cart.items.select_related('variant__product__brand').prefetch_related('variant__images')
     context = {
         'cart': cart,
         'items': items,
@@ -139,7 +147,7 @@ def cart_detail(request):
 @require_POST
 def checkout(request):
     cart = Cart.get_or_create(request)
-    items = cart.items.select_related('product')
+    items = cart.items.select_related('variant__product')
     if not items.exists():
         messages.error(request, 'Корзина пуста.')
         return redirect('app_cart:cart_detail')
@@ -183,14 +191,14 @@ def checkout(request):
     for item in items:
         OrderItem.objects.create(
             order=order,
-            product=item.product,
-            product_name=item.product.name,
-            product_color=item.product.color,
+            variant=item.variant,
+            product_name=item.variant.product.name,
+            product_color=item.variant.color,
             unit_price=item.unit_price,
             quantity=item.quantity,
         )
-        item.product.stock = max(item.product.stock - item.quantity, 0)
-        item.product.save(update_fields=['stock'])
+        item.variant.stock = max(item.variant.stock - item.quantity, 0)
+        item.variant.save(update_fields=['stock'])
 
     if cart.promo_code:
         cart.promo_code.used_count += 1

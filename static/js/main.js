@@ -59,11 +59,10 @@
         .catch(function () {});
     }
 
-    function addToCart(productId, productName, qty, variantId) {
+    function addToCart(variantId, productName, qty) {
         var fd = new FormData();
-        fd.append('product_id', productId);
+        fd.append('variant_id', variantId);
         fd.append('quantity', qty || 1);
-        if (variantId) fd.append('variant_id', variantId);
 
         fetch('/cart/add/', {
             method: 'POST',
@@ -175,7 +174,7 @@
     }
 
     // ====== Галерея карточки товара ======
-    function initGallery() {
+    function bindGalleryThumbs() {
         var thumbs = $$('#galleryThumbs .thumb');
         var mainImg = $('#mainImage');
         if (!thumbs.length || !mainImg) return;
@@ -284,99 +283,142 @@
         });
     }
 
-// ====== Variant Selector ======
+// ====== Variant Selector (свотчи цвета) ======
     function initVariantSelector() {
-        var container = $('#variantSelector');
-        if (!container || !window.__productVariants) return;
+        var swatches = $$('.js-variant-swatch');
+        var variantsEl = $('#product-variants');
+        if (!swatches.length || !variantsEl) return;
 
-        var options = $$('.js-variant-option', container);
-        var hiddenInput = $('#selectedVariantId');
-        var selectedAttrs = {};
-        var allVariants = window.__productVariants;
+        var byId = {};
+        try {
+            (JSON.parse(variantsEl.textContent) || []).forEach(function (v) { byId[v.id] = v; });
+        } catch (e) {}
+        if (Object.keys(byId).length === 0) return;
 
-        function getMatchingVariants() {
-            return allVariants.filter(function (v) {
-                for (var attr in selectedAttrs) {
-                    if (selectedAttrs[attr] && v.attrs[attr] !== selectedAttrs[attr]) return false;
-                }
-                return true;
-            });
+        var thumbsWrap = $('#galleryThumbs');
+        var priceEl = $('#currentPrice');
+        var basePriceEl = $('#basePrice');
+        var discountEl = $('#discountBadge');
+        var galleryDiscount = $('#galleryBadgeDiscount');
+        var stockEl = $('#stockStatus');
+        var qtyInput = $('#qtyInput');
+        var addBtn = $('#addToCartBtn');
+        var specColor = $('#specColor');
+        var specStock = $('#specStock');
+        var specStatus = $('#specStatus');
+        var specBasePrice = $('#specBasePrice');
+        var specPrice = $('#specPrice');
+        var specDisc = $('#specDiscount');
+
+        var STATUS_LABELS = {
+            'in_stock': 'В наличии',
+            'out_of_stock': 'Нет в наличии',
+            'preorder': 'Предзаказ',
+        };
+
+        function statusClass(status) {
+            if (status === 'preorder') return 'status--warn';
+            return status === 'in_stock' ? 'status--ok' : 'status--bad';
         }
 
-        function updateUI() {
-            var matching = getMatchingVariants();
-
-            options.forEach(function (btn) {
-                var attr = btn.closest('.mod__options').getAttribute('data-attribute');
-                var val = btn.getAttribute('data-value');
-                var variantIds = (btn.getAttribute('data-variant-ids') || '').split(',').filter(Boolean);
-
-                var isAvailable = matching.some(function (v) {
-                    return v.attrs[attr] === val && v.stock > 0;
-                });
-
-                btn.classList.toggle('is-disabled', !isAvailable);
-
-                if (selectedAttrs[attr] === val) {
-                    btn.classList.add('is-active');
-                } else {
-                    btn.classList.remove('is-active');
-                }
+        function render(v) {
+            if (!v) return;
+            swatches.forEach(function (s) {
+                s.classList.toggle('is-current', s.getAttribute('data-variant-id') === String(v.id));
             });
 
-            if (matching.length === 1) {
-                var v = matching[0];
-                hiddenInput.value = v.id;
+            // Галерея: обновляем главное фото и пересобираем миниатюры
+            var mainImgTmp = $('#mainImage');
+            var gallery = $('#galleryMain');
+            if (thumbsWrap && gallery && v.images.length) {
+                if (mainImgTmp) {
+                    var url0 = v.images[0];
+                    if (mainImgTmp.getAttribute('src') !== url0) {
+                        var next = document.createElement('img');
+                        next.src = url0;
+                        next.alt = v.name || '';
+                        next.className = 'is-active';
+                        next.id = 'mainImage';
+                        mainImgTmp.parentNode.insertBefore(next, mainImgTmp.nextSibling);
+                        mainImgTmp.classList.remove('is-active');
+                        setTimeout(function () {
+                            if (mainImgTmp.parentNode) mainImgTmp.parentNode.removeChild(mainImgTmp);
+                        }, 350);
+                    }
+                }
 
-                var priceEl = $('#currentPrice');
-                var oldPriceEl = $('#oldPrice');
-                var discountEl = $('#discountBadge');
-                var stockEl = $('#stockStatus');
-                var qtyInput = $('#qtyInput');
+                thumbsWrap.innerHTML = '';
+                v.images.forEach(function (src, i) {
+                    var b = document.createElement('button');
+                    b.type = 'button';
+                    b.className = 'thumb' + (i === 0 ? ' is-active' : '');
+                    b.setAttribute('data-image', src);
+                    b.setAttribute('data-alt', v.name || '');
+                    b.setAttribute('role', 'option');
+                    b.setAttribute('aria-label', 'Фото ' + (i + 1));
+                    var im = document.createElement('img');
+                    im.src = src;
+                    im.alt = '';
+                    im.setAttribute('loading', 'lazy');
+                    b.appendChild(im);
+                    thumbsWrap.appendChild(b);
+                });
+                thumbsWrap.style.display = v.images.length > 1 ? '' : 'none';
+                bindGalleryThumbs();
+            }
 
-                if (priceEl) priceEl.textContent = v.price + ' ₽';
-                if (oldPriceEl) {
-                    if (v.old_price) {
-                        oldPriceEl.textContent = v.old_price + ' ₽';
-                        oldPriceEl.style.display = '';
-                    } else {
-                        oldPriceEl.style.display = 'none';
-                    }
-                }
-                if (discountEl) {
-                    if (v.discount > 0) {
-                        discountEl.textContent = '-' + v.discount + '%';
-                        discountEl.style.display = '';
-                    } else {
-                        discountEl.style.display = 'none';
-                    }
-                }
-                if (stockEl) {
-                    if (v.stock > 0) {
-                        stockEl.className = 'status status--ok';
-                        stockEl.textContent = '● В наличии (' + v.stock + ' шт.)';
-                    } else {
-                        stockEl.className = 'status status--bad';
-                        stockEl.textContent = '● Нет в наличии';
-                    }
-                }
-                if (qtyInput) {
-                    qtyInput.max = v.stock || 999;
+            if (priceEl) priceEl.textContent = v.sale_price + ' ₽';
+            if (basePriceEl) {
+                if (v.discount > 0) {
+                    basePriceEl.textContent = v.price + ' ₽';
+                    basePriceEl.style.display = '';
+                } else {
+                    basePriceEl.style.display = 'none';
                 }
             }
+            if (discountEl) {
+                if (v.discount > 0) {
+                    discountEl.textContent = '-' + v.discount + '%';
+                    discountEl.style.display = '';
+                } else {
+                    discountEl.style.display = 'none';
+                }
+            }
+            if (galleryDiscount) {
+                if (v.discount > 0) {
+                    galleryDiscount.textContent = '-' + v.discount + '%';
+                    galleryDiscount.style.display = '';
+                } else {
+                    galleryDiscount.style.display = 'none';
+                }
+            }
+            if (stockEl) {
+                stockEl.className = 'status ' + statusClass(v.status);
+                if (v.status === 'preorder') {
+                    stockEl.textContent = '● Предзаказ';
+                } else if (v.stock > 0) {
+                    stockEl.textContent = '● В наличии (' + v.stock + ' шт.)';
+                } else {
+                    stockEl.textContent = '● Нет в наличии';
+                }
+            }
+            if (qtyInput) qtyInput.max = Math.max(v.stock, 1) || 999;
+            if (addBtn) {
+                addBtn.setAttribute('data-variant-id', String(v.id));
+                addBtn.setAttribute('data-product-name', v.name || 'Товар');
+            }
+
+            if (specBasePrice) specBasePrice.textContent = v.price + ' ₽';
+            if (specPrice) specPrice.textContent = v.sale_price + ' ₽';
+            if (specDisc) specDisc.textContent = v.discount ? v.discount + '%' : '—';
+            if (specColor) specColor.textContent = v.color;
+            if (specStock) specStock.textContent = v.stock + ' шт.';
+            if (specStatus) specStatus.textContent = STATUS_LABELS[v.status] || v.status || '—';
         }
 
-        options.forEach(function (btn) {
-            btn.addEventListener('click', function () {
-                var attr = btn.closest('.mod__options').getAttribute('data-attribute');
-                var val = btn.getAttribute('data-value');
-
-                if (selectedAttrs[attr] === val) {
-                    delete selectedAttrs[attr];
-                } else {
-                    selectedAttrs[attr] = val;
-                }
-                updateUI();
+        swatches.forEach(function (s) {
+            s.addEventListener('click', function () {
+                render(byId[s.getAttribute('data-variant-id')]);
             });
         });
     }
@@ -432,15 +474,13 @@
             var addBtn = target.closest('.js-add-to-cart');
             if (addBtn) {
                 e.preventDefault();
-                var id = addBtn.getAttribute('data-product-id');
+                var id = addBtn.getAttribute('data-variant-id');
                 var name = addBtn.getAttribute('data-product-name') || 'Товар';
                 var qty = 1;
                 var qInput = $('#qtyInput');
                 if (qInput) qty = Math.max(1, parseInt(qInput.value, 10) || 1);
-                var variantId = null;
-                var variantInput = $('#selectedVariantId');
-                if (variantInput && variantInput.value) variantId = variantInput.value;
-                addToCart(id, name, qty, variantId);
+                if (!id) return;
+                addToCart(id, name, qty);
                 return;
             }
         });
@@ -461,7 +501,7 @@
     document.addEventListener('DOMContentLoaded', function () {
         initBurger();
         initSlider();
-        initGallery();
+        bindGalleryThumbs();
         initQtyCounter();
         initRatingPicker();
         initFilters();

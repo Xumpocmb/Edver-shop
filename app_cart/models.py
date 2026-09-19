@@ -3,7 +3,7 @@ from django.db import models
 from django.conf import settings
 from django.utils import timezone
 
-from app_catalog.models import Product
+from app_catalog.models import ProductVariant
 
 
 class PromoCode(models.Model):
@@ -129,14 +129,6 @@ class Cart(models.Model):
         return sum(item.line_total for item in self.items.all())
 
     @property
-    def total_discount(self):
-        total = Decimal(0)
-        for item in self.items.all():
-            if item.old_line_total:
-                total += item.old_line_total - item.line_total
-        return total
-
-    @property
     def promo_discount(self):
         if self.promo_code and self.promo_code.is_valid:
             return self.promo_code.calc_discount(self.total_price)
@@ -157,10 +149,11 @@ class CartItem(models.Model):
         related_name='items',
         verbose_name="Корзина"
     )
-    product = models.ForeignKey(
-        Product,
+    variant = models.ForeignKey(
+        ProductVariant,
         on_delete=models.CASCADE,
-        verbose_name="Товар"
+        related_name='cart_items',
+        verbose_name="Вариант (цвет)"
     )
     quantity = models.PositiveIntegerField(default=1, verbose_name="Количество")
     added_at = models.DateTimeField(auto_now_add=True)
@@ -168,33 +161,22 @@ class CartItem(models.Model):
     class Meta:
         verbose_name = "Элемент корзины"
         verbose_name_plural = "Элементы корзины"
-        unique_together = ['cart', 'product']
+        unique_together = ['cart', 'variant']
 
     def __str__(self):
-        return f"{self.product.name} ({self.product.color}) x{self.quantity}"
+        return f"{self.variant.product.name} ({self.variant.color}) x{self.quantity}"
 
     @property
     def unit_price(self):
-        return self.product.price
-
-    @property
-    def old_unit_price(self):
-        return self.product.old_price
+        return self.variant.sale_price
 
     @property
     def line_total(self):
         return self.unit_price * self.quantity
 
     @property
-    def old_line_total(self):
-        old = self.old_unit_price
-        if old and old > self.unit_price:
-            return old * self.quantity
-        return None
-
-    @property
     def available_stock(self):
-        return self.product.stock
+        return self.variant.stock
 
 
 class Order(models.Model):
@@ -275,9 +257,9 @@ class OrderItem(models.Model):
         Order, on_delete=models.CASCADE, related_name='items',
         verbose_name='Заказ',
     )
-    product = models.ForeignKey(
-        Product, on_delete=models.SET_NULL, null=True,
-        verbose_name='Товар',
+    variant = models.ForeignKey(
+        ProductVariant, on_delete=models.SET_NULL, null=True,
+        verbose_name='Вариант (цвет)',
     )
     product_name = models.CharField(max_length=300, verbose_name='Название товара')
     product_color = models.CharField(max_length=100, verbose_name='Цвет')

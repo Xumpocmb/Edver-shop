@@ -1,7 +1,7 @@
+from decimal import Decimal, ROUND_HALF_UP
+
 from django.db import models
 from django.urls import reverse
-from django.utils.text import slugify
-import uuid
 
 
 class Category(models.Model):
@@ -71,26 +71,15 @@ class Brand(models.Model):
 
 
 class Product(models.Model):
-    STATUS_CHOICES = [
-        ('in_stock', 'В наличии'),
-        ('out_of_stock', 'Нет в наличии'),
-        ('preorder', 'Предзаказ'),
-    ]
+    """Модель товара: одна модель = один URL, цвета — это варианты."""
 
     GENDER_CHOICES = [
         ('M', 'Мужской'),
         ('F', 'Женский'),
     ]
 
-    name = models.CharField(max_length=500, verbose_name="Название товара")
+    name = models.CharField(max_length=500, verbose_name="Название модели")
     slug = models.SlugField(max_length=500, unique=True, db_index=True)
-    sku = models.CharField(
-        max_length=100,
-        unique=True,
-        blank=True,
-        null=True,
-        verbose_name="Артикул"
-    )
     category = models.ForeignKey(
         Category,
         on_delete=models.PROTECT,
@@ -105,7 +94,6 @@ class Product(models.Model):
         related_name='products',
         verbose_name="Бренд"
     )
-
     gender = models.CharField(
         max_length=1,
         choices=GENDER_CHOICES,
@@ -115,13 +103,6 @@ class Product(models.Model):
         db_index=True,
         verbose_name="Пол (пусто — унисекс)",
     )
-
-    group_id = models.UUIDField(
-        default=uuid.uuid4,
-        db_index=True,
-        verbose_name="Группа товаров (одна модель — разные цвета)"
-    )
-
     short_description = models.TextField(
         blank=True,
         verbose_name="Краткое описание"
@@ -129,36 +110,6 @@ class Product(models.Model):
     description = models.TextField(
         blank=True,
         verbose_name="Подробное описание"
-    )
-    price = models.DecimalField(
-        max_digits=12,
-        decimal_places=2,
-        verbose_name="Цена продажи"
-    )
-    cost_price = models.DecimalField(
-        max_digits=12,
-        decimal_places=2,
-        null=True,
-        blank=True,
-        verbose_name="Себестоимость"
-    )
-    old_price = models.DecimalField(
-        max_digits=12,
-        decimal_places=2,
-        null=True,
-        blank=True,
-        verbose_name="Старая цена"
-    )
-    discount_percent = models.SmallIntegerField(
-        default=0,
-        verbose_name="Процент скидки"
-    )
-    stock = models.PositiveIntegerField(default=0, verbose_name="Остаток")
-    status = models.CharField(
-        max_length=20,
-        choices=STATUS_CHOICES,
-        default='in_stock',
-        verbose_name="Статус"
     )
     weight = models.DecimalField(
         max_digits=10,
@@ -177,12 +128,6 @@ class Product(models.Model):
         blank=True,
         verbose_name="Материал"
     )
-    color = models.CharField(
-        max_length=100,
-        blank=True,
-        verbose_name="Цвет"
-    )
-
     views_count = models.PositiveIntegerField(default=0, verbose_name="Просмотры")
     sales_count = models.PositiveIntegerField(default=0, verbose_name="Продано")
 
@@ -201,9 +146,7 @@ class Product(models.Model):
         indexes = [
             models.Index(fields=['slug']),
             models.Index(fields=['category']),
-            models.Index(fields=['price']),
             models.Index(fields=['-created_at']),
-            models.Index(fields=['group_id']),
         ]
 
     def save(self, *args, **kwargs):
@@ -217,30 +160,103 @@ class Product(models.Model):
         super().save(*args, **kwargs)
 
     def __str__(self):
-        return f"{self.name} — {self.color} ({self.price})"
+        return self.name
 
     def get_absolute_url(self):
         return reverse('app_catalog:product_detail', kwargs={'slug': self.slug})
 
     @property
-    def discount_percent_display(self):
-        """Процент скидки для отображения (из поля или вычисляемый)."""
-        if self.discount_percent > 0:
-            return self.discount_percent
-        if self.old_price and self.old_price > self.price:
-            return int(100 - (self.price / self.old_price * 100))
-        return 0
+    def active_variants(self):
+        return [v for v in self.variants.all() if v.is_active]
 
     @property
-    def effective_old_price(self):
-        """Старая цена: явная old_price или вычисленная из скидки."""
-        if self.old_price and self.old_price > self.price:
-            return self.old_price
-        if self.discount_percent > 0:
-            return (self.price / (1 - self.discount_percent / 100)).quantize(
-                self.price, rounding=None
-            )
+    def main_variant(self):
+        """Вариант для витрины (первый активный по порядку)."""
+        for v in self.variants.all():
+            if v.is_active:
+                return v
         return None
+
+    @property
+    def price_min(self):
+        prices = [v.price for v in self.active_variants if v.price is not None]
+        return min(prices) if prices else None
+
+    @property
+    def price_max(self):
+        prices = [v.price for v in self.active_variants if v.price is not None]
+        return max(prices) if prices else None
+
+
+class ProductVariant(models.Model):
+    """Конкретный цвет товара: цена, остаток и фото."""
+
+    STATUS_CHOICES = [
+        ('in_stock', 'В наличии'),
+        ('out_of_stock', 'Нет в наличии'),
+        ('preorder', 'Предзаказ'),
+    ]
+
+    product = models.ForeignKey(
+        Product,
+        on_delete=models.CASCADE,
+        related_name='variants',
+        verbose_name="Товар"
+    )
+    color = models.CharField(max_length=100, verbose_name="Цвет")
+    color_hex = models.CharField(
+        max_length=7,
+        blank=True,
+        default='',
+        verbose_name="Hex цвета",
+        help_text="Например #d32f2f. Используется для свотчей."
+    )
+    price = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        verbose_name="Цена продажи"
+    )
+    discount_percent = models.SmallIntegerField(
+        default=0,
+        verbose_name="Процент скидки"
+    )
+    stock = models.PositiveIntegerField(default=0, verbose_name="Остаток")
+    status = models.CharField(
+        max_length=20,
+        choices=STATUS_CHOICES,
+        default='in_stock',
+        verbose_name="Статус"
+    )
+    order = models.PositiveIntegerField(default=0, verbose_name="Порядок")
+    is_active = models.BooleanField(default=True, verbose_name="Активен")
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name="Создан")
+    updated_at = models.DateTimeField(auto_now=True, verbose_name="Обновлён")
+
+    class Meta:
+        verbose_name = "Вариант товара (цвет)"
+        verbose_name_plural = "Варианты товара (цвета)"
+        ordering = ['order', 'id']
+        unique_together = ['product', 'color']
+        indexes = [
+            models.Index(fields=['product']),
+            models.Index(fields=['price']),
+        ]
+
+    def __str__(self):
+        return f"{self.product.name} — {self.color}"
+
+    @property
+    def discount_percent_display(self):
+        """Процент скидки для отображения."""
+        return self.discount_percent
+
+    @property
+    def sale_price(self):
+        """Цена со скидкой: цена минус процент скидки от цены."""
+        if self.discount_percent > 0:
+            factor = (Decimal(100) - self.discount_percent) / 100
+            return (self.price * factor).quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
+        return self.price
 
     @property
     def main_image(self):
@@ -249,27 +265,13 @@ class Product(models.Model):
             first = self.images.first()
         return first
 
-    def get_siblings(self):
-        """Все цвета той же модели (без текущего товара)."""
-        return Product.objects.filter(
-            group_id=self.group_id,
-            is_active=True,
-        ).exclude(id=self.id).select_related('brand').prefetch_related('images')
-
-    def get_all_colors(self):
-        """Все цвета той же модели (включая текущий)."""
-        return Product.objects.filter(
-            group_id=self.group_id,
-            is_active=True,
-        ).select_related('brand').prefetch_related('images')
-
 
 class ProductImage(models.Model):
-    product = models.ForeignKey(
-        Product,
+    variant = models.ForeignKey(
+        ProductVariant,
         on_delete=models.CASCADE,
         related_name='images',
-        verbose_name="Товар"
+        verbose_name="Вариант (цвет)"
     )
     image = models.ImageField(
         upload_to='products/%Y/%m/',
@@ -289,4 +291,4 @@ class ProductImage(models.Model):
         ordering = ['-is_main', 'order']
 
     def __str__(self):
-        return f"Изображение для {self.product.name}"
+        return f"Изображение для {self.variant}"

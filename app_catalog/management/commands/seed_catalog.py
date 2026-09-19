@@ -1,10 +1,11 @@
-import uuid
 from decimal import Decimal
 from django.core.management.base import BaseCommand
 from django.core.files.base import ContentFile
 from django.utils.text import slugify
 
-from app_catalog.models import Brand, Category, Product, ProductImage
+from app_catalog.models import Brand, Category, Product, ProductVariant, ProductImage
+from app_cart.models import PromoCode
+from app_home.models import SiteReview
 
 
 SVG_PLACEHOLDER = """<svg xmlns="http://www.w3.org/2000/svg" width="{w}" height="{h}" viewBox="0 0 {w} {h}">
@@ -38,12 +39,27 @@ def _svg(name, color_idx=0):
     return SVG_PLACEHOLDER.format(w=800, h=800, c1=c1, c2=c2, label=name[:20])
 
 
+TRANSLIT_DICT = {
+    'а': 'a', 'б': 'b', 'в': 'v', 'г': 'g', 'д': 'd', 'е': 'e', 'ё': 'e',
+    'ж': 'zh', 'з': 'z', 'и': 'i', 'й': 'y', 'к': 'k', 'л': 'l', 'м': 'm',
+    'н': 'n', 'о': 'o', 'п': 'p', 'р': 'r', 'с': 's', 'т': 't', 'у': 'u',
+    'ф': 'f', 'х': 'h', 'ц': 'ts', 'ч': 'ch', 'ш': 'sh', 'щ': 'shch',
+    'ъ': '', 'ы': 'y', 'ь': '', 'э': 'e', 'ю': 'yu', 'я': 'ya',
+}
+
+_TRANSLIT_TABLE = str.maketrans(TRANSLIT_DICT)
+
+
+def _translit(text):
+    return text.lower().translate(_TRANSLIT_TABLE)
+
+
 def _slug(text):
-    return slugify(text, allow_unicode=True)
+    return slugify(_translit(text))
 
 
 class Command(BaseCommand):
-    help = "Seed demo data: 8 categories, 50 product models with gender & color groups"
+    help = "Seed demo data: 8 categories, 50 product models with color variants"
 
     def add_arguments(self, parser):
         parser.add_argument('--flush', action='store_true',
@@ -52,9 +68,12 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         if options.get('flush'):
             ProductImage.objects.all().delete()
+            ProductVariant.objects.all().delete()
             Product.objects.all().delete()
             Category.objects.all().delete()
             Brand.objects.all().delete()
+            PromoCode.objects.all().delete()
+            SiteReview.objects.all().delete()
             self.stdout.write(self.style.WARNING('Flushed catalog data'))
 
         # ---------- Brands ----------
@@ -101,10 +120,15 @@ class Command(BaseCommand):
             cat_objs[slug] = c
 
         # =====================================================
-        # ТОВАРЫ — 50 моделей (групп цветов). Каждая группа = одна
-        # модель товара в разных цветах (group_id одинаковый).
+        # ТОВАРЫ — 50 моделей в разных цветах. Каждая группа = одна
+        # модель Product + ProductVariant на каждый цвет.
         # Формат: (category_slug, brand, name, gender, color, material,
-        #          price, old_price, dims, weight, flags)
+        #          final_price, base_price, dims, weight, flags)
+        #   final_price — продажная цена без скидки,
+        #   base_price  — базовая цена «до скидки». Если она больше
+        #                 final_price, варианту ставится price=base_price и
+        #                 discount_percent, чтобы цена со скидкой была
+        #                 близка к final_price.
         # =====================================================
 
         products_seed = [
@@ -585,82 +609,182 @@ class Command(BaseCommand):
             },
         ]
 
+        # Цвета для нити свотчей (color_hex на варианте)
+        COLOR_HEX = {
+            'Бордовый': '#8b0000',
+            'Чёрный': '#1f1f1f',
+            'Синий': '#1565c0',
+            'Кремовый': '#f5e6c8',
+            'Розовый': '#f06292',
+            'Тёмно-коричневый': '#4e342e',
+            'Зелёный': '#2e7d32',
+            'Белый': '#fafafa',
+            'Серый': '#9e9e9e',
+            'Тёмно-синий': '#1a2c4e',
+            'Коричневый': '#795548',
+            'Бежевый': '#d7c4a1',
+            'Тёмно-зелёный': '#1b5e20',
+            'Красный': '#d32f2f',
+            'Серебристый': '#b0b4ba',
+            'Фиолетовый': '#6a1b9a',
+        }
+
         product_idx = 0
+        variant_idx = 0
         for group_data in products_seed:
-            group_uuid = uuid.uuid4()
-            for (cat_slug, brand_name, pname, gender, color, material,
-                 price, old_price, dims, weight, flags) in group_data['items']:
+            items = group_data['items']
+            if not items:
+                continue
 
-                category = cat_objs.get(cat_slug)
-                if not category:
-                    self.stderr.write(f'Skip {pname}: no category {cat_slug}')
-                    continue
-                brand = brands.get(brand_name)
+            first = items[0]
+            cat_slug, brand_name, pname, gender, _color, material, _final, _base, dims, weight, flags = first
 
-                gender_label = 'Унисекс' if gender is None else ('Мужской' if gender == 'M' else 'Женский')
+            category = cat_objs.get(cat_slug)
+            if not category:
+                self.stderr.write(f'Skip {pname}: no category {cat_slug}')
+                continue
+            brand = brands.get(brand_name)
 
-                slug_base = _slug(f'{pname} {color}')
-                slug = slug_base
-                counter = 1
-                while Product.objects.filter(slug=slug).exists():
-                    slug = f'{slug_base}-{counter}'
-                    counter += 1
+            gender_label = 'Унисекс' if gender is None else ('Мужской' if gender == 'M' else 'Женский')
 
-                p, created = Product.objects.get_or_create(
-                    slug=slug,
+            slug = _slug(pname)
+            if Product.objects.filter(slug=slug).exists():
+                slug = f'{slug}-{cat_slug}'
+
+            p, created = Product.objects.get_or_create(
+                slug=slug,
+                defaults={
+                    'name': pname,
+                    'category': category,
+                    'brand': brand,
+                    'gender': gender,
+                    'short_description': f'{pname} — качественное изделие от бренда {brand_name}. '
+                                         f'Материал: {material}.',
+                    'description': (
+                        f'{pname} — модель от бренда {brand_name}.\n\n'
+                        f'Основные характеристики:\n'
+                        f'• Материал: {material}\n'
+                        f'• Размеры: {dims}\n'
+                        f'• Вес: {weight} кг\n'
+                        f'• Пол: {gender_label}\n\n'
+                        f'Идеальный вариант для повседневного использования или путешествий. '
+                        f'Качественная фурнитура, усиленные швы, гарантия производителя.'
+                    ),
+                    'material': material,
+                    'dimensions': dims,
+                    'weight': weight,
+                    **flags,
+                }
+            )
+            if not created:
+                self.stderr.write(f'SKIP (exists): {pname}')
+                continue
+
+            for v_idx, (v_cat, v_brand, v_pname, v_gender, color, v_material,
+                        v_final, v_base, v_dims, v_weight, v_flags) in enumerate(items):
+                if v_base and v_base > v_final:
+                    base_price = v_base
+                    discount = int((v_base - v_final) / v_base * 100)
+                else:
+                    base_price = v_final
+                    discount = 0
+                variant, v_created = ProductVariant.objects.get_or_create(
+                    product=p,
+                    color=color,
                     defaults={
-                        'name': pname,
-                        'category': category,
-                        'brand': brand,
-                        'gender': gender,
-                        'group_id': group_uuid,
-                        'price': price,
-                        'old_price': old_price,
-                        'cost_price': (price * Decimal('0.6')).quantize(price),
-                        'discount_percent': (int((old_price - price) / old_price * 100) if old_price and old_price > price else 0),
+                        'color_hex': COLOR_HEX.get(color, '#888888'),
+                        'price': base_price,
+                        'discount_percent': discount,
                         'stock': 15 + product_idx % 30,
-                        'sku': f'EDV-{1000 + product_idx:04d}',
-                        'short_description': f'{pname} — качественное изделие от бренда {brand_name}. '
-                                             f'Материал: {material}. Цвет: {color}.',
-                        'description': (
-                            f'{pname} — модель от бренда {brand_name}.\n\n'
-                            f'Основные характеристики:\n'
-                            f'• Материал: {material}\n'
-                            f'• Цвет: {color}\n'
-                            f'• Размеры: {dims}\n'
-                            f'• Вес: {weight} кг\n'
-                            f'• Пол: {gender_label}\n\n'
-                            f'Идеальный вариант для повседневного использования или путешествий. '
-                            f'Качественная фурнитура, усиленные швы, гарантия производителя.'
-                        ),
-                        'color': color,
-                        'material': material,
-                        'dimensions': dims,
-                        'weight': weight,
+                        'order': v_idx,
                         'status': 'in_stock',
-                        **flags,
                     }
                 )
-                if not created:
+                if not v_created:
                     continue
 
                 for img_pos in range(3):
-                    svg_bytes = _svg(pname[:18] + f' [{img_pos+1}]', product_idx + img_pos).encode('utf-8')
+                    svg_bytes = _svg(f'{pname} {color} [{img_pos + 1}]', product_idx + variant_idx + img_pos).encode('utf-8')
                     ProductImage.objects.create(
-                        product=p,
-                        image=ContentFile(svg_bytes, name=f'{slug}-{img_pos+1}.svg'),
+                        variant=variant,
+                        image=ContentFile(svg_bytes, name=f'{variant.id}-{v_idx}-{img_pos + 1}.svg'),
                         alt=f'{pname} {color} — фото {img_pos + 1}',
                         is_main=(img_pos == 0),
                         order=img_pos,
                     )
+                variant_idx += 1
 
-                self.stdout.write(self.style.SUCCESS(f'  {p.name} — {p.color}'))
-                product_idx += 1
+            self.stdout.write(
+                self.style.SUCCESS(f'  {p.name} — {p.variants.count()} цвет(ов)')
+            )
+            product_idx += 1
 
-        groups = Product.objects.values('group_id').distinct().count()
         self.stdout.write(self.style.SUCCESS(
             f'\nSeed complete: Brands={Brand.objects.count()}, '
             f'Categories={Category.objects.count()}, '
-            f'Products={Product.objects.count()} (моделей/групп цветов: {groups}), '
+            f'Products={Product.objects.count()} (моделей), '
+            f'Variants={ProductVariant.objects.count()} (цветов), '
             f'Images={ProductImage.objects.count()}.'
         ))
+
+        # ---------- Promo codes ----------
+        promos_data = [
+            ('SALE10', 'percent', Decimal('10'), Decimal('3000'), 0),
+            ('SALE20', 'percent', Decimal('20'), Decimal('10000'), 0),
+            ('WELCOME15', 'percent', Decimal('15'), Decimal('5000'), 0),
+        ]
+        for code, dtype, value, min_sum, max_uses in promos_data:
+            PromoCode.objects.get_or_create(
+                code=code,
+                defaults={
+                    'discount_type': dtype,
+                    'discount_value': value,
+                    'min_order_sum': min_sum,
+                    'max_uses': max_uses,
+                }
+            )
+        self.stdout.write(self.style.SUCCESS(
+            f'Promo codes: {PromoCode.objects.count()}'
+        ))
+
+        # ---------- Site reviews ----------
+        reviews_data = [
+            ('Анна', 'Заказывала сумку — всё пришло быстро, упаковка отличная.', 5),
+            ('Дмитрий', 'Хороший выбор чемоданов по адекватным ценам.', 4),
+            ('Ольга', 'Кошелёк отличного качества, выглядит дороже своей цены.', 5),
+        ]
+        for name, text, rating in reviews_data:
+            SiteReview.objects.get_or_create(
+                name=name,
+                text=text,
+                defaults={'rating': rating, 'is_published': True},
+            )
+        self.stdout.write(self.style.SUCCESS(
+            f'Site reviews: {SiteReview.objects.count()}'
+        ))
+
+        # ---------- Нормализация слагов: только латиница ----------
+        # Чинит товары/бренды, созданные старой версией сида с кириллицей.
+        changed = 0
+        for obj in Brand.objects.all():
+            new = _slug(obj.name)
+            if obj.slug != new:
+                obj.slug = new
+                obj.save(update_fields=['slug'])
+                changed += 1
+        for obj in Category.objects.all():
+            new = _slug(obj.name)
+            if obj.slug != new:
+                obj.slug = new
+                obj.save(update_fields=['slug'])
+                changed += 1
+        for obj in Product.objects.all().select_related('category'):
+            new = _slug(obj.name)
+            if Product.objects.filter(slug=new).exclude(pk=obj.pk).exists():
+                new = f'{new}-{obj.category.slug}'
+            if obj.slug != new:
+                obj.slug = new
+                obj.save(update_fields=['slug'])
+                changed += 1
+        if changed:
+            self.stdout.write(self.style.SUCCESS(f'Slugs normalized to latin: {changed}'))

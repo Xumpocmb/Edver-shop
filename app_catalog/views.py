@@ -1,61 +1,62 @@
 from django.shortcuts import render, get_object_or_404
 from django.core.paginator import Paginator
-from django.db.models import Q, Avg, Min, Max
+from django.db.models import Q, Min, Max
 
 from .models import Product, Category
 
 
 def _apply_filters(queryset, request):
     get = request.GET
+    qs = queryset.filter(variants__is_active=True)
 
     price_from = get.get('price_from')
     price_to = get.get('price_to')
     if price_from:
         try:
-            queryset = queryset.filter(price__gte=float(price_from))
+            qs = qs.filter(variants__price__gte=float(price_from))
         except (TypeError, ValueError):
             pass
     if price_to:
         try:
-            queryset = queryset.filter(price__lte=float(price_to))
+            qs = qs.filter(variants__price__lte=float(price_to))
         except (TypeError, ValueError):
             pass
+    if price_from or price_to:
+        qs = qs.distinct()
 
     gender = get.get('gender')
     if gender in ('M', 'F'):
-        queryset = queryset.filter(
+        qs = qs.filter(
             Q(gender=gender) | Q(gender__isnull=True)
         )
 
     in_stock = get.get('in_stock')
     if in_stock == '1':
-        queryset = queryset.filter(status='in_stock', stock__gt=0)
+        qs = qs.filter(variants__status='in_stock', variants__stock__gt=0).distinct()
 
     on_sale = get.get('on_sale')
     if on_sale == '1':
-        queryset = queryset.filter(is_sale=True)
+        qs = qs.filter(is_sale=True)
 
     sort = get.get('sort', 'newest')
     if sort == 'price_asc':
-        queryset = queryset.order_by('price')
+        qs = qs.annotate(_display_price=Min('variants__price')).order_by('_display_price', 'id')
     elif sort == 'price_desc':
-        queryset = queryset.order_by('-price')
+        qs = qs.annotate(_display_price=Min('variants__price')).order_by('-_display_price', 'id')
     elif sort == 'popular':
-        queryset = queryset.order_by('-sales_count', '-views_count')
+        qs = qs.order_by('-sales_count', '-views_count')
     else:
-        queryset = queryset.order_by('-created_at')
-    return queryset
+        qs = qs.order_by('-created_at')
+    return qs
 
 
 def _get_filter_context(request, base_qs, show_gender=True):
     categories = Category.objects.filter(is_active=True).order_by('order', 'name')
-    price_agg = base_qs.aggregate(min_p=Avg('price') * 0, max_p=Avg('price') * 0)
-    if base_qs.exists():
-        price_agg = base_qs.aggregate(Min('price'), Max('price'))
+    price_agg = base_qs.aggregate(min_price=Min('variants__price'), max_price=Max('variants__price'))
     return {
         'categories': categories,
-        'price_min': price_agg.get('price__min', 0) or 0,
-        'price_max': price_agg.get('price__max', 0) or 0,
+        'price_min': price_agg.get('min_price') or 0,
+        'price_max': price_agg.get('max_price') or 0,
         'current_sort': request.GET.get('sort', 'newest'),
         'current_price_from': request.GET.get('price_from', ''),
         'current_price_to': request.GET.get('price_to', ''),
@@ -66,8 +67,12 @@ def _get_filter_context(request, base_qs, show_gender=True):
     }
 
 
+def _prefetch_products(qs):
+    return qs.select_related('category', 'brand').prefetch_related('variants__images')
+
+
 def catalog_list(request):
-    qs = Product.objects.filter(is_active=True).select_related('category', 'brand').prefetch_related('images')
+    qs = _prefetch_products(Product.objects.filter(is_active=True))
     qs = _apply_filters(qs, request)
     ctx = _get_filter_context(request, qs)
 
@@ -89,9 +94,7 @@ def catalog_list(request):
 
 def category_detail(request, slug):
     category = get_object_or_404(Category, slug=slug, is_active=True)
-    qs = Product.objects.filter(
-        is_active=True, category=category
-    ).select_related('category', 'brand').prefetch_related('images')
+    qs = _prefetch_products(Product.objects.filter(is_active=True, category=category))
     qs = _apply_filters(qs, request)
     ctx = _get_filter_context(request, qs, show_gender=category.has_gender)
 
@@ -115,16 +118,15 @@ def category_detail(request, slug):
 
 def search_results(request):
     query = request.GET.get('q', '').strip()
-    qs = Product.objects.filter(is_active=True).select_related('category', 'brand').prefetch_related('images')
+    qs = _prefetch_products(Product.objects.filter(is_active=True))
     if query:
         qs = qs.filter(
             Q(name__icontains=query)
             | Q(short_description__icontains=query)
             | Q(description__icontains=query)
-            | Q(sku__icontains=query)
             | Q(category__name__icontains=query)
             | Q(brand__name__icontains=query)
-            | Q(color__icontains=query)
+            | Q(variants__color__icontains=query)
             | Q(material__icontains=query)
         ).distinct()
     qs = _apply_filters(qs, request)
@@ -152,22 +154,50 @@ def search_results(request):
 
 def product_detail(request, slug):
     product = get_object_or_404(
-        Product.objects.select_related('category', 'brand').prefetch_related('images'),
+        Product.objects.select_related('category', 'brand').prefetch_related('variants__images'),
         slug=slug, is_active=True
     )
 
     product.views_count += 1
     product.save(update_fields=['views_count'])
 
+    variants = [v for v in product.variants.all() if v.is_active]
+
+    selected = None
+    variant_param = request.GET.get('variant')
+    if variant_param:
+        for v in variants:
+            if str(v.id) == variant_param:
+                selected = v
+                break
+    if selected is None:
+        selected = product.main_variant
+
+    images = list(selected.images.all()) if selected else []
+
+    variants_data = [
+        {
+            'id': v.id,
+            'name': f'{product.name} {v.color}',
+            'color': v.color,
+            'hex': v.color_hex or '#cccccc',
+            'price': str(v.price),
+            'sale_price': str(v.sale_price),
+            'discount': v.discount_percent_display,
+            'stock': v.stock,
+            'status': v.status,
+            'images': [img.image.url for img in v.images.all()],
+        }
+        for v in variants
+    ]
+
     related = Product.objects.filter(
         is_active=True, category=product.category
-    ).exclude(id=product.id).select_related('brand').prefetch_related('images')[:8]
+    ).exclude(id=product.id).select_related('brand').prefetch_related('variants__images')[:8]
 
     cross_sell = Product.objects.filter(
         is_active=True, is_popular=True
-    ).exclude(id=product.id).select_related('brand').prefetch_related('images')[:4]
-
-    sibling_colors = product.get_siblings()
+    ).exclude(id=product.id).select_related('brand').prefetch_related('variants__images')[:4]
 
     crumbs = [('Каталог', '/catalog/')]
     crumbs.append((product.category.name, product.category.get_absolute_url()))
@@ -175,10 +205,12 @@ def product_detail(request, slug):
 
     context = {
         'product': product,
-        'images': product.images.all(),
+        'variants': variants,
+        'variant': selected,
+        'images': images,
+        'variants_data': variants_data,
         'related_products': related,
         'cross_sell_products': cross_sell,
-        'sibling_colors': sibling_colors,
         'breadcrumbs': crumbs,
         'page_title': product.name,
     }

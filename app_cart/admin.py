@@ -5,7 +5,7 @@ from .models import Cart, CartItem, PromoCode, Order, OrderItem, EvropochtaBranc
 class CartItemInline(admin.TabularInline):
     model = CartItem
     extra = 0
-    readonly_fields = ('product', 'quantity', 'added_at')
+    readonly_fields = ('variant', 'quantity', 'added_at')
 
 
 @admin.register(Cart)
@@ -31,7 +31,7 @@ class PromoCodeAdmin(admin.ModelAdmin):
 class OrderItemInline(admin.TabularInline):
     model = OrderItem
     extra = 0
-    readonly_fields = ('product', 'product_name', 'product_color', 'unit_price', 'quantity')
+    readonly_fields = ('variant', 'product_name', 'product_color', 'unit_price', 'quantity')
 
 
 @admin.register(Order)

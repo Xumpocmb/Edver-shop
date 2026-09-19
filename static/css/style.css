@@ -2301,12 +2301,6 @@ button {
     font-size: 1.05rem;
 }
 
-.cart-item__old-total {
-    font-size: .82rem;
-    color: var(--color-text-soft);
-    text-decoration: line-through;
-}
-
 .cart-item__remove {
     width: 32px;
     height: 32px;
@@ -2574,6 +2568,8 @@ button {
     cursor: pointer;
     transition: border-color .2s, transform .15s;
     text-decoration: none;
+    background: transparent;
+    font: inherit;
 }
 
 .color-swatch:hover {
@@ -2588,7 +2584,6 @@ button {
 
 .color-swatch.is-current {
     border-color: var(--color-border-strong);
-    cursor: default;
     opacity: .7;
 }
 
@@ -2614,4 +2609,20 @@ button {
 .color-swatch.is-active .color-swatch__label {
     color: var(--color-accent);
     font-weight: 700;
+}
+
+/* Мини-свотчи на карточке товара */
+.product-card__variants {
+    display: flex;
+    gap: .35rem;
+    align-items: center;
+    margin: .25rem 0 .5rem;
+}
+
+.product-card__swatch {
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    border: 1px solid var(--color-border);
+    box-shadow: inset 0 1px 2px rgba(0, 0, 0, .12);
 }
