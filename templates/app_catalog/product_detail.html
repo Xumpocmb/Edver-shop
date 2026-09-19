@@ -169,7 +169,7 @@
             </tr>{% endif %}
             <tr>
                 <th>Цвет</th>
-                <td id="specColor2">{{ variant.color }}</td>
+                <td id="specColor">{{ variant.color }}</td>
             </tr>
             {% if product.material %}<tr>
                 <th>Материал</th>
@@ -218,10 +218,14 @@
     {% if cross_sell_products %}
     <section class="container product-section">
         <h2 class="product-section__title">С этим товаром покупают</h2>
-        <div class="products-grid">
-            {% for p in cross_sell_products %}
-            {% include 'app_catalog/_product_card.html' with product=p %}
-            {% endfor %}
+        <div class="cross-sell">
+            <div class="cross-sell__track" aria-label="С этим товаром покупают">
+                {% for p in cross_sell_products %}
+                <div class="cross-sell__item">
+                    {% include 'app_catalog/_product_card.html' with product=p %}
+                </div>
+                {% endfor %}
+            </div>
         </div>
     </section>
     {% endif %}

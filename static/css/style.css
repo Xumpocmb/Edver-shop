@@ -921,6 +921,44 @@ button {
     text-decoration: line-through;
 }
 
+/* ====== CROSS-SELL ====== */
+.cross-sell__track {
+    display: flex;
+    gap: 1rem;
+    overflow-x: auto;
+    scroll-snap-type: x proximity;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: .5rem;
+    scrollbar-width: thin;
+    scrollbar-color: var(--color-border-strong) transparent;
+}
+
+.cross-sell__track::-webkit-scrollbar {
+    height: 6px;
+}
+.cross-sell__track::-webkit-scrollbar-thumb {
+    background: var(--color-border-strong);
+    border-radius: 3px;
+}
+.cross-sell__track::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.cross-sell__item {
+    flex: 0 0 260px;
+    scroll-snap-align: start;
+}
+
+.cross-sell__item .product-card {
+    height: 100%;
+}
+
+@media (max-width: 640px) {
+    .cross-sell__item {
+        flex-basis: 210px;
+    }
+}
+
 /* ====== ADVANTAGES ====== */
 .advantages-grid {
     display: grid;
