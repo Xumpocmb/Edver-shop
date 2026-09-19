@@ -30,6 +30,14 @@ def _apply_filters(queryset, request):
             Q(gender=gender) | Q(gender__isnull=True)
         )
 
+    colors = get.getlist('color')
+    if colors:
+        qs = qs.filter(variants__color__in=colors).distinct()
+
+    materials = get.getlist('material')
+    if materials:
+        qs = qs.filter(material__in=materials)
+
     in_stock = get.get('in_stock')
     if in_stock == '1':
         qs = qs.filter(variants__status='in_stock', variants__stock__gt=0).distinct()
@@ -61,10 +69,29 @@ def _get_filter_context(request, base_qs, show_gender=True):
         'current_price_from': request.GET.get('price_from', ''),
         'current_price_to': request.GET.get('price_to', ''),
         'current_gender': request.GET.get('gender', ''),
+        'current_colors': request.GET.getlist('color'),
+        'current_materials': request.GET.getlist('material'),
         'in_stock_checked': request.GET.get('in_stock') == '1',
         'on_sale_checked': request.GET.get('on_sale') == '1',
         'show_gender_filter': show_gender,
     }
+
+
+def _get_filter_options(qs):
+    """Доступные для фильтрации цвета и материалы (в контексте набора товаров)."""
+    colors = list(
+        qs.filter(variants__is_active=True)
+          .values_list('variants__color', flat=True)
+          .distinct()
+          .order_by('variants__color')
+    )
+    materials = list(
+        qs.exclude(material__isnull=True).exclude(material='')
+          .values_list('material', flat=True)
+          .distinct()
+          .order_by('material')
+    )
+    return colors, materials
 
 
 def _prefetch_products(qs):
@@ -73,6 +100,7 @@ def _prefetch_products(qs):
 
 def catalog_list(request):
     qs = _prefetch_products(Product.objects.filter(is_active=True))
+    color_options, material_options = _get_filter_options(qs)
     qs = _apply_filters(qs, request)
     ctx = _get_filter_context(request, qs)
 
@@ -87,6 +115,8 @@ def catalog_list(request):
         'paginator': paginator,
         'breadcrumbs': breadcrumbs,
         'page_title': 'Каталог',
+        'color_options': color_options,
+        'material_options': material_options,
     }
     context.update(ctx)
     return render(request, 'app_catalog/catalog.html', context)
@@ -95,6 +125,7 @@ def catalog_list(request):
 def category_detail(request, slug):
     category = get_object_or_404(Category, slug=slug, is_active=True)
     qs = _prefetch_products(Product.objects.filter(is_active=True, category=category))
+    color_options, material_options = _get_filter_options(qs)
     qs = _apply_filters(qs, request)
     ctx = _get_filter_context(request, qs, show_gender=category.has_gender)
 
@@ -111,6 +142,8 @@ def category_detail(request, slug):
         'paginator': paginator,
         'breadcrumbs': crumbs,
         'page_title': category.name,
+        'color_options': color_options,
+        'material_options': material_options,
     }
     context.update(ctx)
     return render(request, 'app_catalog/catalog.html', context)
@@ -129,6 +162,7 @@ def search_results(request):
             | Q(variants__color__icontains=query)
             | Q(material__icontains=query)
         ).distinct()
+    color_options, material_options = _get_filter_options(qs)
     qs = _apply_filters(qs, request)
     ctx = _get_filter_context(request, qs)
 
@@ -147,6 +181,8 @@ def search_results(request):
         'search_query': query,
         'breadcrumbs': breadcrumbs,
         'page_title': f'Поиск: {query}' if query else 'Поиск',
+        'color_options': color_options,
+        'material_options': material_options,
     }
     context.update(ctx)
     return render(request, 'app_catalog/catalog.html', context)

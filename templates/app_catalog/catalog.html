@@ -35,7 +35,7 @@
                         <span class="filters-card__arrow" aria-hidden="true">▾</span>
                     </button>
                     <button type="button" class="btn btn--text filters-card__reset js-reset-filters"
-                            id="resetFiltersBtn" {% if not current_price_from and not current_price_to and not in_stock_checked and not on_sale_checked %}hidden{% endif %}>
+                            id="resetFiltersBtn" {% if not current_price_from and not current_price_to and not in_stock_checked and not on_sale_checked and not current_colors and not current_materials %}hidden{% endif %}>
                         Сбросить
                     </button>
                 </div>
@@ -97,6 +97,38 @@
                             <input type="radio" name="gender" value="F" {% if current_gender == 'F' %}checked{% endif %}>
                             <span>Женские</span>
                         </label>
+                    </div>
+                    {% endif %}
+
+                    <!-- Цвет -->
+                    {% if color_options %}
+                    <div class="filters-group">
+                        <div class="filters-group__name">Цвет</div>
+                        <div class="filters-scroll">
+                            {% for c in color_options %}
+                            <label class="checkbox-row">
+                                <input type="checkbox" name="color" value="{{ c }}"
+                                       {% if c in current_colors %}checked{% endif %}>
+                                <span>{{ c }}</span>
+                            </label>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <!-- Материал -->
+                    {% if material_options %}
+                    <div class="filters-group">
+                        <div class="filters-group__name">Материал</div>
+                        <div class="filters-scroll">
+                            {% for m in material_options %}
+                            <label class="checkbox-row">
+                                <input type="checkbox" name="material" value="{{ m }}"
+                                       {% if m in current_materials %}checked{% endif %}>
+                                <span>{{ m }}</span>
+                            </label>
+                            {% endfor %}
+                        </div>
                     </div>
                     {% endif %}
 
