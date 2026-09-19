@@ -7,14 +7,6 @@ import uuid
 class Category(models.Model):
     name = models.CharField(max_length=255, verbose_name="Название")
     slug = models.SlugField(max_length=255, unique=True, db_index=True)
-    parent = models.ForeignKey(
-        'self',
-        on_delete=models.CASCADE,
-        null=True,
-        blank=True,
-        related_name='children',
-        verbose_name="Родительская категория"
-    )
     image = models.ImageField(
         upload_to='categories/',
         null=True,
@@ -33,10 +25,16 @@ class Category(models.Model):
         default=True,
         verbose_name="Активна"
     )
+    has_gender = models.BooleanField(
+        default=True,
+        verbose_name="Разделять по полу",
+        help_text=(
+            "Выключите для категорий без деления на мужские/женские "
+            "(например, зонты): у товаров категории поле «Пол» будет очищаться."
+        )
+    )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-
-    objects = models.Manager()
 
     class Meta:
         verbose_name = "Категория"
@@ -44,19 +42,10 @@ class Category(models.Model):
         ordering = ['order', 'name']
 
     def __str__(self):
-        if self.parent:
-            return f"{self.parent.name} → {self.name}"
         return self.name
 
     def get_absolute_url(self):
         return reverse('app_catalog:category_detail', kwargs={'slug': self.slug})
-
-    def get_descendants_ids(self):
-        """Рекурсивный сбор ID всех подкатегорий (включая себя)."""
-        ids = [self.id]
-        for child in self.children.filter(is_active=True):
-            ids.extend(child.get_descendants_ids())
-        return ids
 
 
 class Brand(models.Model):
@@ -120,8 +109,11 @@ class Product(models.Model):
     gender = models.CharField(
         max_length=1,
         choices=GENDER_CHOICES,
-        default='M',
-        verbose_name="Пол"
+        null=True,
+        blank=True,
+        default=None,
+        db_index=True,
+        verbose_name="Пол (пусто — унисекс)",
     )
 
     group_id = models.UUIDField(
@@ -212,8 +204,17 @@ class Product(models.Model):
             models.Index(fields=['price']),
             models.Index(fields=['-created_at']),
             models.Index(fields=['group_id']),
-            models.Index(fields=['gender']),
         ]
+
+    def save(self, *args, **kwargs):
+        """Если категория не разделяется по полу — поле «Пол» очищается."""
+        if self.gender and self.category_id:
+            has_gender = Category.objects.filter(
+                pk=self.category_id, has_gender=True
+            ).exists()
+            if not has_gender:
+                self.gender = None
+        super().save(*args, **kwargs)
 
     def __str__(self):
         return f"{self.name} — {self.color} ({self.price})"

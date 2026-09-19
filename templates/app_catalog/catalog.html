@@ -51,28 +51,10 @@
                         <ul class="cat-filter">
                             {% for c in categories %}
                                 <li class="cat-filter__item">
-                                    <button type="button" class="cat-filter__toggle{% if category.id == c.id %} is-active{% endif %}" data-target="cat-{{ c.id }}">
-                                        <span>{{ c.name }}</span>
-                                        {% if c.children.all %}<span class="cat-filter__arrow">‹</span>{% endif %}
-                                    </button>
-                                    <ul class="cat-filter__sub" id="cat-{{ c.id }}">
-                                        {% if c.children.all %}
-                                            {% for child in c.children.all %}
-                                                <li>
-                                                    <a href="{{ child.get_absolute_url }}"
-                                                       class="cat-filter__link{% if category.id == child.id %} is-active{% endif %}">
-                                                        {{ child.name }}
-                                                    </a>
-                                                </li>
-                                            {% endfor %}
-                                        {% endif %}
-                                        <li>
-                                            <a href="{{ c.get_absolute_url }}"
-                                               class="cat-filter__link cat-filter__link--all{% if category.id == c.id and not category.parent %} is-active{% endif %}">
-                                                Все {{ c.name }}
-                                            </a>
-                                        </li>
-                                    </ul>
+                                    <a href="{{ c.get_absolute_url }}"
+                                       class="cat-filter__link{% if category.id == c.id %} is-active{% endif %}">
+                                        {{ c.name }}
+                                    </a>
                                 </li>
                             {% endfor %}
                         </ul>
@@ -98,6 +80,25 @@
                             </div>
                         </div>
                     </div>
+
+                    {% if show_gender_filter %}
+                    <!-- Пол -->
+                    <div class="filters-group">
+                        <div class="filters-group__name">Пол</div>
+                        <label class="checkbox-row">
+                            <input type="radio" name="gender" value="" {% if not current_gender %}checked{% endif %}>
+                            <span>Все</span>
+                        </label>
+                        <label class="checkbox-row">
+                            <input type="radio" name="gender" value="M" {% if current_gender == 'M' %}checked{% endif %}>
+                            <span>Мужские</span>
+                        </label>
+                        <label class="checkbox-row">
+                            <input type="radio" name="gender" value="F" {% if current_gender == 'F' %}checked{% endif %}>
+                            <span>Женские</span>
+                        </label>
+                    </div>
+                    {% endif %}
 
                     <!-- Быстрые фильтры -->
                     <div class="filters-group">

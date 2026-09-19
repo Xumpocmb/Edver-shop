@@ -23,7 +23,9 @@ def _apply_filters(queryset, request):
 
     gender = get.get('gender')
     if gender in ('M', 'F'):
-        queryset = queryset.filter(gender=gender)
+        queryset = queryset.filter(
+            Q(gender=gender) | Q(gender__isnull=True)
+        )
 
     in_stock = get.get('in_stock')
     if in_stock == '1':
@@ -45,8 +47,8 @@ def _apply_filters(queryset, request):
     return queryset
 
 
-def _get_filter_context(request, base_qs):
-    categories = Category.objects.filter(is_active=True, parent=None).prefetch_related('children')
+def _get_filter_context(request, base_qs, show_gender=True):
+    categories = Category.objects.filter(is_active=True).order_by('order', 'name')
     price_agg = base_qs.aggregate(min_p=Avg('price') * 0, max_p=Avg('price') * 0)
     if base_qs.exists():
         price_agg = base_qs.aggregate(Min('price'), Max('price'))
@@ -60,6 +62,7 @@ def _get_filter_context(request, base_qs):
         'current_gender': request.GET.get('gender', ''),
         'in_stock_checked': request.GET.get('in_stock') == '1',
         'on_sale_checked': request.GET.get('on_sale') == '1',
+        'show_gender_filter': show_gender,
     }
 
 
@@ -86,25 +89,17 @@ def catalog_list(request):
 
 def category_detail(request, slug):
     category = get_object_or_404(Category, slug=slug, is_active=True)
-    cat_ids = category.get_descendants_ids()
     qs = Product.objects.filter(
-        is_active=True, category_id__in=cat_ids
+        is_active=True, category=category
     ).select_related('category', 'brand').prefetch_related('images')
     qs = _apply_filters(qs, request)
-    ctx = _get_filter_context(request, qs)
+    ctx = _get_filter_context(request, qs, show_gender=category.has_gender)
 
     paginator = Paginator(qs, 12)
     page_number = request.GET.get('page', 1)
     page_obj = paginator.get_page(page_number)
 
-    crumbs = [('Каталог', '/catalog/')]
-    c = category
-    chain = []
-    while c:
-        chain.append(c)
-        c = c.parent
-    for cat in reversed(chain):
-        crumbs.append((cat.name, cat.get_absolute_url()))
+    crumbs = [('Каталог', '/catalog/'), (category.name, None)]
 
     context = {
         'category': category,
@@ -175,13 +170,7 @@ def product_detail(request, slug):
     sibling_colors = product.get_siblings()
 
     crumbs = [('Каталог', '/catalog/')]
-    c = product.category
-    chain = []
-    while c:
-        chain.append(c)
-        c = c.parent
-    for cat in reversed(chain):
-        crumbs.append((cat.name, cat.get_absolute_url()))
+    crumbs.append((product.category.name, product.category.get_absolute_url()))
     crumbs.append((product.name, None))
 
     context = {

@@ -284,21 +284,7 @@
         });
     }
 
-// ====== Аккордеон категорий в фильтре ======
-    function initCatAccordion() {
-        document.addEventListener('click', function (e) {
-            var btn = e.target.closest('.cat-filter__toggle');
-            if (!btn) return;
-            var targetId = btn.getAttribute('data-target');
-            if (!targetId) return;
-            var sub = document.getElementById(targetId);
-            if (!sub || !sub.classList.contains('cat-filter__sub')) return;
-            var isOpen = sub.classList.toggle('open');
-            btn.classList.toggle('open', isOpen);
-        });
-    }
-
-    // ====== Variant Selector ======
+// ====== Variant Selector ======
     function initVariantSelector() {
         var container = $('#variantSelector');
         if (!container || !window.__productVariants) return;
@@ -480,7 +466,6 @@
         initRatingPicker();
         initFilters();
         initFiltersToggle();
-        initCatAccordion();
         initVariantSelector();
         initCartPage();
         bindCatalogClicks();

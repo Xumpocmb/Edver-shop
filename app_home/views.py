@@ -12,8 +12,8 @@ def home(request):
     sale = products.filter(is_sale=True)[:8]
 
     categories = Category.objects.filter(
-        is_active=True, parent=None
-    ).prefetch_related('children').order_by('order')[:8]
+        is_active=True
+    ).order_by('order', 'name')[:8]
 
     slides = [
         {

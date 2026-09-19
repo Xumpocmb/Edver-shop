@@ -75,46 +75,30 @@ class Command(BaseCommand):
             brands[name] = b
 
         # ---------- Categories (корень + подкатегории) ----------
+        # has_gender=False — категория без деления на мужские/женские
         cats_data = [
-            ('Сумки', 'sumki', 0),
-            ('Кошельки', 'koshelki', 1),
-            ('Рюкзаки', 'ryukzaki', 2),
-            ('Ремни', 'remni', 3),
-            ('Зонты', 'zonty', 4),
-            ('Дорожные сумки', 'dorozhnye-sumki', 5),
-            ('Чемоданы', 'chemodany', 6),
-            ('Аксессуары', 'aksessuary', 7),
+            ('Сумки', 'sumki', 0, True),
+            ('Кошельки', 'koshelki', 1, True),
+            ('Рюкзаки', 'ryukzaki', 2, True),
+            ('Ремни', 'remni', 3, True),
+            ('Зонты', 'zonty', 4, False),
+            ('Дорожные сумки', 'dorozhnye-sumki', 5, True),
+            ('Чемоданы', 'chemodany', 6, True),
+            ('Аксессуары', 'aksessuary', 7, True),
         ]
         cat_objs = {}
-        for name, slug, order in cats_data:
+        for name, slug, order, has_gender in cats_data:
             c, _ = Category.objects.get_or_create(
                 slug=slug,
-                defaults={'name': name, 'order': order, 'description': name}
+                defaults={
+                    'name': name, 'order': order, 'description': name,
+                    'has_gender': has_gender,
+                }
             )
+            if c.has_gender != has_gender:
+                c.has_gender = has_gender
+                c.save(update_fields=['has_gender'])
             cat_objs[slug] = c
-
-        # Подкатегории мужские/женские для всех категорий
-        sub_data = {
-            'sumki': [('Сумки мужские', 'sumki-muzhskie'), ('Сумки женские', 'sumki-zhenskie')],
-            'koshelki': [('Кошельки мужские', 'koshelki-muzhskie'), ('Кошельки женские', 'koshelki-zhenskie')],
-            'ryukzaki': [('Рюкзаки мужские', 'ryukzaki-muzhskie'), ('Рюкзаки женские', 'ryukzaki-zhenskie')],
-            'remni': [('Ремни мужские', 'remni-muzhskie'), ('Ремни женские', 'remni-zhenskie')],
-            'zonty': [('Зонты мужские', 'zonty-muzhskie'), ('Зонты женские', 'zonty-zhenskie')],
-            'dorozhnye-sumki': [('Дорожные сумки мужские', 'dorozhnye-sumki-muzhskie'), ('Дорожные сумки женские', 'dorozhnye-sumki-zhenskie')],
-            'chemodany': [('Чемоданы мужские', 'chemodany-muzhskie'), ('Чемоданы женские', 'chemodany-zhenskie')],
-            'aksessuary': [('Аксессуары мужские', 'aksessuary-muzhskie'), ('Аксессуары женские', 'aksessuary-zhenskie')],
-        }
-        for parent_slug, children in sub_data.items():
-            parent = cat_objs[parent_slug]
-            for child_name, child_slug in children:
-                child, _ = Category.objects.get_or_create(
-                    slug=child_slug,
-                    defaults={'name': child_name, 'parent': parent, 'description': child_name}
-                )
-                if child.parent_id != parent.id:
-                    child.parent = parent
-                    child.save()
-                cat_objs[child_slug] = child
 
         # =====================================================
         # ТОВАРЫ — 50 моделей (групп цветов). Каждая группа = одна
@@ -383,51 +367,51 @@ class Command(BaseCommand):
                 ],
             },
 
-            # ===== ЗОНТЫ (5 моделей) =====
+            # ===== ЗОНТЫ (5 моделей, унисекс) =====
             {
                 'group': 'zont-samsonite-auto',
                 'items': [
-                    ('zonty', 'Samsonite', 'Зонт Samsonite Auto Open', 'M', 'Чёрный', 'Полиэстер',
+                    ('zonty', 'Samsonite', 'Зонт Samsonite Auto Open', None, 'Чёрный', 'Полиэстер',
                      Decimal('4990'), None, 'D=100', Decimal('0.4'), {'is_popular': True}),
-                    ('zonty', 'Samsonite', 'Зонт Samsonite Auto Open', 'M', 'Тёмно-синий', 'Полиэстер',
+                    ('zonty', 'Samsonite', 'Зонт Samsonite Auto Open', None, 'Тёмно-синий', 'Полиэстер',
                      Decimal('4990'), None, 'D=100', Decimal('0.4'), {}),
                 ],
             },
             {
                 'group': 'zont-lacoste-compact',
                 'items': [
-                    ('zonty', 'Lacoste', 'Зонт Lacoste Compact', 'F', 'Бордовый', 'Полиэстер',
+                    ('zonty', 'Lacoste', 'Зонт Lacoste Compact', None, 'Бордовый', 'Полиэстер',
                      Decimal('5990'), None, 'D=95', Decimal('0.35'), {'is_new': True}),
-                    ('zonty', 'Lacoste', 'Зонт Lacoste Compact', 'F', 'Чёрный', 'Полиэстер',
+                    ('zonty', 'Lacoste', 'Зонт Lacoste Compact', None, 'Чёрный', 'Полиэстер',
                      Decimal('5990'), None, 'D=95', Decimal('0.35'), {}),
-                    ('zonty', 'Lacoste', 'Зонт Lacoste Compact', 'F', 'Кремовый', 'Полиэстер',
+                    ('zonty', 'Lacoste', 'Зонт Lacoste Compact', None, 'Кремовый', 'Полиэстер',
                      Decimal('5990'), None, 'D=95', Decimal('0.35'), {}),
                 ],
             },
             {
                 'group': 'zont-samsonite-inverness',
                 'items': [
-                    ('zonty', 'Samsonite', 'Зонт Samsonite Inverness', 'M', 'Чёрный', 'Нейлон',
+                    ('zonty', 'Samsonite', 'Зонт Samsonite Inverness', None, 'Чёрный', 'Нейлон',
                      Decimal('6490'), Decimal('7490'), 'D=105', Decimal('0.45'), {'is_popular': True, 'is_sale': True}),
-                    ('zonty', 'Samsonite', 'Зонт Samsonite Inverness', 'M', 'Тёмно-зелёный', 'Нейлон',
+                    ('zonty', 'Samsonite', 'Зонт Samsonite Inverness', None, 'Тёмно-зелёный', 'Нейлон',
                      Decimal('6490'), None, 'D=105', Decimal('0.45'), {}),
                 ],
             },
             {
                 'group': 'zont-roncato-wind',
                 'items': [
-                    ('zonty', 'Roncato', 'Зонт ветрозащитный Roncato Compact', 'M', 'Серый', 'Полиэстер',
+                    ('zonty', 'Roncato', 'Зонт ветрозащитный Roncato Compact', None, 'Серый', 'Полиэстер',
                      Decimal('3990'), None, 'D=98', Decimal('0.38'), {'is_new': True}),
-                    ('zonty', 'Roncato', 'Зонт ветрозащитный Roncato Compact', 'M', 'Чёрный', 'Полиэстер',
+                    ('zonty', 'Roncato', 'Зонт ветрозащитный Roncato Compact', None, 'Чёрный', 'Полиэстер',
                      Decimal('3990'), None, 'D=98', Decimal('0.38'), {}),
                 ],
             },
             {
                 'group': 'zont-braun-auto',
                 'items': [
-                    ('zonty', 'Braun Büffel', 'Автоматический зонт Braun Büffel', 'F', 'Красный', 'Полиэстер',
+                    ('zonty', 'Braun Büffel', 'Автоматический зонт Braun Büffel', None, 'Красный', 'Полиэстер',
                      Decimal('6990'), None, 'D=100', Decimal('0.42'), {'is_popular': True, 'is_new': True}),
-                    ('zonty', 'Braun Büffel', 'Автоматический зонт Braun Büffel', 'F', 'Бежевый', 'Полиэстер',
+                    ('zonty', 'Braun Büffel', 'Автоматический зонт Braun Büffel', None, 'Бежевый', 'Полиэстер',
                      Decimal('6990'), None, 'D=100', Decimal('0.42'), {}),
                 ],
             },
@@ -607,15 +591,13 @@ class Command(BaseCommand):
             for (cat_slug, brand_name, pname, gender, color, material,
                  price, old_price, dims, weight, flags) in group_data['items']:
 
-                # Переносим товары из корня в подкатегорию по полу
-                effective_slug = cat_slug
-                if cat_slug in sub_data:
-                    effective_slug = f'{cat_slug}-{"muzhskie" if gender == "M" else "zhenskie"}'
-                category = cat_objs.get(effective_slug)
+                category = cat_objs.get(cat_slug)
                 if not category:
-                    self.stderr.write(f'Skip {pname}: no category {effective_slug}')
+                    self.stderr.write(f'Skip {pname}: no category {cat_slug}')
                     continue
                 brand = brands.get(brand_name)
+
+                gender_label = 'Унисекс' if gender is None else ('Мужской' if gender == 'M' else 'Женский')
 
                 slug_base = _slug(f'{pname} {color}')
                 slug = slug_base
@@ -647,7 +629,7 @@ class Command(BaseCommand):
                             f'• Цвет: {color}\n'
                             f'• Размеры: {dims}\n'
                             f'• Вес: {weight} кг\n'
-                            f'• Пол: {"Мужской" if gender == "M" else "Женский"}\n\n'
+                            f'• Пол: {gender_label}\n\n'
                             f'Идеальный вариант для повседневного использования или путешествий. '
                             f'Качественная фурнитура, усиленные швы, гарантия производителя.'
                         ),

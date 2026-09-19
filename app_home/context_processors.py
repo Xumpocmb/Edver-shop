@@ -22,11 +22,14 @@ def footer_info(request):
 
 
 def gender_categories(request):
+    from django.db.models import Q
+
     from app_catalog.models import Category
-    cats = Category.objects.filter(is_active=True).order_by('order', 'name')
+    cats = Category.objects.filter(is_active=True, has_gender=True).order_by('order', 'name')
+    unisex = Q(products__gender__isnull=True)
     return {
-        'categories_men': cats.filter(products__gender='M').distinct(),
-        'categories_women': cats.filter(products__gender='F').distinct(),
+        'categories_men': cats.filter(Q(products__gender='M') | unisex).distinct(),
+        'categories_women': cats.filter(Q(products__gender='F') | unisex).distinct(),
     }
 
 

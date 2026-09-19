@@ -10,12 +10,11 @@ class ProductImageInline(admin.TabularInline):
 
 @admin.register(Category)
 class CategoryAdmin(admin.ModelAdmin):
-    list_display = ['name', 'slug', 'parent', 'is_active', 'order']
-    list_filter = ['is_active', 'parent']
+    list_display = ['name', 'slug', 'has_gender', 'is_active', 'order']
+    list_filter = ['is_active', 'has_gender']
     search_fields = ['name', 'slug', 'description']
     prepopulated_fields = {'slug': ('name',)}
-    list_editable = ['order', 'is_active']
-    raw_id_fields = ['parent']
+    list_editable = ['order', 'is_active', 'has_gender']
 
 
 @admin.register(Brand)

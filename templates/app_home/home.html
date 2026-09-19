@@ -64,9 +64,6 @@
                         {% endif %}
                     </span>
                     <div class="category-card__name">{{ c.name }}</div>
-                    {% if c.children.exists %}
-                        <div class="category-card__count">{{ c.children.count }} подкатегорий</div>
-                    {% endif %}
                 </a>
             {% endfor %}
         </div>
