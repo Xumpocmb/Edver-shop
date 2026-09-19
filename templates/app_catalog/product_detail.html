@@ -116,44 +116,6 @@
             </div>
             {% endif %}
 
-            <!-- Характеристики (краткие) -->
-            <div class="specs-rows">
-                {% if product.brand %}
-                <div class="spec-row">
-                    <span class="spec-row__key">Бренд</span>
-                    <span class="spec-row__val">{{ product.brand.name }}</span>
-                </div>
-                {% endif %}
-                <div class="spec-row">
-                    <span class="spec-row__key">Цвет</span>
-                    <span class="spec-row__val" id="specColor">{{ variant.color }}</span>
-                </div>
-                {% if product.material %}
-                <div class="spec-row">
-                    <span class="spec-row__key">Материал</span>
-                    <span class="spec-row__val">{{ product.material }}</span>
-                </div>
-                {% endif %}
-                {% if product.gender %}
-                <div class="spec-row">
-                    <span class="spec-row__key">Пол</span>
-                    <span class="spec-row__val">{{ product.get_gender_display }}</span>
-                </div>
-                {% endif %}
-                {% if product.dimensions %}
-                <div class="spec-row">
-                    <span class="spec-row__key">Размеры</span>
-                    <span class="spec-row__val">{{ product.dimensions }}</span>
-                </div>
-                {% endif %}
-                {% if product.weight %}
-                <div class="spec-row">
-                    <span class="spec-row__key">Вес</span>
-                    <span class="spec-row__val">{{ product.weight }} кг</span>
-                </div>
-                {% endif %}
-            </div>
-
             <!-- Кнопки добавления -->
             <div class="buy-block">
                 <div class="qty-row">

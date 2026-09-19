@@ -185,16 +185,19 @@
                 var alt = t.getAttribute('data-alt') || '';
                 thumbs.forEach(function (x) { x.classList.remove('is-active'); });
                 t.classList.add('is-active');
+                if (!mainImg.parentNode) return;
                 if (mainImg.getAttribute('src') === url) return;
-                mainImg.classList.remove('is-active');
                 var next = document.createElement('img');
                 next.src = url;
                 next.alt = alt;
-                mainImg.parentNode.insertBefore(next, mainImg.nextSibling);
+                var old = mainImg;
+                old.classList.remove('is-active');
+                old.id = '';
+                old.parentNode.insertBefore(next, old.nextSibling);
+                next.id = 'mainImage';
                 requestAnimationFrame(function () { next.classList.add('is-active'); });
                 setTimeout(function () {
-                    if (mainImg.parentNode) mainImg.parentNode.removeChild(mainImg);
-                    next.id = 'mainImage';
+                    if (old.parentNode) old.parentNode.removeChild(old);
                 }, 350);
                 mainImg = next;
             });
@@ -337,12 +340,14 @@
                         var next = document.createElement('img');
                         next.src = url0;
                         next.alt = v.name || '';
-                        next.className = 'is-active';
+                        var oldImg = mainImgTmp;
+                        oldImg.classList.remove('is-active');
+                        oldImg.id = '';
+                        oldImg.parentNode.insertBefore(next, oldImg.nextSibling);
                         next.id = 'mainImage';
-                        mainImgTmp.parentNode.insertBefore(next, mainImgTmp.nextSibling);
-                        mainImgTmp.classList.remove('is-active');
+                        requestAnimationFrame(function () { next.classList.add('is-active'); });
                         setTimeout(function () {
-                            if (mainImgTmp.parentNode) mainImgTmp.parentNode.removeChild(mainImgTmp);
+                            if (oldImg.parentNode) oldImg.parentNode.removeChild(oldImg);
                         }, 350);
                     }
                 }
