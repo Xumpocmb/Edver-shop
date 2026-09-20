@@ -42,10 +42,10 @@
 
             <div class="product-card__price-row">
                 {% if v.discount_percent_display > 0 %}
-                    <span class="product-card__price">{{ v.sale_price }} ₽</span>
-                    <span class="product-card__old-price">{{ v.price }} ₽</span>
+                    <span class="product-card__price">{{ v.sale_price }} <span class="nbrb-icon nbrb-icon-byn"></span></span>
+                    <span class="product-card__old-price">{{ v.price }} <span class="nbrb-icon nbrb-icon-byn"></span></span>
                 {% else %}
-                    <span class="product-card__price">{{ v.price }} ₽</span>
+                    <span class="product-card__price">{{ v.price }} <span class="nbrb-icon nbrb-icon-byn"></span></span>
                 {% endif %}
             </div>
 

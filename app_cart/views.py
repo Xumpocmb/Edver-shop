@@ -114,7 +114,7 @@ def apply_promo(request):
     if cart.total_price < promo.min_order_sum:
         return _cart_response(
             request, cart,
-            f'Минимальная сумма заказа для этого промокода: {promo.min_order_sum} ₽',
+            f'Минимальная сумма заказа для этого промокода: {promo.min_order_sum} бел. руб.',
             success=False,
         )
 
@@ -122,7 +122,7 @@ def apply_promo(request):
     cart.save(update_fields=['promo_code'])
 
     discount = promo.calc_discount(cart.total_price)
-    return _cart_response(request, cart, f'Промокод применён! Скидка: {discount} ₽')
+    return _cart_response(request, cart, f'Промокод применён! Скидка: {discount} бел. руб.')
 
 
 @require_POST

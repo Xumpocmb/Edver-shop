@@ -17,6 +17,14 @@
 
     var CSRF_TOKEN = getCookie('csrftoken') || '';
 
+    function setPrice(el, value) {
+        if (!el) return;
+        el.textContent = value + ' ';
+        var icon = document.createElement('span');
+        icon.className = 'nbrb-icon nbrb-icon-byn';
+        el.appendChild(icon);
+    }
+
     // ====== Toast ======
     var toastContainer = null;
     function toast(message, type) {
@@ -394,10 +402,10 @@
                 bindGalleryThumbs();
             }
 
-            if (priceEl) priceEl.textContent = v.sale_price + ' ₽';
+            if (priceEl) setPrice(priceEl, v.sale_price);
             if (basePriceEl) {
                 if (v.discount > 0) {
-                    basePriceEl.textContent = v.price + ' ₽';
+                    setPrice(basePriceEl, v.price);
                     basePriceEl.style.display = '';
                 } else {
                     basePriceEl.style.display = 'none';
@@ -435,8 +443,8 @@
                 addBtn.setAttribute('data-product-name', v.name || 'Товар');
             }
 
-            if (specBasePrice) specBasePrice.textContent = v.price + ' ₽';
-            if (specPrice) specPrice.textContent = v.sale_price + ' ₽';
+            if (specBasePrice) setPrice(specBasePrice, v.price);
+            if (specPrice) setPrice(specPrice, v.sale_price);
             if (specDisc) specDisc.textContent = v.discount ? v.discount + '%' : '—';
             if (specColor) specColor.textContent = v.color;
             if (specStock) specStock.textContent = v.stock + ' шт.';

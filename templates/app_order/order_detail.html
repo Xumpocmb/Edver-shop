@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+
+{% block title %}
+<title>Заказ #{{ order.pk }} — EDVER Shop</title>
+{% endblock %}
+
+{% block content %}
+<div class="catalog-page">
+    <div class="container breadcrumbs-wrap">
+        <nav class="breadcrumbs" aria-label="Навигация">
+            <a href="/">Главная</a>
+            <span class="breadcrumbs__sep">/</span>
+            <a href="{% url 'app_user:profile' %}">Личный кабинет</a>
+            <span class="breadcrumbs__sep">/</span>
+            <a href="{% url 'app_user:orders_list' %}">Мои заказы</a>
+            <span class="breadcrumbs__sep">/</span>
+            <span class="breadcrumbs__current">Заказ #{{ order.pk }}</span>
+        </nav>
+    </div>
+
+    <section class="container" style="padding: 2rem 20px 4rem; max-width: 820px;">
+        <h1 class="catalog-head__title">Заказ #{{ order.pk }}</h1>
+        <p style="margin-top: .5rem; color: var(--color-text-muted);">
+            {{ order.created_at|date:"d.m.Y H:i" }} · {{ order.get_status_display }}
+        </p>
+
+        <div class="cart-items" style="margin-top: 1.5rem;">
+            {% for item in order.items.all %}
+            <div class="cart-item" style="display: flex; align-items: center; gap: 1rem; padding: 1rem;">
+                <div class="cart-item__info" style="flex: 1;">
+                    <div class="cart-item__name">{{ item.product_name }}</div>
+                    <div class="cart-item__variant">{{ item.product_color }} × {{ item.quantity }}</div>
+                </div>
+                <div class="cart-item__price">
+                    <span class="cart-item__total">{{ item.line_total }} <span class="nbrb-icon nbrb-icon-byn"></span></span>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <div class="cart-summary" style="margin-top: 1.5rem;">
+            <div class="cart-summary__row">
+                <span>Товары:</span>
+                <span>{{ order.total_price }} <span class="nbrb-icon nbrb-icon-byn"></span></span>
+            </div>
+            {% if order.promo_discount %}
+            <div class="cart-summary__row cart-summary__row--discount">
+                <span>Скидка по промокоду:</span>
+                <span>-{{ order.promo_discount }} <span class="nbrb-icon nbrb-icon-byn"></span></span>
+            </div>
+            {% endif %}
+            <div class="cart-summary__row cart-summary__row--total">
+                <span>Итого:</span>
+                <span>{{ order.grand_total }} <span class="nbrb-icon nbrb-icon-byn"></span></span>
+            </div>
+        </div>
+
+        <div class="order-details" style="margin-top: 1.5rem; background: var(--color-bg-soft); padding: 1.25rem; border-radius: var(--radius);">
+            <div class="spec-row">
+                <span class="spec-row__key">Доставка</span>
+                <span class="spec-row__val">{{ order.get_delivery_type_display }}</span>
+            </div>
+            {% if order.delivery_type == 'belpochta' and order.address %}
+            <div class="spec-row">
+                <span class="spec-row__key">Адрес</span>
+                <span class="spec-row__val">{{ order.address }}</span>
+            </div>
+            {% elif order.evropochta_branch_name %}
+            <div class="spec-row">
+                <span class="spec-row__key">Отделение</span>
+                <span class="spec-row__val">{{ order.evropochta_branch_name }}</span>
+            </div>
+            {% endif %}
+            {% if order.comment %}
+            <div class="spec-row">
+                <span class="spec-row__key">Комментарий</span>
+                <span class="spec-row__val">{{ order.comment }}</span>
+            </div>
+            {% endif %}
+        </div>
+
+        <div style="margin-top: 1.5rem; display: flex; gap: 1rem; flex-wrap: wrap;">
+            <a class="btn btn--ghost" href="{% url 'app_user:orders_list' %}">← Все заказы</a>
+            <a href="/catalog/" class="btn btn--ghost">Перейти в каталог</a>
+        </div>
+    </section>
+</div>
+{% endblock %}

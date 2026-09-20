@@ -25,7 +25,7 @@ def home(request):
         },
         {
             'title': 'Бесплатная доставка',
-            'subtitle': 'При заказе от 5 000 ₽ по всей России',
+            'subtitle': 'При заказе от 5 000 бел. руб. — бесплатная доставка',
             'cta': 'Узнать подробнее',
             'href': '/catalog/?on_sale=1',
             'bg': 'var(--color-accent-light)',

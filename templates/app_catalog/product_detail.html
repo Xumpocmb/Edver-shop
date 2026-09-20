@@ -70,10 +70,10 @@
 
             <div class="product-info__price-block">
                 <div class="price-row">
-                    <span class="price-main" id="currentPrice">{{ variant.sale_price }} ₽</span>
+                    <span class="price-main" id="currentPrice">{{ variant.sale_price }} <span class="nbrb-icon nbrb-icon-byn"></span></span>
                     <span class="price-old" id="basePrice"
                           {% if variant.discount_percent_display <= 0 %}style="display: none;"{% endif %}>
-                        {{ variant.price }} ₽
+                        {{ variant.price }} <span class="nbrb-icon nbrb-icon-byn"></span>
                     </span>
                     <span class="price-discount" id="discountBadge"
                           {% if variant.discount_percent_display <= 0 %}style="display: none;"{% endif %}>
@@ -190,11 +190,11 @@
             </tr>
             <tr>
                 <th>Цена</th>
-                <td id="specBasePrice">{{ variant.price }} ₽</td>
+                <td id="specBasePrice">{{ variant.price }} <span class="nbrb-icon nbrb-icon-byn"></span></td>
             </tr>
             <tr>
                 <th>Цена со скидкой</th>
-                <td id="specPrice">{{ variant.sale_price }} ₽</td>
+                <td id="specPrice">{{ variant.sale_price }} <span class="nbrb-icon nbrb-icon-byn"></span></td>
             </tr>
             <tr>
                 <th>Скидка</th>
