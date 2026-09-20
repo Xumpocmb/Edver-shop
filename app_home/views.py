@@ -74,6 +74,10 @@ def about(request):
     return render(request, 'app_home/about.html', context)
 
 
+def contacts(request):
+    return render(request, 'app_home/contacts.html')
+
+
 def site_reviews(request):
     reviews = SiteReview.objects.filter(is_published=True)[:20]
 

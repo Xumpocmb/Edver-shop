@@ -1347,6 +1347,64 @@ button {
     }
 }
 
+/* ====== КОНТАКТЫ ====== */
+.contacts-list {
+    list-style: none;
+    margin: 0 auto;
+    padding: 0;
+    max-width: 520px;
+    display: grid;
+    gap: .75rem;
+}
+
+.contacts-list__item {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    background: var(--color-bg);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-sm);
+    padding: 1rem 1.25rem;
+}
+
+.contacts-list__icon {
+    flex: none;
+    font-size: 1.4rem;
+    line-height: 1;
+}
+
+.contacts-list__body {
+    display: flex;
+    flex-direction: column;
+    gap: .15rem;
+    min-width: 0;
+}
+
+.contacts-list__label {
+    font-size: .82rem;
+    color: var(--color-text-muted, #666);
+}
+
+.contacts-list__value {
+    font-size: 1.05rem;
+    font-weight: 600;
+    color: var(--color-accent-dark);
+}
+
+.contacts-list__value:hover {
+    text-decoration: underline;
+}
+
+.contacts-list__empty {
+    padding: 1rem 1.25rem;
+    background: var(--color-bg-soft);
+    border: 1px dashed var(--color-border-strong);
+    border-radius: var(--radius);
+    color: var(--color-text-muted, #666);
+    text-align: center;
+}
+
 .catalog-layout {
     display: grid;
     gap: 1.5rem;

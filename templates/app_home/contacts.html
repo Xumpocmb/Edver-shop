@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+
+{% block title %}
+<title>Контакты — EDVER Shop</title>
+{% endblock %}
+
+{% block content %}
+<div class="catalog-page">
+
+    <div class="container breadcrumbs-wrap">
+        <nav class="breadcrumbs" aria-label="Навигация">
+            <a href="/">Главная</a>
+            <span class="breadcrumbs__sep">/</span>
+            <span class="breadcrumbs__current">Контакты</span>
+        </nav>
+    </div>
+
+    <section class="container" style="padding: 2rem 20px 1rem;">
+        <h1 class="catalog-head__title">Контакты</h1>
+    </section>
+
+    <section class="section section--gray container">
+        <div class="section-head section-head--center">
+            <h2 class="section-title">Свяжитесь с нами</h2>
+            <p class="section-subtitle">Мы на связи и с радостью ответим на ваши вопросы.</p>
+        </div>
+
+        <ul class="contacts-list">
+            {% if phone and phone.number %}
+            <li class="contacts-list__item">
+                <span class="contacts-list__icon">📞</span>
+                <div class="contacts-list__body">
+                    <span class="contacts-list__label">Телефон</span>
+                    <a href="tel:{{ phone.number }}" class="contacts-list__value">{{ phone.number }}</a>
+                </div>
+            </li>
+            {% endif %}
+            {% if instagram and instagram.url %}
+            <li class="contacts-list__item">
+                <span class="contacts-list__icon">📷</span>
+                <div class="contacts-list__body">
+                    <span class="contacts-list__label">Instagram</span>
+                    <a href="{{ instagram.url }}" class="contacts-list__value" target="_blank" rel="noopener">Мы в Instagram</a>
+                </div>
+            </li>
+            {% endif %}
+            {% if tiktok and tiktok.url %}
+            <li class="contacts-list__item">
+                <span class="contacts-list__icon">🎵</span>
+                <div class="contacts-list__body">
+                    <span class="contacts-list__label">TikTok</span>
+                    <a href="{{ tiktok.url }}" class="contacts-list__value" target="_blank" rel="noopener">Мы в TikTok</a>
+                </div>
+            </li>
+            {% endif %}
+            {% if not phone.number and not instagram.url and not tiktok.url %}
+            <li class="contacts-list__empty">Контактные данные скоро появятся.</li>
+            {% endif %}
+        </ul>
+    </section>
+
+</div>
+{% endblock %}

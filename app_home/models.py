@@ -40,7 +40,6 @@ class PhoneNumber(models.Model):
     is_singleton = models.BooleanField(default=True, unique=True, editable=False)
     number = models.CharField(
         max_length=20,
-        default='+375299673138',
         verbose_name='Номер телефона',
     )
 
