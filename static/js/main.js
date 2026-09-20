@@ -117,16 +117,38 @@
     function initBurger() {
         var burger = $('#burger');
         var nav = $('#main-nav');
+        var backdrop = $('#menu-backdrop');
+        var closeBtn = $('#menu-close');
         if (!burger || !nav) return;
+
+        var lastFocus = null;
+        function openMenu() {
+            lastFocus = document.activeElement;
+            nav.classList.add('open');
+            backdrop && backdrop.classList.add('open');
+            burger.classList.add('active');
+            burger.setAttribute('aria-expanded', 'true');
+            if (closeBtn) closeBtn.focus();
+        }
         function closeMenu() {
+            if (!nav.classList.contains('open')) return;
             nav.classList.remove('open');
+            backdrop && backdrop.classList.remove('open');
             burger.classList.remove('active');
             burger.setAttribute('aria-expanded', 'false');
+            if (lastFocus && lastFocus.focus) lastFocus.focus();
         }
+        function isOpen() {
+            return nav.classList.contains('open');
+        }
+
         burger.addEventListener('click', function () {
-            var isOpen = nav.classList.toggle('open');
-            burger.classList.toggle('active', isOpen);
-            burger.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+            isOpen() ? closeMenu() : openMenu();
+        });
+        closeBtn && closeBtn.addEventListener('click', closeMenu);
+        backdrop && backdrop.addEventListener('click', closeMenu);
+        document.addEventListener('keydown', function (e) {
+            if (e.key === 'Escape' && isOpen()) closeMenu();
         });
         nav.addEventListener('click', function (e) {
             var btn = e.target.closest('.header-menu-toggle');
@@ -135,8 +157,8 @@
                 var targetId = btn.getAttribute('data-target');
                 var target = document.getElementById(targetId);
                 if (!target) return;
-                var isOpen = target.classList.toggle('open');
-                btn.classList.toggle('open', isOpen);
+                var isOpenSub = target.classList.toggle('open');
+                btn.classList.toggle('open', isOpenSub);
                 return;
             }
             if (e.target.closest('a')) closeMenu();

@@ -1,5 +1,10 @@
 <header class="header">
     <div class="header-left">
+        <button class="burger" id="burger" aria-label="Меню" aria-expanded="false">
+            <span class="burger-bar"></span>
+            <span class="burger-bar"></span>
+            <span class="burger-bar"></span>
+        </button>
         <a href="/" class="logo">
             {% if site_logo and site_logo.image %}
                 <img src="{{ site_logo.image.url }}" alt="{{ site_logo.text }}" class="logo-img">
@@ -41,33 +46,45 @@
             <span class="header-badge" id="cart-badge" {% if not cart_total_items %}hidden{% endif %}>{{ cart_total_items|default:"0" }}</span>
         </a>
         <a href="/profile/" class="header-icon" aria-label="Профиль">👤</a>
-        <button class="burger" id="burger" aria-label="Меню" aria-expanded="false">
-            <span class="burger-bar"></span>
-            <span class="burger-bar"></span>
-            <span class="burger-bar"></span>
-        </button>
     </div>
-    <nav class="header-menu" id="main-nav">
-        <a href="/catalog/">Каталог</a>
-        <button class="header-menu-toggle" type="button" data-target="menu-men">Мужчинам</button>
-        <div class="header-menu-dropdown" id="menu-men">
-            {% for cat in categories_men %}
-                <a href="/catalog/{{ cat.slug }}/?gender=M">{{ cat.name }}</a>
-            {% endfor %}
-            <a href="/catalog/?gender=M" class="header-menu-more">Все мужское →</a>
+    <nav class="header-menu" id="main-nav" aria-label="Меню сайта">
+        <div class="header-menu-head">
+            <a href="/" class="header-menu-logo">
+                {% if site_logo and site_logo.image %}
+                    <img src="{{ site_logo.image.url }}" alt="{{ site_logo.text }}" class="header-menu-logo-img">
+                {% else %}
+                    {{ site_logo.text|default:"EDVER Shop" }}
+                {% endif %}
+            </a>
+            <button class="header-menu-close" id="menu-close" type="button" aria-label="Закрыть меню">✕</button>
         </div>
-        <button class="header-menu-toggle" type="button" data-target="menu-women">Женщинам</button>
-        <div class="header-menu-dropdown" id="menu-women">
-            {% for cat in categories_women %}
-                <a href="/catalog/{{ cat.slug }}/?gender=F">{{ cat.name }}</a>
-            {% endfor %}
-            <a href="/catalog/?gender=F" class="header-menu-more">Все женское →</a>
+        <div class="header-menu-body">
+            <a href="/catalog/">Каталог</a>
+            <button class="header-menu-toggle" type="button" data-target="menu-men">Мужчинам</button>
+            <div class="header-menu-dropdown" id="menu-men">
+                {% for cat in categories_men %}
+                    <a href="/catalog/{{ cat.slug }}/?gender=M">{{ cat.name }}</a>
+                {% endfor %}
+                <a href="/catalog/?gender=M" class="header-menu-more">Все мужское →</a>
+            </div>
+            <button class="header-menu-toggle" type="button" data-target="menu-women">Женщинам</button>
+            <div class="header-menu-dropdown" id="menu-women">
+                {% for cat in categories_women %}
+                    <a href="/catalog/{{ cat.slug }}/?gender=F">{{ cat.name }}</a>
+                {% endfor %}
+                <a href="/catalog/?gender=F" class="header-menu-more">Все женское →</a>
+            </div>
+            <a href="/about/">О нас</a>
+            <a href="/contacts/">Контакты</a>
+            <div class="header-menu-divider"></div>
+            <div class="header-menu-caption">Покупателям</div>
+            <a href="/payment/">Оплата</a>
+            <a href="/returns/">Возврат товара</a>
         </div>
-        <a href="/about/">О нас</a>
-        <a href="/contacts/">Контакты</a>
-        <a href="/payment/">Оплата</a>
-        <a href="/returns/">Возврат товара</a>
-        <a href="tel:{{ phone.number }}" class="header-menu-contact">📞 {{ phone.number }}</a>
-        <a href="{{ instagram.url }}" class="header-menu-contact" target="_blank" rel="noopener">📷 Мы в Instagram</a>
+        <div class="header-menu-foot">
+            <a href="tel:{{ phone.number }}" class="header-menu-contact">📞 {{ phone.number }}</a>
+            <a href="{{ instagram.url }}" class="header-menu-contact" target="_blank" rel="noopener">📷 Мы в Instagram</a>
+        </div>
     </nav>
+    <div class="header-menu-backdrop" id="menu-backdrop"></div>
 </header>
