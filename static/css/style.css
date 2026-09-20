@@ -992,14 +992,6 @@ button {
     flex: 1;
 }
 
-.product-card__brand {
-    font-size: .75rem;
-    color: var(--color-accent);
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: .03em;
-}
-
 .product-card__name {
     font-size: .95rem;
     font-weight: 600;
@@ -1878,14 +1870,6 @@ button {
     gap: 1.5rem;
 }
 
-.product-info__brand {
-    font-size: .78rem;
-    color: var(--color-accent);
-    font-weight: 800;
-    text-transform: uppercase;
-    letter-spacing: .05em;
-}
-
 .product-info__title {
     font-size: clamp(1.4rem, 2.5vw, 1.9rem);
     font-weight: 800;
@@ -2617,13 +2601,6 @@ button {
     font-size: .82rem;
     color: var(--color-accent);
     font-weight: 600;
-}
-
-.cart-item__brand {
-    font-size: .75rem;
-    color: var(--color-text-muted);
-    text-transform: uppercase;
-    letter-spacing: .03em;
 }
 
 .cart-item__price {

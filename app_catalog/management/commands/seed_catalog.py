@@ -3,7 +3,7 @@ from django.core.management.base import BaseCommand
 from django.core.files.base import ContentFile
 from django.utils.text import slugify
 
-from app_catalog.models import Brand, Category, Product, ProductVariant, ProductImage
+from app_catalog.models import Category, Product, ProductVariant, ProductImage
 from app_cart.models import PromoCode
 from app_home.models import SiteReview
 
@@ -71,27 +71,9 @@ class Command(BaseCommand):
             ProductVariant.objects.all().delete()
             Product.objects.all().delete()
             Category.objects.all().delete()
-            Brand.objects.all().delete()
             PromoCode.objects.all().delete()
             SiteReview.objects.all().delete()
             self.stdout.write(self.style.WARNING('Flushed catalog data'))
-
-        # ---------- Brands ----------
-        brands_data = [
-            ('Roncato', 'Италия. Чемоданы и дорожные аксессуары.'),
-            ('Braun Büffel', 'Германия. Классические кожаные изделия.'),
-            ('Lacoste', 'Франция. Стильные сумки и кошельки.'),
-            ('Samsonite', 'США/Бельгия. Мировой лидер по чемоданам.'),
-            ('Tous', 'Испания. Аксессуары и сумки для женщин.'),
-            ('Piquadro', 'Италия. Бизнес-аксессуары и портфели.'),
-        ]
-        brands = {}
-        for name, desc in brands_data:
-            b, _ = Brand.objects.get_or_create(
-                name=name,
-                defaults={'slug': _slug(name), 'description': desc}
-            )
-            brands[name] = b
 
         # ---------- Categories (корень + подкатегории) ----------
         # has_gender=False — категория без деления на мужские/женские
@@ -122,7 +104,7 @@ class Command(BaseCommand):
         # =====================================================
         # ТОВАРЫ — 50 моделей в разных цветах. Каждая группа = одна
         # модель Product + ProductVariant на каждый цвет.
-        # Формат: (category_slug, brand, name, gender, color, material,
+        # Формат: (category_slug, name, gender, color, material,
         #          final_price, base_price, dims, weight, flags)
         #   final_price — продажная цена без скидки,
         #   base_price  — базовая цена «до скидки». Если она больше
@@ -136,78 +118,78 @@ class Command(BaseCommand):
             {
                 'group': 'sumki-lacoste-nf2148',
                 'items': [
-                    ('sumki', 'Lacoste', 'Сумка-шоппер Lacoste NF.2148', 'F', 'Бордовый', 'Хлопок',
+                    ('sumki', 'Сумка-шоппер Lacoste NF.2148', 'F', 'Бордовый', 'Хлопок',
                      Decimal('12990'), Decimal('15990'), '38x30x14', Decimal('0.45'), {'is_popular': True, 'is_sale': True}),
-                    ('sumki', 'Lacoste', 'Сумка-шоппер Lacoste NF.2148', 'F', 'Чёрный', 'Хлопок',
+                    ('sumki', 'Сумка-шоппер Lacoste NF.2148', 'F', 'Чёрный', 'Хлопок',
                      Decimal('12990'), None, '38x30x14', Decimal('0.45'), {'is_popular': True}),
-                    ('sumki', 'Lacoste', 'Сумка-шоппер Lacoste NF.2148', 'F', 'Синий', 'Хлопок',
+                    ('sumki', 'Сумка-шоппер Lacoste NF.2148', 'F', 'Синий', 'Хлопок',
                      Decimal('12990'), None, '38x30x14', Decimal('0.45'), {}),
                 ],
             },
             {
                 'group': 'sumki-tous-crossbody',
                 'items': [
-                    ('sumki', 'Tous', 'Кожаная сумка Tous Mini Crossbody', 'F', 'Кремовый', 'Натуральная кожа',
+                    ('sumki', 'Кожаная сумка Tous Mini Crossbody', 'F', 'Кремовый', 'Натуральная кожа',
                      Decimal('18500'), None, '22x18x8', Decimal('0.38'), {'is_new': True, 'is_popular': True}),
-                    ('sumki', 'Tous', 'Кожаная сумка Tous Mini Crossbody', 'F', 'Розовый', 'Натуральная кожа',
+                    ('sumki', 'Кожаная сумка Tous Mini Crossbody', 'F', 'Розовый', 'Натуральная кожа',
                      Decimal('18500'), None, '22x18x8', Decimal('0.38'), {'is_new': True}),
-                    ('sumki', 'Tous', 'Кожаная сумка Tous Mini Crossbody', 'F', 'Чёрный', 'Натуральная кожа',
+                    ('sumki', 'Кожаная сумка Tous Mini Crossbody', 'F', 'Чёрный', 'Натуральная кожа',
                      Decimal('18500'), None, '22x18x8', Decimal('0.38'), {}),
                 ],
             },
             {
                 'group': 'sumki-piquadro-briefcase',
                 'items': [
-                    ('sumki', 'Piquadro', 'Портфель Piquadro Briefcase', 'M', 'Чёрный', 'Натуральная кожа',
+                    ('sumki', 'Портфель Piquadro Briefcase', 'M', 'Чёрный', 'Натуральная кожа',
                      Decimal('42990'), Decimal('49990'), '40x30x10', Decimal('1.1'), {'is_popular': True, 'is_sale': True}),
-                    ('sumki', 'Piquadro', 'Портфель Piquadro Briefcase', 'M', 'Тёмно-коричневый', 'Натуральная кожа',
+                    ('sumki', 'Портфель Piquadro Briefcase', 'M', 'Тёмно-коричневый', 'Натуральная кожа',
                      Decimal('42990'), None, '40x30x10', Decimal('1.1'), {'is_popular': True}),
                 ],
             },
             {
                 'group': 'sumki-braun-siena',
                 'items': [
-                    ('sumki', 'Braun Büffel', 'Кроссбоди Braun Büffel Siena', 'F', 'Тёмно-коричневый', 'Натуральная кожа',
+                    ('sumki', 'Кроссбоди Braun Büffel Siena', 'F', 'Тёмно-коричневый', 'Натуральная кожа',
                      Decimal('23890'), None, '24x18x6', Decimal('0.4'), {'is_new': True}),
-                    ('sumki', 'Braun Büffel', 'Кроссбоди Braun Büffel Siena', 'F', 'Чёрный', 'Натуральная кожа',
+                    ('sumki', 'Кроссбоди Braun Büffel Siena', 'F', 'Чёрный', 'Натуральная кожа',
                      Decimal('23890'), None, '24x18x6', Decimal('0.4'), {}),
                 ],
             },
             {
                 'group': 'sumki-lacoste-shopper',
                 'items': [
-                    ('sumki', 'Lacoste', 'Шоппер Lacoste L.12.12', 'F', 'Зелёный', 'ПВХ',
+                    ('sumki', 'Шоппер Lacoste L.12.12', 'F', 'Зелёный', 'ПВХ',
                      Decimal('8990'), Decimal('10990'), '35x34x12', Decimal('0.35'), {'is_sale': True, 'is_popular': True}),
-                    ('sumki', 'Lacoste', 'Шоппер Lacoste L.12.12', 'F', 'Чёрный', 'ПВХ',
+                    ('sumki', 'Шоппер Lacoste L.12.12', 'F', 'Чёрный', 'ПВХ',
                      Decimal('8990'), None, '35x34x12', Decimal('0.35'), {}),
-                    ('sumki', 'Lacoste', 'Шоппер Lacoste L.12.12', 'F', 'Белый', 'ПВХ',
+                    ('sumki', 'Шоппер Lacoste L.12.12', 'F', 'Белый', 'ПВХ',
                      Decimal('8990'), None, '35x34x12', Decimal('0.35'), {}),
                 ],
             },
             {
                 'group': 'sumki-tous-kaos',
                 'items': [
-                    ('sumki', 'Tous', 'Шоппер Tous Kaos Mini', 'F', 'Кремовый', 'Натуральная кожа',
+                    ('sumki', 'Шоппер Tous Kaos Mini', 'F', 'Кремовый', 'Натуральная кожа',
                      Decimal('10490'), None, '28x24x10', Decimal('0.35'), {'is_new': True}),
-                    ('sumki', 'Tous', 'Шоппер Tous Kaos Mini', 'F', 'Розовый', 'Натуральная кожа',
+                    ('sumki', 'Шоппер Tous Kaos Mini', 'F', 'Розовый', 'Натуральная кожа',
                      Decimal('10490'), None, '28x24x10', Decimal('0.35'), {}),
                 ],
             },
             {
                 'group': 'sumki-samsonite-venice',
                 'items': [
-                    ('sumki', 'Samsonite', 'Сумка-тоут Samsonite Venice', 'F', 'Чёрный', 'Полиэстер',
+                    ('sumki', 'Сумка-тоут Samsonite Venice', 'F', 'Чёрный', 'Полиэстер',
                      Decimal('7990'), None, '38x32x14', Decimal('0.5'), {'is_popular': True}),
-                    ('sumki', 'Samsonite', 'Сумка-тоут Samsonite Venice', 'F', 'Серый', 'Полиэстер',
+                    ('sumki', 'Сумка-тоут Samsonite Venice', 'F', 'Серый', 'Полиэстер',
                      Decimal('7990'), None, '38x32x14', Decimal('0.5'), {}),
                 ],
             },
             {
                 'group': 'sumki-braun-brooklyn',
                 'items': [
-                    ('sumki', 'Braun Büffel', 'Тоут Braun Büffel Brooklyn', 'F', 'Тёмно-синий', 'Натуральная кожа',
+                    ('sumki', 'Тоут Braun Büffel Brooklyn', 'F', 'Тёмно-синий', 'Натуральная кожа',
                      Decimal('26990'), Decimal('29990'), '40x30x14', Decimal('0.85'), {'is_sale': True, 'is_new': True}),
-                    ('sumki', 'Braun Büffel', 'Тоут Braun Büffel Brooklyn', 'F', 'Чёрный', 'Натуральная кожа',
+                    ('sumki', 'Тоут Braun Büffel Brooklyn', 'F', 'Чёрный', 'Натуральная кожа',
                      Decimal('26990'), None, '40x30x14', Decimal('0.85'), {}),
                 ],
             },
@@ -216,72 +198,72 @@ class Command(BaseCommand):
             {
                 'group': 'kosh-tous-long',
                 'items': [
-                    ('koshelki', 'Tous', 'Кошелёк Tous Logo Long', 'F', 'Розовый', 'Натуральная кожа',
+                    ('koshelki', 'Кошелёк Tous Logo Long', 'F', 'Розовый', 'Натуральная кожа',
                      Decimal('7990'), None, '19x10x3', Decimal('0.15'), {'is_new': True}),
-                    ('koshelki', 'Tous', 'Кошелёк Tous Logo Long', 'F', 'Бежевый', 'Натуральная кожа',
+                    ('koshelki', 'Кошелёк Tous Logo Long', 'F', 'Бежевый', 'Натуральная кожа',
                      Decimal('7990'), None, '19x10x3', Decimal('0.15'), {}),
                 ],
             },
             {
                 'group': 'kosh-braun-vasco',
                 'items': [
-                    ('koshelki', 'Braun Büffel', 'Портмоне Braun Büffel Vasco', 'M', 'Коричневый', 'Натуральная кожа',
+                    ('koshelki', 'Портмоне Braun Büffel Vasco', 'M', 'Коричневый', 'Натуральная кожа',
                      Decimal('11490'), Decimal('13490'), '12x9.5x2', Decimal('0.12'), {'is_popular': True, 'is_sale': True}),
-                    ('koshelki', 'Braun Büffel', 'Портмоне Braun Büffel Vasco', 'M', 'Чёрный', 'Натуральная кожа',
+                    ('koshelki', 'Портмоне Braun Büffel Vasco', 'M', 'Чёрный', 'Натуральная кожа',
                      Decimal('11490'), None, '12x9.5x2', Decimal('0.12'), {'is_popular': True}),
                 ],
             },
             {
                 'group': 'kosh-piquadro-slider',
                 'items': [
-                    ('koshelki', 'Piquadro', 'Картхолдер Piquadro Slider', 'M', 'Чёрный', 'Натуральная кожа',
+                    ('koshelki', 'Картхолдер Piquadro Slider', 'M', 'Чёрный', 'Натуральная кожа',
                      Decimal('5990'), None, '10.5x7.5x1', Decimal('0.06'), {'is_popular': True, 'is_new': True}),
-                    ('koshelki', 'Piquadro', 'Картхолдер Piquadro Slider', 'M', 'Синий', 'Натуральная кожа',
+                    ('koshelki', 'Картхолдер Piquadro Slider', 'M', 'Синий', 'Натуральная кожа',
                      Decimal('5990'), None, '10.5x7.5x1', Decimal('0.06'), {}),
                 ],
             },
             {
                 'group': 'kosh-lacoste-zip',
                 'items': [
-                    ('koshelki', 'Lacoste', 'Кошелёк Lacoste Zip', 'F', 'Белый', 'ПВХ',
+                    ('koshelki', 'Кошелёк Lacoste Zip', 'F', 'Белый', 'ПВХ',
                      Decimal('6490'), Decimal('7990'), '19x11x3', Decimal('0.14'), {'is_sale': True}),
-                    ('koshelki', 'Lacoste', 'Кошелёк Lacoste Zip', 'F', 'Чёрный', 'ПВХ',
+                    ('koshelki', 'Кошелёк Lacoste Zip', 'F', 'Чёрный', 'ПВХ',
                      Decimal('6490'), None, '19x11x3', Decimal('0.14'), {}),
                 ],
             },
             {
                 'group': 'kosh-samsonite-slim',
                 'items': [
-                    ('koshelki', 'Samsonite', 'Кошелёк-слим Samsonite Slim', 'M', 'Чёрный', 'Полиуретан',
+                    ('koshelki', 'Кошелёк-слим Samsonite Slim', 'M', 'Чёрный', 'Полиуретан',
                      Decimal('3990'), None, '10x8x1.5', Decimal('0.07'), {'is_popular': True}),
-                    ('koshelki', 'Samsonite', 'Кошелёк-слим Samsonite Slim', 'M', 'Тёмно-синий', 'Полиуретан',
+                    ('koshelki', 'Кошелёк-слим Samsonite Slim', 'M', 'Тёмно-синий', 'Полиуретан',
                      Decimal('3990'), None, '10x8x1.5', Decimal('0.07'), {}),
                 ],
             },
             {
                 'group': 'kosh-piquadro-atlantic',
                 'items': [
-                    ('koshelki', 'Piquadro', 'Портмоне-трансформер Piquadro Atlantic', 'M', 'Коричневый', 'Натуральная кожа',
+                    ('koshelki', 'Портмоне-трансформер Piquadro Atlantic', 'M', 'Коричневый', 'Натуральная кожа',
                      Decimal('12990'), Decimal('14990'), '12x10x2.5', Decimal('0.14'), {'is_popular': True, 'is_sale': True}),
-                    ('koshelki', 'Piquadro', 'Портмоне-трансформер Piquadro Atlantic', 'M', 'Чёрный', 'Натуральная кожа',
+                    ('koshelki', 'Портмоне-трансформер Piquadro Atlantic', 'M', 'Чёрный', 'Натуральная кожа',
                      Decimal('12990'), None, '12x10x2.5', Decimal('0.14'), {'is_new': True}),
                 ],
             },
             {
                 'group': 'kosh-braun-trento',
                 'items': [
-                    ('koshelki', 'Braun Büffel', 'Кошелёк Braun Büffel Trento', 'F', 'Кремовый', 'Натуральная кожа',
+                    ('koshelki', 'Кошелёк Braun Büffel Trento', 'F', 'Кремовый', 'Натуральная кожа',
                      Decimal('13990'), None, '18x9x3', Decimal('0.13'), {'is_new': True}),
-                    ('koshelki', 'Braun Büffel', 'Кошелёк Braun Büffel Trento', 'F', 'Бордовый', 'Натуральная кожа',
+                    ('koshelki', 'Кошелёк Braun Büffel Trento', 'F', 'Бордовый', 'Натуральная кожа',
                      Decimal('13990'), None, '18x9x3', Decimal('0.13'), {'is_popular': True}),
                 ],
             },
             {
                 'group': 'kosh-tous-mop',
                 'items': [
-                    ('koshelki', 'Tous', 'Монетница Tous Mother of Pearl', 'F', 'Бежевый', 'Натуральная кожа',
+                    ('koshelki', 'Монетница Tous Mother of Pearl', 'F', 'Бежевый', 'Натуральная кожа',
                      Decimal('4490'), None, '11x8x1.5', Decimal('0.05'), {'is_sale': True}),
-                    ('koshelki', 'Tous', 'Монетница Tous Mother of Pearl', 'F', 'Розовый', 'Натуральная кожа',
+                    ('koshelki', 'Монетница Tous Mother of Pearl', 'F', 'Розовый', 'Натуральная кожа',
                      Decimal('4490'), None, '11x8x1.5', Decimal('0.05'), {}),
                 ],
             },
@@ -290,54 +272,54 @@ class Command(BaseCommand):
             {
                 'group': 'bp-lacoste-neocroc',
                 'items': [
-                    ('ryukzaki', 'Lacoste', 'Рюкзак Lacoste Neocroc', 'M', 'Синий', 'ПВХ',
+                    ('ryukzaki', 'Рюкзак Lacoste Neocroc', 'M', 'Синий', 'ПВХ',
                      Decimal('15990'), Decimal('18990'), '30x40x12', Decimal('0.5'), {'is_sale': True, 'is_popular': True}),
-                    ('ryukzaki', 'Lacoste', 'Рюкзак Lacoste Neocroc', 'M', 'Чёрный', 'ПВХ',
+                    ('ryukzaki', 'Рюкзак Lacoste Neocroc', 'M', 'Чёрный', 'ПВХ',
                      Decimal('15990'), None, '30x40x12', Decimal('0.5'), {}),
                 ],
             },
             {
                 'group': 'bp-piquadro-business',
                 'items': [
-                    ('ryukzaki', 'Piquadro', 'Рюкзак Piquadro Business 15.6"', 'M', 'Чёрный', 'Натуральная кожа',
+                    ('ryukzaki', 'Рюкзак Piquadro Business 15.6"', 'M', 'Чёрный', 'Натуральная кожа',
                      Decimal('36990'), None, '42x32x14', Decimal('1.05'), {'is_popular': True, 'is_new': True}),
-                    ('ryukzaki', 'Piquadro', 'Рюкзак Piquadro Business 15.6"', 'M', 'Тёмно-коричневый', 'Натуральная кожа',
+                    ('ryukzaki', 'Рюкзак Piquadro Business 15.6"', 'M', 'Тёмно-коричневый', 'Натуральная кожа',
                      Decimal('36990'), None, '42x32x14', Decimal('1.05'), {}),
                 ],
             },
             {
                 'group': 'bp-samsonite-guardit',
                 'items': [
-                    ('ryukzaki', 'Samsonite', 'Рюкзак Samsonite Guardit 2.0', 'M', 'Чёрный', 'Полиэстер',
+                    ('ryukzaki', 'Рюкзак Samsonite Guardit 2.0', 'M', 'Чёрный', 'Полиэстер',
                      Decimal('12490'), None, '44x32x15', Decimal('0.7'), {'is_popular': True}),
-                    ('ryukzaki', 'Samsonite', 'Рюкзак Samsonite Guardit 2.0', 'M', 'Серый', 'Полиэстер',
+                    ('ryukzaki', 'Рюкзак Samsonite Guardit 2.0', 'M', 'Серый', 'Полиэстер',
                      Decimal('12490'), None, '44x32x15', Decimal('0.7'), {}),
                 ],
             },
             {
                 'group': 'bp-samsonite-flapover',
                 'items': [
-                    ('ryukzaki', 'Samsonite', 'Рюкзак Samsonite Flapover 2.0', 'M', 'Тёмно-синий', 'Полиэстер',
+                    ('ryukzaki', 'Рюкзак Samsonite Flapover 2.0', 'M', 'Тёмно-синий', 'Полиэстер',
                      Decimal('15990'), Decimal('18490'), '46x32x15', Decimal('0.75'), {'is_sale': True, 'is_popular': True}),
-                    ('ryukzaki', 'Samsonite', 'Рюкзак Samsonite Flapover 2.0', 'M', 'Чёрный', 'Полиэстер',
+                    ('ryukzaki', 'Рюкзак Samsonite Flapover 2.0', 'M', 'Чёрный', 'Полиэстер',
                      Decimal('15990'), None, '46x32x15', Decimal('0.75'), {}),
                 ],
             },
             {
                 'group': 'bp-roncato-urban',
                 'items': [
-                    ('ryukzaki', 'Roncato', 'Городской рюкзак Roncato Urban', 'M', 'Серый', 'Полиэстер',
+                    ('ryukzaki', 'Городской рюкзак Roncato Urban', 'M', 'Серый', 'Полиэстер',
                      Decimal('8990'), None, '40x30x13', Decimal('0.5'), {'is_popular': True}),
-                    ('ryukzaki', 'Roncato', 'Городской рюкзак Roncato Urban', 'M', 'Чёрный', 'Полиэстер',
+                    ('ryukzaki', 'Городской рюкзак Roncato Urban', 'M', 'Чёрный', 'Полиэстер',
                      Decimal('8990'), None, '40x30x13', Decimal('0.5'), {'is_new': True}),
                 ],
             },
             {
                 'group': 'bp-tous-mini',
                 'items': [
-                    ('ryukzaki', 'Tous', 'Рюкзак-мини Tous Bear', 'F', 'Кремовый', 'ПВХ',
+                    ('ryukzaki', 'Рюкзак-мини Tous Bear', 'F', 'Кремовый', 'ПВХ',
                      Decimal('11490'), None, '28x34x12', Decimal('0.4'), {'is_new': True, 'is_popular': True}),
-                    ('ryukzaki', 'Tous', 'Рюкзак-мини Tous Bear', 'F', 'Розовый', 'ПВХ',
+                    ('ryukzaki', 'Рюкзак-мини Tous Bear', 'F', 'Розовый', 'ПВХ',
                      Decimal('11490'), None, '28x34x12', Decimal('0.4'), {}),
                 ],
             },
@@ -346,47 +328,47 @@ class Command(BaseCommand):
             {
                 'group': 'rem-braun-classic',
                 'items': [
-                    ('remni', 'Braun Büffel', 'Ремень Braun Büffel Classic', 'M', 'Коричневый', 'Натуральная кожа',
+                    ('remni', 'Ремень Braun Büffel Classic', 'M', 'Коричневый', 'Натуральная кожа',
                      Decimal('6990'), None, 'на ремень', Decimal('0.18'), {'is_popular': True}),
-                    ('remni', 'Braun Büffel', 'Ремень Braun Büffel Classic', 'M', 'Чёрный', 'Натуральная кожа',
+                    ('remni', 'Ремень Braun Büffel Classic', 'M', 'Чёрный', 'Натуральная кожа',
                      Decimal('6990'), None, 'на ремень', Decimal('0.18'), {}),
-                    ('remni', 'Braun Büffel', 'Ремень Braun Büffel Classic', 'M', 'Тёмно-синий', 'Натуральная кожа',
+                    ('remni', 'Ремень Braun Büffel Classic', 'M', 'Тёмно-синий', 'Натуральная кожа',
                      Decimal('6990'), None, 'на ремень', Decimal('0.18'), {}),
                 ],
             },
             {
                 'group': 'rem-piquadro-buckle',
                 'items': [
-                    ('remni', 'Piquadro', 'Ремень Piquadro SB3 X-Fatto', 'M', 'Чёрный', 'Натуральная кожа',
+                    ('remni', 'Ремень Piquadro SB3 X-Fatto', 'M', 'Чёрный', 'Натуральная кожа',
                      Decimal('11990'), Decimal('13990'), 'на ремень', Decimal('0.2'), {'is_sale': True, 'is_popular': True}),
-                    ('remni', 'Piquadro', 'Ремень Piquadro SB3 X-Fatto', 'M', 'Коричневый', 'Натуральная кожа',
+                    ('remni', 'Ремень Piquadro SB3 X-Fatto', 'M', 'Коричневый', 'Натуральная кожа',
                      Decimal('11990'), None, 'на ремень', Decimal('0.2'), {}),
                 ],
             },
             {
                 'group': 'rem-samsonite-tech',
                 'items': [
-                    ('remni', 'Samsonite', 'Ремень Samsonite Tech', 'M', 'Чёрный', 'Полиуретан',
+                    ('remni', 'Ремень Samsonite Tech', 'M', 'Чёрный', 'Полиуретан',
                      Decimal('2990'), None, 'на ремень', Decimal('0.12'), {'is_popular': True}),
-                    ('remni', 'Samsonite', 'Ремень Samsonite Tech', 'M', 'Серый', 'Полиуретан',
+                    ('remni', 'Ремень Samsonite Tech', 'M', 'Серый', 'Полиуретан',
                      Decimal('2990'), None, 'на ремень', Decimal('0.12'), {}),
                 ],
             },
             {
                 'group': 'rem-lacoste-woven',
                 'items': [
-                    ('remni', 'Lacoste', 'Ремень плетёный Lacoste Classic', 'M', 'Тёмно-синий', 'Натуральная кожа',
+                    ('remni', 'Ремень плетёный Lacoste Classic', 'M', 'Тёмно-синий', 'Натуральная кожа',
                      Decimal('5490'), None, 'на ремень', Decimal('0.15'), {'is_new': True}),
-                    ('remni', 'Lacoste', 'Ремень плетёный Lacoste Classic', 'M', 'Бордовый', 'Натуральная кожа',
+                    ('remni', 'Ремень плетёный Lacoste Classic', 'M', 'Бордовый', 'Натуральная кожа',
                      Decimal('5490'), None, 'на ремень', Decimal('0.15'), {}),
                 ],
             },
             {
                 'group': 'rem-roncato-travel',
                 'items': [
-                    ('remni', 'Roncato', 'Дорожный ремень Roncato Travel', 'M', 'Коричневый', 'Натуральная кожа',
+                    ('remni', 'Дорожный ремень Roncato Travel', 'M', 'Коричневый', 'Натуральная кожа',
                      Decimal('4990'), Decimal('5990'), 'на ремень', Decimal('0.17'), {'is_sale': True}),
-                    ('remni', 'Roncato', 'Дорожный ремень Roncato Travel', 'M', 'Чёрный', 'Натуральная кожа',
+                    ('remni', 'Дорожный ремень Roncato Travel', 'M', 'Чёрный', 'Натуральная кожа',
                      Decimal('4990'), None, 'на ремень', Decimal('0.17'), {}),
                 ],
             },
@@ -395,47 +377,47 @@ class Command(BaseCommand):
             {
                 'group': 'zont-samsonite-auto',
                 'items': [
-                    ('zonty', 'Samsonite', 'Зонт Samsonite Auto Open', None, 'Чёрный', 'Полиэстер',
+                    ('zonty', 'Зонт Samsonite Auto Open', None, 'Чёрный', 'Полиэстер',
                      Decimal('4990'), None, 'D=100', Decimal('0.4'), {'is_popular': True}),
-                    ('zonty', 'Samsonite', 'Зонт Samsonite Auto Open', None, 'Тёмно-синий', 'Полиэстер',
+                    ('zonty', 'Зонт Samsonite Auto Open', None, 'Тёмно-синий', 'Полиэстер',
                      Decimal('4990'), None, 'D=100', Decimal('0.4'), {}),
                 ],
             },
             {
                 'group': 'zont-lacoste-compact',
                 'items': [
-                    ('zonty', 'Lacoste', 'Зонт Lacoste Compact', None, 'Бордовый', 'Полиэстер',
+                    ('zonty', 'Зонт Lacoste Compact', None, 'Бордовый', 'Полиэстер',
                      Decimal('5990'), None, 'D=95', Decimal('0.35'), {'is_new': True}),
-                    ('zonty', 'Lacoste', 'Зонт Lacoste Compact', None, 'Чёрный', 'Полиэстер',
+                    ('zonty', 'Зонт Lacoste Compact', None, 'Чёрный', 'Полиэстер',
                      Decimal('5990'), None, 'D=95', Decimal('0.35'), {}),
-                    ('zonty', 'Lacoste', 'Зонт Lacoste Compact', None, 'Кремовый', 'Полиэстер',
+                    ('zonty', 'Зонт Lacoste Compact', None, 'Кремовый', 'Полиэстер',
                      Decimal('5990'), None, 'D=95', Decimal('0.35'), {}),
                 ],
             },
             {
                 'group': 'zont-samsonite-inverness',
                 'items': [
-                    ('zonty', 'Samsonite', 'Зонт Samsonite Inverness', None, 'Чёрный', 'Нейлон',
+                    ('zonty', 'Зонт Samsonite Inverness', None, 'Чёрный', 'Нейлон',
                      Decimal('6490'), Decimal('7490'), 'D=105', Decimal('0.45'), {'is_popular': True, 'is_sale': True}),
-                    ('zonty', 'Samsonite', 'Зонт Samsonite Inverness', None, 'Тёмно-зелёный', 'Нейлон',
+                    ('zonty', 'Зонт Samsonite Inverness', None, 'Тёмно-зелёный', 'Нейлон',
                      Decimal('6490'), None, 'D=105', Decimal('0.45'), {}),
                 ],
             },
             {
                 'group': 'zont-roncato-wind',
                 'items': [
-                    ('zonty', 'Roncato', 'Зонт ветрозащитный Roncato Compact', None, 'Серый', 'Полиэстер',
+                    ('zonty', 'Зонт ветрозащитный Roncato Compact', None, 'Серый', 'Полиэстер',
                      Decimal('3990'), None, 'D=98', Decimal('0.38'), {'is_new': True}),
-                    ('zonty', 'Roncato', 'Зонт ветрозащитный Roncato Compact', None, 'Чёрный', 'Полиэстер',
+                    ('zonty', 'Зонт ветрозащитный Roncato Compact', None, 'Чёрный', 'Полиэстер',
                      Decimal('3990'), None, 'D=98', Decimal('0.38'), {}),
                 ],
             },
             {
                 'group': 'zont-braun-auto',
                 'items': [
-                    ('zonty', 'Braun Büffel', 'Автоматический зонт Braun Büffel', None, 'Красный', 'Полиэстер',
+                    ('zonty', 'Автоматический зонт Braun Büffel', None, 'Красный', 'Полиэстер',
                      Decimal('6990'), None, 'D=100', Decimal('0.42'), {'is_popular': True, 'is_new': True}),
-                    ('zonty', 'Braun Büffel', 'Автоматический зонт Braun Büffel', None, 'Бежевый', 'Полиэстер',
+                    ('zonty', 'Автоматический зонт Braun Büffel', None, 'Бежевый', 'Полиэстер',
                      Decimal('6990'), None, 'D=100', Decimal('0.42'), {}),
                 ],
             },
@@ -444,45 +426,45 @@ class Command(BaseCommand):
             {
                 'group': 'duff-samsonite-midtown',
                 'items': [
-                    ('dorozhnye-sumki', 'Samsonite', 'Дуфл Samsonite Midtown', 'M', 'Тёмно-синий', 'Полиэстер',
+                    ('dorozhnye-sumki', 'Дуфл Samsonite Midtown', 'M', 'Тёмно-синий', 'Полиэстер',
                      Decimal('9990'), Decimal('12490'), '50x28x26', Decimal('0.9'), {'is_sale': True, 'is_new': True}),
-                    ('dorozhnye-sumki', 'Samsonite', 'Дуфл Samsonite Midtown', 'M', 'Чёрный', 'Полиэстер',
+                    ('dorozhnye-sumki', 'Дуфл Samsonite Midtown', 'M', 'Чёрный', 'Полиэстер',
                      Decimal('9990'), None, '50x28x26', Decimal('0.9'), {}),
                 ],
             },
             {
                 'group': 'duff-lacoste-sport',
                 'items': [
-                    ('dorozhnye-sumki', 'Lacoste', 'Спортивная сумка Lacoste Sport', 'M', 'Бордовый', 'Полиэстер',
+                    ('dorozhnye-sumki', 'Спортивная сумка Lacoste Sport', 'M', 'Бордовый', 'Полиэстер',
                      Decimal('8490'), None, '52x26x24', Decimal('0.6'), {}),
-                    ('dorozhnye-sumki', 'Lacoste', 'Спортивная сумка Lacoste Sport', 'M', 'Чёрный', 'Полиэстер',
+                    ('dorozhnye-sumki', 'Спортивная сумка Lacoste Sport', 'M', 'Чёрный', 'Полиэстер',
                      Decimal('8490'), None, '52x26x24', Decimal('0.6'), {}),
                 ],
             },
             {
                 'group': 'duff-roncato-weekender',
                 'items': [
-                    ('dorozhnye-sumki', 'Roncato', 'Выходная дорожная сумка Roncato Weekender', 'F', 'Тёмно-зелёный', 'Полиэстер',
+                    ('dorozhnye-sumki', 'Выходная дорожная сумка Roncato Weekender', 'F', 'Тёмно-зелёный', 'Полиэстер',
                      Decimal('7490'), Decimal('8990'), '48x28x24', Decimal('0.8'), {'is_sale': True, 'is_popular': True}),
-                    ('dorozhnye-sumki', 'Roncato', 'Выходная дорожная сумка Roncato Weekender', 'F', 'Серый', 'Полиэстер',
+                    ('dorozhnye-sumki', 'Выходная дорожная сумка Roncato Weekender', 'F', 'Серый', 'Полиэстер',
                      Decimal('7490'), None, '48x28x24', Decimal('0.8'), {}),
                 ],
             },
             {
                 'group': 'duff-samsonite-trolley',
                 'items': [
-                    ('dorozhnye-sumki', 'Samsonite', 'Сумка на колёсиках Samsonite Trolley', 'M', 'Чёрный', 'Полиэстер',
+                    ('dorozhnye-sumki', 'Сумка на колёсиках Samsonite Trolley', 'M', 'Чёрный', 'Полиэстер',
                      Decimal('13490'), None, '46x38x25', Decimal('1.6'), {'is_popular': True}),
-                    ('dorozhnye-sumki', 'Samsonite', 'Сумка на колёсиках Samsonite Trolley', 'M', 'Тёмно-синий', 'Полиэстер',
+                    ('dorozhnye-sumki', 'Сумка на колёсиках Samsonite Trolley', 'M', 'Тёмно-синий', 'Полиэстер',
                      Decimal('13490'), None, '46x38x25', Decimal('1.6'), {}),
                 ],
             },
             {
                 'group': 'duff-piquadro-business',
                 'items': [
-                    ('dorozhnye-sumki', 'Piquadro', 'Бизнес-сумка Piquadro Travel', 'M', 'Чёрный', 'Натуральная кожа',
+                    ('dorozhnye-sumki', 'Бизнес-сумка Piquadro Travel', 'M', 'Чёрный', 'Натуральная кожа',
                      Decimal('27990'), Decimal('31990'), '50x30x24', Decimal('1.4'), {'is_popular': True, 'is_sale': True}),
-                    ('dorozhnye-sumki', 'Piquadro', 'Бизнес-сумка Piquadro Travel', 'M', 'Тёмно-коричневый', 'Натуральная кожа',
+                    ('dorozhnye-sumki', 'Бизнес-сумка Piquadro Travel', 'M', 'Тёмно-коричневый', 'Натуральная кожа',
                      Decimal('27990'), None, '50x30x24', Decimal('1.4'), {}),
                 ],
             },
@@ -491,72 +473,72 @@ class Command(BaseCommand):
             {
                 'group': 'chem-samsonite-lite20',
                 'items': [
-                    ('chemodany', 'Samsonite', 'Чемодан Samsonite Lite-Shock 20"', 'M', 'Синий', 'Полипропилен',
+                    ('chemodany', 'Чемодан Samsonite Lite-Shock 20"', 'M', 'Синий', 'Полипропилен',
                      Decimal('32990'), Decimal('38990'), '55x40x20', Decimal('2.1'), {'is_popular': True, 'is_sale': True}),
-                    ('chemodany', 'Samsonite', 'Чемодан Samsonite Lite-Shock 20"', 'M', 'Чёрный', 'Полипропилен',
+                    ('chemodany', 'Чемодан Samsonite Lite-Shock 20"', 'M', 'Чёрный', 'Полипропилен',
                      Decimal('32990'), None, '55x40x20', Decimal('2.1'), {'is_popular': True}),
                 ],
             },
             {
                 'group': 'chem-samsonite-clite24',
                 'items': [
-                    ('chemodany', 'Samsonite', 'Чемодан Samsonite C-Lite 24"', 'M', 'Чёрный', 'Curv',
+                    ('chemodany', 'Чемодан Samsonite C-Lite 24"', 'M', 'Чёрный', 'Curv',
                      Decimal('41990'), None, '67x45x28', Decimal('2.7'), {'is_popular': True}),
-                    ('chemodany', 'Samsonite', 'Чемодан Samsonite C-Lite 24"', 'M', 'Серый', 'Curv',
+                    ('chemodany', 'Чемодан Samsonite C-Lite 24"', 'M', 'Серый', 'Curv',
                      Decimal('41990'), None, '67x45x28', Decimal('2.7'), {}),
                 ],
             },
             {
                 'group': 'chem-roncato-young28',
                 'items': [
-                    ('chemodany', 'Roncato', 'Чемодан Roncato Young 28"', 'M', 'Красный', 'Makrolon',
+                    ('chemodany', 'Чемодан Roncato Young 28"', 'M', 'Красный', 'Makrolon',
                      Decimal('29890'), Decimal('34990'), '77x52x30', Decimal('3.4'), {'is_new': True, 'is_sale': True}),
-                    ('chemodany', 'Roncato', 'Чемодан Roncato Young 28"', 'M', 'Чёрный', 'Makrolon',
+                    ('chemodany', 'Чемодан Roncato Young 28"', 'M', 'Чёрный', 'Makrolon',
                      Decimal('29890'), None, '77x52x30', Decimal('3.4'), {}),
                 ],
             },
             {
                 'group': 'chem-roncato-box20',
                 'items': [
-                    ('chemodany', 'Roncato', 'Чемодан Roncato Box 2.0 Cabin 20"', 'M', 'Тёмно-зелёный', 'Makrolon',
+                    ('chemodany', 'Чемодан Roncato Box 2.0 Cabin 20"', 'M', 'Тёмно-зелёный', 'Makrolon',
                      Decimal('25990'), None, '55x40x20', Decimal('2.3'), {'is_popular': True}),
-                    ('chemodany', 'Roncato', 'Чемодан Roncato Box 2.0 Cabin 20"', 'M', 'Серый', 'Makrolon',
+                    ('chemodany', 'Чемодан Roncato Box 2.0 Cabin 20"', 'M', 'Серый', 'Makrolon',
                      Decimal('25990'), None, '55x40x20', Decimal('2.3'), {}),
                 ],
             },
             {
                 'group': 'chem-samsonite-base28',
                 'items': [
-                    ('chemodany', 'Samsonite', 'Чемодан Samsonite Base Boost 28"', 'M', 'Серый', 'Полиэстер',
+                    ('chemodany', 'Чемодан Samsonite Base Boost 28"', 'M', 'Серый', 'Полиэстер',
                      Decimal('27490'), Decimal('32990'), '78x52x31', Decimal('3.8'), {'is_sale': True}),
-                    ('chemodany', 'Samsonite', 'Чемодан Samsonite Base Boost 28"', 'M', 'Синий', 'Полиэстер',
+                    ('chemodany', 'Чемодан Samsonite Base Boost 28"', 'M', 'Синий', 'Полиэстер',
                      Decimal('27490'), None, '78x52x31', Decimal('3.8'), {}),
                 ],
             },
             {
                 'group': 'chem-roncato-ironik24',
                 'items': [
-                    ('chemodany', 'Roncato', 'Чемодан Roncato Ironik 24"', 'M', 'Чёрный', 'Makrolon',
+                    ('chemodany', 'Чемодан Roncato Ironik 24"', 'M', 'Чёрный', 'Makrolon',
                      Decimal('31990'), Decimal('36990'), '65x42x27', Decimal('2.8'), {'is_popular': True, 'is_sale': True}),
-                    ('chemodany', 'Roncato', 'Чемодан Roncato Ironik 24"', 'M', 'Красный', 'Makrolon',
+                    ('chemodany', 'Чемодан Roncato Ironik 24"', 'M', 'Красный', 'Makrolon',
                      Decimal('31990'), None, '65x42x27', Decimal('2.8'), {}),
                 ],
             },
             {
                 'group': 'chem-samsonite-scure24',
                 'items': [
-                    ('chemodany', 'Samsonite', 'Чемодан Samsonite S\'Cure Spinner 24"', 'F', 'Серебристый', 'Поликарбонат',
+                    ('chemodany', 'Чемодан Samsonite S\'Cure Spinner 24"', 'F', 'Серебристый', 'Поликарбонат',
                      Decimal('35990'), None, '66x45x30', Decimal('3.9'), {'is_popular': True, 'is_new': True}),
-                    ('chemodany', 'Samsonite', 'Чемодан Samsonite S\'Cure Spinner 24"', 'F', 'Фиолетовый', 'Поликарбонат',
+                    ('chemodany', 'Чемодан Samsonite S\'Cure Spinner 24"', 'F', 'Фиолетовый', 'Поликарбонат',
                      Decimal('35990'), None, '66x45x30', Decimal('3.9'), {}),
                 ],
             },
             {
                 'group': 'chem-roncato-okmini28',
                 'items': [
-                    ('chemodany', 'Roncato', 'Чемодан Roncato Ok Mini 28"', 'F', 'Розовый', 'Makrolon',
+                    ('chemodany', 'Чемодан Roncato Ok Mini 28"', 'F', 'Розовый', 'Makrolon',
                      Decimal('24990'), Decimal('28990'), '76x54x31', Decimal('3.5'), {'is_sale': True}),
-                    ('chemodany', 'Roncato', 'Чемодан Roncato Ok Mini 28"', 'F', 'Серебристый', 'Makrolon',
+                    ('chemodany', 'Чемодан Roncato Ok Mini 28"', 'F', 'Серебристый', 'Makrolon',
                      Decimal('24990'), None, '76x54x31', Decimal('3.5'), {'is_new': True}),
                 ],
             },
@@ -565,45 +547,45 @@ class Command(BaseCommand):
             {
                 'group': 'acc-piquadro-passport',
                 'items': [
-                    ('aksessuary', 'Piquadro', 'Обложка на паспорт Piquadro', 'M', 'Чёрный', 'Натуральная кожа',
+                    ('aksessuary', 'Обложка на паспорт Piquadro', 'M', 'Чёрный', 'Натуральная кожа',
                      Decimal('4290'), Decimal('4990'), '14x10x1', Decimal('0.05'), {'is_new': True, 'is_sale': True}),
-                    ('aksessuary', 'Piquadro', 'Обложка на паспорт Piquadro', 'M', 'Коричневый', 'Натуральная кожа',
+                    ('aksessuary', 'Обложка на паспорт Piquadro', 'M', 'Коричневый', 'Натуральная кожа',
                      Decimal('4290'), None, '14x10x1', Decimal('0.05'), {}),
                 ],
             },
             {
                 'group': 'acc-tous-pen',
                 'items': [
-                    ('aksessuary', 'Tous', 'Пенал Tous Mini', 'F', 'Бежевый', 'ПВХ',
+                    ('aksessuary', 'Пенал Tous Mini', 'F', 'Бежевый', 'ПВХ',
                      Decimal('3490'), None, '20x8x5', Decimal('0.09'), {}),
-                    ('aksessuary', 'Tous', 'Пенал Tous Mini', 'F', 'Розовый', 'ПВХ',
+                    ('aksessuary', 'Пенал Tous Mini', 'F', 'Розовый', 'ПВХ',
                      Decimal('3490'), None, '20x8x5', Decimal('0.09'), {}),
                 ],
             },
             {
                 'group': 'acc-piquadro-keycase',
                 'items': [
-                    ('aksessuary', 'Piquadro', 'Ключница Piquadro Key Case', 'M', 'Чёрный', 'Натуральная кожа',
+                    ('aksessuary', 'Ключница Piquadro Key Case', 'M', 'Чёрный', 'Натуральная кожа',
                      Decimal('2990'), None, '9x6x2', Decimal('0.04'), {'is_popular': True}),
-                    ('aksessuary', 'Piquadro', 'Ключница Piquadro Key Case', 'M', 'Коричневый', 'Натуральная кожа',
+                    ('aksessuary', 'Ключница Piquadro Key Case', 'M', 'Коричневый', 'Натуральная кожа',
                      Decimal('2990'), None, '9x6x2', Decimal('0.04'), {}),
                 ],
             },
             {
                 'group': 'acc-samsonite-tags',
                 'items': [
-                    ('aksessuary', 'Samsonite', 'Набор багажных бирок Samsonite', 'M', 'Чёрный', 'Кожа',
+                    ('aksessuary', 'Набор багажных бирок Samsonite', 'M', 'Чёрный', 'Кожа',
                      Decimal('2490'), Decimal('2990'), '12x8x2', Decimal('0.05'), {'is_sale': True, 'is_popular': True}),
-                    ('aksessuary', 'Samsonite', 'Набор багажных бирок Samsonite', 'M', 'Красный', 'Кожа',
+                    ('aksessuary', 'Набор багажных бирок Samsonite', 'M', 'Красный', 'Кожа',
                      Decimal('2490'), None, '12x8x2', Decimal('0.05'), {}),
                 ],
             },
             {
                 'group': 'acc-braun-glasses',
                 'items': [
-                    ('aksessuary', 'Braun Büffel', 'Футляр для очков Braun Büffel', 'F', 'Коричневый', 'Натуральная кожа',
+                    ('aksessuary', 'Футляр для очков Braun Büffel', 'F', 'Коричневый', 'Натуральная кожа',
                      Decimal('3990'), None, '16x6x4', Decimal('0.06'), {'is_new': True}),
-                    ('aksessuary', 'Braun Büffel', 'Футляр для очков Braun Büffel', 'F', 'Бордовый', 'Натуральная кожа',
+                    ('aksessuary', 'Футляр для очков Braun Büffel', 'F', 'Бордовый', 'Натуральная кожа',
                      Decimal('3990'), None, '16x6x4', Decimal('0.06'), {}),
                 ],
             },
@@ -637,13 +619,12 @@ class Command(BaseCommand):
                 continue
 
             first = items[0]
-            cat_slug, brand_name, pname, gender, _color, material, _final, _base, dims, weight, flags = first
+            cat_slug, pname, gender, _color, material, _final, _base, dims, weight, flags = first
 
             category = cat_objs.get(cat_slug)
             if not category:
                 self.stderr.write(f'Skip {pname}: no category {cat_slug}')
                 continue
-            brand = brands.get(brand_name)
 
             gender_label = 'Унисекс' if gender is None else ('Мужской' if gender == 'M' else 'Женский')
 
@@ -656,12 +637,11 @@ class Command(BaseCommand):
                 defaults={
                     'name': pname,
                     'category': category,
-                    'brand': brand,
                     'gender': gender,
-                    'short_description': f'{pname} — качественное изделие от бренда {brand_name}. '
+                    'short_description': f'{pname} — качественное изделие. '
                                          f'Материал: {material}.',
                     'description': (
-                        f'{pname} — модель от бренда {brand_name}.\n\n'
+                        f'{pname}.\n\n'
                         f'Основные характеристики:\n'
                         f'• Материал: {material}\n'
                         f'• Размеры: {dims}\n'
@@ -680,7 +660,7 @@ class Command(BaseCommand):
                 self.stderr.write(f'SKIP (exists): {pname}')
                 continue
 
-            for v_idx, (v_cat, v_brand, v_pname, v_gender, color, v_material,
+            for v_idx, (v_cat, v_pname, v_gender, color, v_material,
                         v_final, v_base, v_dims, v_weight, v_flags) in enumerate(items):
                 if v_base and v_base > v_final:
                     base_price = v_base
@@ -720,7 +700,7 @@ class Command(BaseCommand):
             product_idx += 1
 
         self.stdout.write(self.style.SUCCESS(
-            f'\nSeed complete: Brands={Brand.objects.count()}, '
+            f'\nSeed complete: '
             f'Categories={Category.objects.count()}, '
             f'Products={Product.objects.count()} (моделей), '
             f'Variants={ProductVariant.objects.count()} (цветов), '
@@ -764,14 +744,8 @@ class Command(BaseCommand):
         ))
 
         # ---------- Нормализация слагов: только латиница ----------
-        # Чинит товары/бренды, созданные старой версией сида с кириллицей.
+        # Чинит товары/категории, созданные старой версией сида с кириллицей.
         changed = 0
-        for obj in Brand.objects.all():
-            new = _slug(obj.name)
-            if obj.slug != new:
-                obj.slug = new
-                obj.save(update_fields=['slug'])
-                changed += 1
         for obj in Category.objects.all():
             new = _slug(obj.name)
             if obj.slug != new:

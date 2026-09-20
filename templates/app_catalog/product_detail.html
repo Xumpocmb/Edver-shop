@@ -65,9 +65,6 @@
         <!-- Информация о товаре -->
         <div class="product-info">
             <div class="product-info__top">
-                {% if product.brand %}
-                <div class="product-info__brand">{{ product.brand.name }}</div>
-                {% endif %}
                 <h1 class="product-info__title">{{ product.name }}</h1>
             </div>
 
@@ -159,10 +156,6 @@
     <section class="container product-section">
         <h2 class="product-section__title">Характеристики</h2>
         <table class="specs-table">
-            {% if product.brand %}<tr>
-                <th>Бренд</th>
-                <td>{{ product.brand.name }}</td>
-            </tr>{% endif %}
             {% if product.category %}<tr>
                 <th>Категория</th>
                 <td>{{ product.category.name }}</td>

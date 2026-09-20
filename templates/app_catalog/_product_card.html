@@ -25,9 +25,6 @@
     </a>
 
     <div class="product-card__body">
-        {% if product.brand %}
-            <div class="product-card__brand">{{ product.brand.name }}</div>
-        {% endif %}
         <a href="{{ product.get_absolute_url }}" class="product-card__name">{{ product.name }}</a>
 
         {% with v=product.main_variant %}

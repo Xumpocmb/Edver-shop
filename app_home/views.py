@@ -5,7 +5,7 @@ from .models import SiteReview, StaticPage
 
 
 def home(request):
-    products = Product.objects.filter(is_active=True).select_related('brand', 'category').prefetch_related('variants__images')
+    products = Product.objects.filter(is_active=True).select_related('category').prefetch_related('variants__images')
 
     popular = products.filter(is_popular=True)[:8]
     new_products = products.filter(is_new=True)[:8]

@@ -1,7 +1,7 @@
 from django.contrib import admin
 from django.utils.html import format_html
 
-from .models import Category, Brand, Product, ProductVariant, ProductImage
+from .models import Category, Product, ProductVariant, ProductImage
 
 
 class ProductImageInline(admin.TabularInline):
@@ -22,17 +22,6 @@ class CategoryAdmin(admin.ModelAdmin):
     list_editable = ['order', 'is_active', 'has_gender']
 
 
-@admin.register(Brand)
-class BrandAdmin(admin.ModelAdmin):
-    class Media:
-        js = ('admin/js/urlify_ru.js',)
-
-    list_display = ['name', 'slug', 'is_active']
-    list_filter = ['is_active']
-    search_fields = ['name', 'slug', 'description']
-    prepopulated_fields = {'slug': ('name',)}
-
-
 class ProductVariantInline(admin.TabularInline):
     model = ProductVariant
     extra = 1
@@ -49,14 +38,14 @@ class ProductAdmin(admin.ModelAdmin):
 
     list_display = ['main_image', 'name', 'category']
     list_display_links = ['name']
-    list_filter = ['is_active', 'gender', 'is_popular', 'is_new', 'is_sale', 'category', 'brand']
+    list_filter = ['is_active', 'gender', 'is_popular', 'is_new', 'is_sale', 'category']
     search_fields = ['name', 'slug', 'description', 'short_description', 'variants__color']
     prepopulated_fields = {'slug': ('name',)}
     inlines = [ProductVariantInline]
     save_on_top = True
     fieldsets = (
         (None, {
-            'fields': (('name', 'slug'), ('category', 'brand'), 'gender')
+            'fields': (('name', 'slug'), ('category',), 'gender')
         }),
         ('Характеристики', {
             'fields': ('material', 'weight', 'dimensions'),

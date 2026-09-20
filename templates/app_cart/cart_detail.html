@@ -43,9 +43,6 @@
                     <div class="cart-item__info">
                         <a href="{{ item.variant.product.get_absolute_url }}" class="cart-item__name">{{ item.variant.product.name }}</a>
                         <div class="cart-item__variant">{{ item.variant.color }}</div>
-                        {% if item.variant.product.brand %}
-                            <div class="cart-item__brand">{{ item.variant.product.brand.name }}</div>
-                        {% endif %}
                     </div>
                     <div class="cart-item__qty">
                         <div class="qty-counter">

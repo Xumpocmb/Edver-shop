@@ -135,7 +135,7 @@ def remove_promo(request):
 
 def cart_detail(request):
     cart = Cart.get_or_create(request)
-    items = cart.items.select_related('variant__product__brand').prefetch_related('variant__images')
+    items = cart.items.select_related('variant__product').prefetch_related('variant__images')
     context = {
         'cart': cart,
         'items': items,

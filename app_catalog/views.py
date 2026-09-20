@@ -93,7 +93,7 @@ def _get_filter_options(qs):
 
 
 def _prefetch_products(qs):
-    return qs.select_related('category', 'brand').prefetch_related('variants__images')
+    return qs.select_related('category').prefetch_related('variants__images')
 
 
 def catalog_list(request):
@@ -156,7 +156,6 @@ def search_results(request):
             | Q(short_description__icontains=query)
             | Q(description__icontains=query)
             | Q(category__name__icontains=query)
-            | Q(brand__name__icontains=query)
             | Q(variants__color__icontains=query)
             | Q(material__icontains=query)
         ).distinct()
@@ -188,7 +187,7 @@ def search_results(request):
 
 def product_detail(request, slug):
     product = get_object_or_404(
-        Product.objects.select_related('category', 'brand').prefetch_related('variants__images'),
+        Product.objects.select_related('category').prefetch_related('variants__images'),
         slug=slug, is_active=True
     )
 
@@ -227,11 +226,11 @@ def product_detail(request, slug):
 
     related = Product.objects.filter(
         is_active=True, category=product.category
-    ).exclude(id=product.id).select_related('brand').prefetch_related('variants__images')[:8]
+    ).exclude(id=product.id).prefetch_related('variants__images')[:8]
 
     cross_sell = Product.objects.filter(
         is_active=True, is_popular=True
-    ).exclude(id=product.id).select_related('brand').prefetch_related('variants__images')[:4]
+    ).exclude(id=product.id).prefetch_related('variants__images')[:4]
 
     crumbs = [('Каталог', '/catalog/')]
     crumbs.append((product.category.name, product.category.get_absolute_url()))

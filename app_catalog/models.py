@@ -48,28 +48,6 @@ class Category(models.Model):
         return reverse('app_catalog:category_detail', kwargs={'slug': self.slug})
 
 
-class Brand(models.Model):
-    name = models.CharField(max_length=255, verbose_name="Название бренда")
-    slug = models.SlugField(max_length=255, unique=True, db_index=True)
-    logo = models.ImageField(
-        upload_to='brands/',
-        null=True,
-        blank=True,
-        verbose_name="Логотип"
-    )
-    description = models.TextField(blank=True, verbose_name="Описание")
-    is_active = models.BooleanField(default=True, verbose_name="Активен")
-    created_at = models.DateTimeField(auto_now_add=True)
-
-    class Meta:
-        verbose_name = "Бренд"
-        verbose_name_plural = "Бренды"
-        ordering = ['name']
-
-    def __str__(self):
-        return self.name
-
-
 class Product(models.Model):
     """Модель товара: одна модель = один URL, цвета — это варианты."""
 
@@ -85,14 +63,6 @@ class Product(models.Model):
         on_delete=models.PROTECT,
         related_name='products',
         verbose_name="Категория"
-    )
-    brand = models.ForeignKey(
-        Brand,
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
-        related_name='products',
-        verbose_name="Бренд"
     )
     gender = models.CharField(
         max_length=1,
