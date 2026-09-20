@@ -9,4 +9,5 @@ urlpatterns = [
     path('reviews/', views.site_reviews, name='site_reviews'),
     path('privacy/', views.static_page, {'slug': 'privacy'}, name='privacy'),
     path('payment/', views.static_page, {'slug': 'payment'}, name='payment'),
+    path('offer/', views.static_page, {'slug': 'offer'}, name='offer'),
 ]
