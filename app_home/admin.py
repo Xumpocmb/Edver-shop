@@ -67,3 +67,6 @@ class StaticPageAdmin(SummernoteModelAdmin):
     list_editable = ('is_published',)
     prepopulated_fields = {'slug': ('title',)}
     search_fields = ('title', 'content')
+
+    class Media:
+        css = {'all': ('css/admin.css',)}

@@ -1,0 +1,10 @@
+/* ====== Summernote в админке: растягиваем редактор на всю ширину поля ====== */
+.admin .summernote-div,
+.summernote-div {
+    display: block;
+    width: 100%;
+}
+
+.summernote-div iframe {
+    width: 100% !important;
+}
