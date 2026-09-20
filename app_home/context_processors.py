@@ -1,9 +1,14 @@
-from .models import FooterInfo, Instagram, PhoneNumber, SiteLogo
+from .models import FooterInfo, Instagram, PhoneNumber, SiteFavicon, SiteLogo, TikTok
 
 
 def site_logo(request):
     logo = SiteLogo.objects.first()
     return {'site_logo': logo}
+
+
+def site_favicon(request):
+    favicon = SiteFavicon.objects.first()
+    return {'site_favicon': favicon}
 
 
 def phone(request):
@@ -14,6 +19,11 @@ def phone(request):
 def instagram(request):
     instagram = Instagram.objects.first()
     return {'instagram': instagram}
+
+
+def tiktok(request):
+    tiktok = TikTok.objects.first()
+    return {'tiktok': tiktok}
 
 
 def footer_info(request):

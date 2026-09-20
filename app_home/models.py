@@ -19,6 +19,22 @@ class SiteLogo(models.Model):
         verbose_name_plural = 'Логотип сайта'
 
 
+class SiteFavicon(models.Model):
+    is_singleton = models.BooleanField(default=True, unique=True, editable=False)
+    image = models.ImageField(upload_to='favicon/', verbose_name='Фавиконка')
+
+    def save(self, *args, **kwargs):
+        self.is_singleton = True
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return 'Фавиконка сайта'
+
+    class Meta:
+        verbose_name = 'Фавиконка сайта'
+        verbose_name_plural = 'Фавиконка сайта'
+
+
 class PhoneNumber(models.Model):
     is_singleton = models.BooleanField(default=True, unique=True, editable=False)
     number = models.CharField(
@@ -56,6 +72,25 @@ class Instagram(models.Model):
     class Meta:
         verbose_name = 'Instagram'
         verbose_name_plural = 'Instagram'
+
+
+class TikTok(models.Model):
+    is_singleton = models.BooleanField(default=True, unique=True, editable=False)
+    url = models.URLField(
+        default='https://www.tiktok.com/',
+        verbose_name='Ссылка на TikTok',
+    )
+
+    def save(self, *args, **kwargs):
+        self.is_singleton = True
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return self.url
+
+    class Meta:
+        verbose_name = 'TikTok'
+        verbose_name_plural = 'TikTok'
 
 
 class FooterInfo(models.Model):

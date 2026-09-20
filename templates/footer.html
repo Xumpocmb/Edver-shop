@@ -3,11 +3,14 @@
         <p>{{ footer_info.text|linebreaksbr }}</p>
     </div>
     <div class="footer-side">
-        <a href="https://instagram.com/" class="footer-instagram" target="_blank" rel="noopener" aria-label="Instagram">
+        <a href="{{ instagram.url }}" class="footer-instagram" target="_blank" rel="noopener" aria-label="Instagram">
             📷 Мы в Instagram
         </a>
+        <a href="{{ tiktok.url }}" class="footer-instagram" target="_blank" rel="noopener" aria-label="TikTok">
+            🎵 Мы в TikTok
+        </a>
         <nav class="footer-links">
-            <a href="/reviews/">Отзывы</a>
+            <a href="/returns/">Возврат товара</a>
             <a href="/offer/">Договор оферты</a>
             <a href="/privacy/">Политика обработки данных</a>
         </nav>
