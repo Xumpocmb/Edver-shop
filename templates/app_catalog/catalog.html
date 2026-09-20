@@ -160,7 +160,6 @@
                     <label for="sortSelect">Сортировка:</label>
                     <select id="sortSelect" class="sort-select" form="filtersForm" name="sort">
                         <option value="newest" {% if current_sort == 'newest' %}selected{% endif %}>По умолчанию (новые)</option>
-                        <option value="popular" {% if current_sort == 'popular' %}selected{% endif %}>Сначала популярные</option>
                         <option value="price_asc" {% if current_sort == 'price_asc' %}selected{% endif %}>Цена: по возрастанию</option>
                         <option value="price_desc" {% if current_sort == 'price_desc' %}selected{% endif %}>Цена: по убыванию</option>
                     </select>

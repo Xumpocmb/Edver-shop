@@ -51,8 +51,6 @@ def _apply_filters(queryset, request):
         qs = qs.annotate(_display_price=Min('variants__price')).order_by('_display_price', 'id')
     elif sort == 'price_desc':
         qs = qs.annotate(_display_price=Min('variants__price')).order_by('-_display_price', 'id')
-    elif sort == 'popular':
-        qs = qs.order_by('-sales_count', '-views_count')
     else:
         qs = qs.order_by('-created_at')
     return qs
