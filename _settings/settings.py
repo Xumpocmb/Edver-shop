@@ -25,8 +25,9 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    
-    
+
+    'django_summernote',
+
     "app_home.apps.AppHomeConfig",
     "app_catalog.apps.AppCatalogConfig",
     "app_user.apps.AppUserConfig",
@@ -124,6 +125,23 @@ MAILERS = {
     'default': {
         'BACKEND': 'django.core.mail.backends.console.EmailBackend',
     },
+}
+
+SUMMERNOTE_CONFIG = {
+    'disable_upload': True,
+    'width': '100%',
+    'height': 600,
+    'toolbar': [
+        ['style', ['style']],
+        ['font', ['bold', 'italic', 'underline', 'clear']],
+        ['fontname', ['fontname']],
+        ['fontsize', ['fontsize']],
+        ['color', ['color']],
+        ['para', ['ul', 'ol', 'paragraph']],
+        ['table', ['table']],
+        ['insert', ['link']],
+        ['view', ['fullscreen', 'codeview']],
+    ],
 }
 
 # Django MPTT

@@ -1,7 +1,7 @@
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 from app_catalog.models import Product, Category
-from .models import SiteReview
+from .models import SiteReview, StaticPage
 
 
 def home(request):
@@ -99,3 +99,8 @@ def site_reviews(request):
 
     context = {'reviews': reviews}
     return render(request, 'app_home/site_reviews.html', context)
+
+
+def static_page(request, slug):
+    page = get_object_or_404(StaticPage, slug=slug, is_published=True)
+    return render(request, 'app_home/static_page.html', {'page': page})

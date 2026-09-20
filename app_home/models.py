@@ -1,5 +1,6 @@
 from django.db import models
 from django.core.validators import MinValueValidator, MaxValueValidator
+from django_summernote.fields import SummernoteTextField
 
 
 class SiteLogo(models.Model):
@@ -107,6 +108,22 @@ class FooterInfo(models.Model):
     class Meta:
         verbose_name = 'Информация в футере'
         verbose_name_plural = 'Информация в футере'
+
+
+class StaticPage(models.Model):
+    title = models.CharField(max_length=200, verbose_name='Заголовок')
+    slug = models.SlugField(max_length=120, unique=True, verbose_name='Адрес (slug)')
+    content = SummernoteTextField(blank=True, verbose_name='Содержимое')
+    is_published = models.BooleanField(default=True, verbose_name='Опубликована')
+    updated_at = models.DateTimeField(auto_now=True, verbose_name='Дата обновления')
+
+    class Meta:
+        verbose_name = 'Страница'
+        verbose_name_plural = 'Страницы'
+        ordering = ['title']
+
+    def __str__(self):
+        return self.title
 
 
 class SiteReview(models.Model):

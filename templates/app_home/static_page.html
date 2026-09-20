@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}
+<title>{{ page.title }} — EDVER Shop</title>
+{% endblock %}
+
+{% block content %}
+<div class="catalog-page">
+
+    <div class="container breadcrumbs-wrap">
+        <nav class="breadcrumbs" aria-label="Навигация">
+            <a href="/">Главная</a>
+            <span class="breadcrumbs__sep">/</span>
+            <span class="breadcrumbs__current">{{ page.title }}</span>
+        </nav>
+    </div>
+
+    <section class="container static-page">
+        <div class="static-page__body">
+            {{ page.content|safe }}
+        </div>
+    </section>
+
+</div>
+{% endblock %}

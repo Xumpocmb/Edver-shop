@@ -7,4 +7,6 @@ urlpatterns = [
     path('', views.home, name='home'),
     path('about/', views.about, name='about'),
     path('reviews/', views.site_reviews, name='site_reviews'),
+    path('privacy/', views.static_page, {'slug': 'privacy'}, name='privacy'),
+    path('payment/', views.static_page, {'slug': 'payment'}, name='payment'),
 ]
