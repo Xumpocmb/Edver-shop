@@ -1158,7 +1158,7 @@ button {
     gap: 1.5rem;
 }
 
-.footer-instagram {
+.footer-social {
     display: inline-flex;
     align-items: center;
     gap: .5rem;
@@ -1169,10 +1169,21 @@ button {
     transition: background-color .2s, color .2s, border-color .2s;
 }
 
-.footer-instagram:hover {
+.footer-social:hover {
     background: #fff;
     color: var(--color-footer-bg);
     border-color: #fff;
+}
+
+.footer-phone {
+    font-weight: 700;
+    color: #fff;
+    font-size: 1.05rem;
+    letter-spacing: .02em;
+}
+
+.footer-phone:hover {
+    color: var(--color-accent-hover);
 }
 
 .footer-links {

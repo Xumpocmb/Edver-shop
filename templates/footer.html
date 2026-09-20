@@ -3,12 +3,21 @@
         <p>{{ footer_info.text|linebreaksbr }}</p>
     </div>
     <div class="footer-side">
-        <a href="{{ instagram.url }}" class="footer-instagram" target="_blank" rel="noopener" aria-label="Instagram">
+        {% if phone and phone.number %}
+        <a href="tel:{{ phone.number }}" class="footer-phone" aria-label="Телефон">
+            📞 {{ phone.number }}
+        </a>
+        {% endif %}
+        {% if instagram and instagram.url %}
+        <a href="{{ instagram.url }}" class="footer-social" target="_blank" rel="noopener" aria-label="Instagram">
             📷 Мы в Instagram
         </a>
-        <a href="{{ tiktok.url }}" class="footer-instagram" target="_blank" rel="noopener" aria-label="TikTok">
+        {% endif %}
+        {% if tiktok and tiktok.url %}
+        <a href="{{ tiktok.url }}" class="footer-social" target="_blank" rel="noopener" aria-label="TikTok">
             🎵 Мы в TikTok
         </a>
+        {% endif %}
         <nav class="footer-links">
             <a href="/returns/">Возврат товара</a>
             <a href="/offer/">Договор оферты</a>

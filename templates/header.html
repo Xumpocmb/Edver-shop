@@ -38,9 +38,11 @@
         <a href="/contacts/">Контакты</a>
     </nav>
     <div class="header-right">
-        <a href="tel:{{ phone.number }}" class="header-icon header-icon--label" aria-label="Телефон">
-            <span>📞</span><span class="header-icon-text">{{ phone.number }}</span>
-        </a>
+        {% if phone and phone.number %}
+            <a href="tel:{{ phone.number }}" class="header-icon header-icon--label" aria-label="Телефон">
+                <span>📞</span><span class="header-icon-text">{{ phone.number }}</span>
+            </a>
+        {% endif %}
         <a href="/cart/" class="header-icon" aria-label="Корзина">
             <span>🛒</span>
             <span class="header-badge" id="cart-badge" {% if not cart_total_items %}hidden{% endif %}>{{ cart_total_items|default:"0" }}</span>
@@ -82,9 +84,15 @@
             <a href="/reviews/">Отзывы</a>
         </div>
         <div class="header-menu-foot">
-            <a href="tel:{{ phone.number }}" class="header-menu-contact">📞 {{ phone.number }}</a>
-            <a href="{{ instagram.url }}" class="header-menu-contact" target="_blank" rel="noopener">📷 Мы в Instagram</a>
-            <a href="{{ tiktok.url }}" class="header-menu-contact" target="_blank" rel="noopener">🎵 Мы в TikTok</a>
+            {% if phone and phone.number %}
+                <a href="tel:{{ phone.number }}" class="header-menu-contact">📞 {{ phone.number }}</a>
+            {% endif %}
+            {% if instagram and instagram.url %}
+                <a href="{{ instagram.url }}" class="header-menu-contact" target="_blank" rel="noopener">📷 Мы в Instagram</a>
+            {% endif %}
+            {% if tiktok and tiktok.url %}
+                <a href="{{ tiktok.url }}" class="header-menu-contact" target="_blank" rel="noopener">🎵 Мы в TikTok</a>
+            {% endif %}
         </div>
     </nav>
     <div class="header-menu-backdrop" id="menu-backdrop"></div>
