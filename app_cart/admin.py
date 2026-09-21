@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Cart, CartItem, PromoCode, Order, OrderItem, EvropochtaBranch
+from .models import Cart, CartItem, PromoCode, EvropochtaBranch
 
 
 class CartItemInline(admin.TabularInline):
@@ -26,51 +26,6 @@ class PromoCodeAdmin(admin.ModelAdmin):
     search_fields = ('code',)
     list_editable = ('is_active',)
     readonly_fields = ('used_count', 'created_at')
-
-
-class OrderItemInline(admin.TabularInline):
-    model = OrderItem
-    extra = 0
-    readonly_fields = ('variant', 'product_name', 'product_color', 'unit_price', 'quantity')
-
-
-@admin.register(Order)
-class OrderAdmin(admin.ModelAdmin):
-    list_display = (
-        'id', 'full_name', 'phone', 'delivery_type',
-        'grand_total', 'status', 'created_at',
-    )
-    list_filter = ('status', 'delivery_type', 'created_at')
-    search_fields = ('full_name', 'phone')
-    list_editable = ('status',)
-    readonly_fields = (
-        'user', 'session_key', 'full_name', 'phone', 'address',
-        'delivery_type', 'evropochta_branch_id', 'evropochta_branch_name',
-        'promo_code', 'promo_discount', 'total_price', 'grand_total',
-        'comment', 'created_at', 'updated_at',
-    )
-    inlines = [OrderItemInline]
-    fieldsets = (
-        (None, {
-            'fields': ('status',),
-        }),
-        ('Данные клиента', {
-            'fields': ('full_name', 'phone', 'comment'),
-        }),
-        ('Доставка', {
-            'fields': (
-                'delivery_type', 'address',
-                'evropochta_branch_id', 'evropochta_branch_name',
-            ),
-        }),
-        ('Оплата', {
-            'fields': ('total_price', 'promo_discount', 'grand_total', 'promo_code'),
-        }),
-        ('Система', {
-            'fields': ('user', 'session_key', 'created_at', 'updated_at'),
-            'classes': ('collapse',),
-        }),
-    )
 
 
 @admin.register(EvropochtaBranch)

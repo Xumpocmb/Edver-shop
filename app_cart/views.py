@@ -5,7 +5,9 @@ from django.views.decorators.http import require_POST
 from django.contrib import messages
 
 from app_catalog.models import ProductVariant
-from .models import Cart, CartItem, PromoCode, Order, OrderItem, EvropochtaBranch
+from app_order.models import Order, OrderItem
+from app_order.utils import create_order_with_number
+from .models import Cart, CartItem, PromoCode, EvropochtaBranch
 
 
 def _cart_response(request, cart, message=None, success=True):
@@ -188,7 +190,7 @@ def checkout(request):
         messages.error(request, 'Укажите адрес доставки.')
         return redirect('app_cart:cart_detail')
 
-    order = Order.objects.create(
+    order = create_order_with_number(
         user=request.user if request.user.is_authenticated else None,
         session_key=cart.session_key,
         full_name=full_name,
@@ -221,7 +223,7 @@ def checkout(request):
         cart.promo_code.save(update_fields=['used_count'])
 
     cart.clear()
-    messages.success(request, f'Заказ #{order.pk} оформлен! Мы свяжемся с вами для подтверждения.')
+    messages.success(request, f'Заказ {order.number} оформлен! Мы свяжемся с вами для подтверждения.')
     return redirect('app_cart:order_success', order_id=order.pk)
 
 

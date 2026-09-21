@@ -6,7 +6,8 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.urls import reverse_lazy
 from django.views.generic import CreateView, UpdateView
 
-from app_cart.models import Cart, Order
+from app_cart.models import Cart
+from app_order.models import Order
 from .forms import PhoneAuthenticationForm, PhoneUserCreationForm, UserProfileForm
 from .models import UserProfile
 
