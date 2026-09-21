@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 
 {% block title %}
-<title>Заказ #{{ order.pk }} — EDVER Shop</title>
+<title>Заказ {{ order.number }} — EDVER Shop</title>
 {% endblock %}
 
 {% block content %}
@@ -14,13 +14,13 @@
             <span class="breadcrumbs__sep">/</span>
             <a href="{% url 'app_user:orders_list' %}">Мои заказы</a>
             <span class="breadcrumbs__sep">/</span>
-            <span class="breadcrumbs__current">Заказ #{{ order.pk }}</span>
+            <span class="breadcrumbs__current">Заказ {{ order.number }}</span>
         </nav>
     </div>
 
     <section class="container" style="padding: 2rem 20px 4rem; max-width: 700px;">
         <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
-            <h1 class="catalog-head__title">Заказ #{{ order.pk }}</h1>
+            <h1 class="catalog-head__title">Заказ {{ order.number }}</h1>
             <span class="order-card__status order-card__status--{{ order.status }}">{{ order.get_status_display }}</span>
         </div>
 

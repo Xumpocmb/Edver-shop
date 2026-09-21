@@ -51,7 +51,7 @@
                 {% for order in orders %}
                 <a href="{% url 'app_user:order_detail' order.pk %}" class="order-card">
                     <div class="order-card__head">
-                        <span class="order-card__num">Заказ #{{ order.pk }}</span>
+                        <span class="order-card__num">Заказ {{ order.number }}</span>
                         <span class="order-card__status order-card__status--{{ order.status }}">{{ order.get_status_display }}</span>
                     </div>
                     <div class="order-card__meta">
