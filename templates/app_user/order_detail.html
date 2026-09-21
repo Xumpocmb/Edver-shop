@@ -94,6 +94,10 @@
                 {% csrf_token %}
                 <button type="submit" class="btn btn--primary">Повторить заказ</button>
             </form>
+            <form method="post" action="{% url 'app_user:cancel_order' order.pk %}" onsubmit="return confirm('Отменить заказ #{{ order.pk }}?');">
+                {% csrf_token %}
+                <button type="submit" class="btn btn--danger">Отменить заказ</button>
+            </form>
             {% endif %}
         </div>
     </section>

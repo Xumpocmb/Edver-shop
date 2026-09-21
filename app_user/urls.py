@@ -13,6 +13,7 @@ urlpatterns = [
     path('orders/', views.profile_dashboard, name='orders_list'),
     path('orders/<int:order_id>/', views.order_detail, name='order_detail'),
     path('orders/<int:order_id>/reorder/', views.reorder, name='reorder'),
+    path('orders/<int:order_id>/cancel/', views.cancel_order, name='cancel_order'),
 
     # Профиль
     path('edit/', views.profile_edit, name='profile_edit'),

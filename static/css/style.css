@@ -194,6 +194,17 @@ button {
     background: var(--color-accent-soft);
 }
 
+.btn--danger {
+    background: var(--color-danger);
+    color: #fff;
+    border-color: var(--color-danger);
+}
+
+.btn--danger:hover {
+    background: #991b1b;
+    box-shadow: var(--shadow);
+}
+
 .btn--block {
     width: 100%;
 }

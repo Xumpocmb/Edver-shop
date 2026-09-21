@@ -602,6 +602,30 @@
         });
     }
 
+    // ====== Phone link handler (prevent tel: on desktop) ======
+    function initPhoneLink() {
+        var phoneLink = document.querySelector('.header-phone-link');
+        if (!phoneLink) return;
+
+        // Check if we're on a mobile device or have a tel handler
+        var isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+
+        if (!isMobile) {
+            phoneLink.addEventListener('click', function (e) {
+                e.preventDefault();
+                // Copy phone number to clipboard or show tooltip
+                var phone = phoneLink.getAttribute('href').replace('tel:', '');
+                if (navigator.clipboard) {
+                    navigator.clipboard.writeText(phone).then(function() {
+                        // Show tooltip
+                        phoneLink.setAttribute('title', 'Номер скопирован: ' + phone);
+                        setTimeout(function() { phoneLink.removeAttribute('title'); }, 2000);
+                    });
+                }
+            });
+        }
+    }
+
     // ====== Инициализация ======
     document.addEventListener('DOMContentLoaded', function () {
         initBurger();
@@ -617,6 +641,7 @@
         fetchCartCount();
         initAlerts();
         initUserDropdown();
+        initPhoneLink();
     });
 
 })();

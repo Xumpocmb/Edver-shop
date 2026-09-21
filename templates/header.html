@@ -39,7 +39,7 @@
     </nav>
     <div class="header-right">
         {% if phone and phone.number %}
-            <a href="tel:{{ phone.number }}" class="header-icon header-icon--label" aria-label="Телефон">
+            <a href="tel:{{ phone.number }}" class="header-icon header-icon--label header-phone-link" aria-label="Телефон">
                 <span>📞</span><span class="header-icon-text">{{ phone.number }}</span>
             </a>
         {% endif %}

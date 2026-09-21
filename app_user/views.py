@@ -106,3 +106,22 @@ def reorder(request, order_id):
         )
     messages.success(request, f'Товары из заказа #{order_id} добавлены в корзину')
     return redirect('app_cart:cart_detail')
+
+
+@login_required
+def cancel_order(request, order_id):
+    order = get_object_or_404(Order, pk=order_id, user=request.user)
+    if order.status not in ('new', 'processing'):
+        messages.error(request, 'Этот заказ нельзя отменить.')
+        return redirect('app_user:order_detail', order_id=order.pk)
+
+    # Возвращаем товары на склад
+    for item in order.items.select_related('variant'):
+        item.variant.stock += item.quantity
+        item.variant.save(update_fields=['stock'])
+
+    order.status = 'cancelled'
+    order.save(update_fields=['status'])
+
+    messages.success(request, f'Заказ #{order.pk} отменён. Товары возвращены на склад.')
+    return redirect('app_user:order_detail', order_id=order.pk)
