@@ -121,6 +121,9 @@ static/video
 **/migrations/*.py
 !**/migrations/__init__.py
 
+# Celery beat
+celerybeat-schedule*
+
 # Исключаем базу данных SQLite
 db.sqlite3
 
