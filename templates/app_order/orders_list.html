@@ -19,10 +19,16 @@
     <section class="container" style="padding: 2rem 20px 4rem; max-width: 820px;">
         <h1 class="catalog-head__title">Мои заказы</h1>
 
+        <nav class="profile-tabs" style="margin-top: 2rem; border-bottom: 1px solid var(--color-border); display: flex; gap: .5rem; flex-wrap: wrap;">
+            <a href="{% url 'app_order:orders_list' %}" class="profile-tab active" style="padding: .75rem 1rem; text-decoration: none; color: var(--color-text); border-bottom: 2px solid var(--color-accent); font-weight: 500;">Мои заказы</a>
+            <a href="{% url 'app_user:profile' %}" class="profile-tab" style="padding: .75rem 1rem; text-decoration: none; color: var(--color-text); border-bottom: 2px solid transparent; font-weight: 500;">Профиль</a>
+            <a href="{% url 'app_user:password_change' %}" class="profile-tab" style="padding: .75rem 1rem; text-decoration: none; color: var(--color-text); border-bottom: 2px solid transparent; font-weight: 500;">Смена пароля</a>
+        </nav>
+
         {% if orders %}
             <div class="cart-items" style="margin-top: 1.5rem;">
                 {% for order in orders %}
-                <a href="{% url 'app_user:order_detail' order.pk %}" class="cart-item"
+                <a href="{% url 'app_order:order_detail' order.pk %}" class="cart-item"
                    style="display: flex; align-items: center; gap: 1rem; text-decoration: none; color: inherit; padding: 1rem;">
                     <div class="cart-item__info" style="flex: 1;">
                         <div class="cart-item__name">Заказ {{ order.number }}</div>

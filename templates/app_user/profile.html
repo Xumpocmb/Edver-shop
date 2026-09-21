@@ -32,8 +32,8 @@
         </div>
 
         <nav class="profile-tabs" style="margin-top: 2rem; border-bottom: 1px solid var(--color-border); display: flex; gap: .5rem; flex-wrap: wrap;">
-            <a href="{% url 'app_user:profile' %}" class="profile-tab {% if request.path == '/profile/' or request.path == '/profile/orders/' %}active{% endif %}" style="padding: .75rem 1rem; text-decoration: none; color: var(--color-text); border-bottom: 2px solid {% if request.path == '/profile/' or request.path == '/profile/orders/' %}var(--color-accent){% else %}transparent{% endif %}; font-weight: 500;">Мои заказы</a>
-            <a href="{% url 'app_user:profile_edit' %}" class="profile-tab {% if 'edit' in request.path %}active{% endif %}" style="padding: .75rem 1rem; text-decoration: none; color: var(--color-text); border-bottom: 2px solid {% if 'edit' in request.path %}var(--color-accent){% else %}transparent{% endif %}; font-weight: 500;">Профиль</a>
+            <a href="{% url 'app_order:orders_list' %}" class="profile-tab" style="padding: .75rem 1rem; text-decoration: none; color: var(--color-text); border-bottom: 2px solid transparent; font-weight: 500;">Мои заказы</a>
+            <a href="{% url 'app_user:profile' %}" class="profile-tab active" style="padding: .75rem 1rem; text-decoration: none; color: var(--color-text); border-bottom: 2px solid var(--color-accent); font-weight: 500;">Профиль</a>
             <a href="{% url 'app_user:password_change' %}" class="profile-tab {% if 'password' in request.path %}active{% endif %}" style="padding: .75rem 1rem; text-decoration: none; color: var(--color-text); border-bottom: 2px solid {% if 'password' in request.path %}var(--color-accent){% else %}transparent{% endif %}; font-weight: 500;">Смена пароля</a>
         </nav>
 
@@ -44,33 +44,6 @@
             {% endfor %}
         </div>
         {% endif %}
-
-        <div style="margin-top: 1.5rem;">
-            {% if orders %}
-            <div class="orders-list">
-                {% for order in orders %}
-                <a href="{% url 'app_user:order_detail' order.pk %}" class="order-card">
-                    <div class="order-card__head">
-                        <span class="order-card__num">Заказ {{ order.number }}</span>
-                        <span class="order-card__status order-card__status--{{ order.status }}">{{ order.get_status_display }}</span>
-                    </div>
-                    <div class="order-card__meta">
-                        <span>{{ order.created_at|date:"d.m.Y H:i" }}</span>
-                        <span>{{ order.grand_total }} <span class="nbrb-icon nbrb-icon-byn"></span></span>
-                        <span>{{ order.get_delivery_type_display }}</span>
-                    </div>
-                </a>
-                {% endfor %}
-            </div>
-            {% else %}
-            <div class="empty-state empty-state--sm" style="margin-top: 2rem;">
-                <div class="empty-state__icon">📦</div>
-                <h4 class="empty-state__title">Заказов пока нет</h4>
-                <p class="empty-state__text">Ваши заказы появятся здесь после оформления.</p>
-                <a href="/catalog/" class="btn btn--primary">Перейти в каталог</a>
-            </div>
-            {% endif %}
-        </div>
     </section>
 </div>
 {% endblock %}

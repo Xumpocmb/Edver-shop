@@ -6,7 +6,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.urls import reverse_lazy
 from django.views.generic import CreateView, UpdateView
 
-from app_cart.models import Cart
+from app_cart.models import Cart, CartItem
 from app_order.models import Order
 from .forms import PhoneAuthenticationForm, PhoneUserCreationForm, UserProfileForm
 from .models import UserProfile
@@ -55,17 +55,7 @@ class UserLogoutView(LogoutView):
 
 @login_required
 def profile_dashboard(request):
-    orders = Order.objects.filter(user=request.user).order_by('-created_at')
-    context = {'orders': orders}
-    return render(request, 'app_user/profile.html', context)
-
-
-@login_required
-def order_detail(request, order_id):
-    order = get_object_or_404(Order, pk=order_id, user=request.user)
-    items = order.items.select_related('variant__product')
-    context = {'order': order, 'items': items}
-    return render(request, 'app_user/order_detail.html', context)
+    return render(request, 'app_user/profile.html')
 
 
 @login_required
