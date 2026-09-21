@@ -115,3 +115,11 @@ def cancel_order(request, order_id):
 
     messages.success(request, f'Заказ #{order.pk} отменён. Товары возвращены на склад.')
     return redirect('app_user:order_detail', order_id=order.pk)
+
+
+@login_required
+def order_detail(request, order_id):
+    order = get_object_or_404(Order, pk=order_id, user=request.user)
+    items = order.items.select_related('variant__product')
+    context = {'order': order, 'items': items}
+    return render(request, 'app_user/order_detail.html', context)
