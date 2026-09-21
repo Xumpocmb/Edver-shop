@@ -16,6 +16,10 @@ def _cart_response(request, cart, message=None, success=True):
             'message': message,
             'total_items': cart.total_items,
             'total_price': str(cart.total_price),
+            'promo_discount': str(cart.promo_discount),
+            'grand_total': str(cart.grand_total),
+            'has_promo': cart.promo_code is not None,
+            'promo_code': cart.promo_code.code if cart.promo_code else '',
             'items': [
                 {
                     'id': item.id,
@@ -136,10 +140,22 @@ def remove_promo(request):
 def cart_detail(request):
     cart = Cart.get_or_create(request)
     items = cart.items.select_related('variant__product').prefetch_related('variant__images')
+
+    # Профиль для автозаполнения формы оформления
+    profile_data = {}
+    if request.user.is_authenticated and hasattr(request.user, 'profile'):
+        profile = request.user.profile
+        profile_data = {
+            'full_name': profile.full_name,
+            'phone': profile.phone,
+            'address': profile.address,
+        }
+
     context = {
         'cart': cart,
         'items': items,
         'page_title': 'Корзина',
+        'profile_data': profile_data,
     }
     return render(request, 'app_cart/cart_detail.html', context)
 

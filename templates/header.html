@@ -47,9 +47,34 @@
             <span>🛒</span>
             <span class="header-badge" id="cart-badge" {% if not cart_total_items %}hidden{% endif %}>{{ cart_total_items|default:"0" }}</span>
         </a>
-        <a href="/profile/" class="header-icon" aria-label="Профиль">
-            {% if user.is_authenticated %}✅{% else %}👤{% endif %}
-        </a>
+
+        {% if user.is_authenticated %}
+        <div class="header-user-dropdown">
+            <button type="button" class="header-icon header-user-btn" id="header-user-btn" aria-label="Профиль" aria-expanded="false">
+                {% if user.profile.full_name %}
+                    {{ user.profile.full_name|truncatechars:15 }}
+                {% else %}
+                    {{ user.username }}
+                {% endif %}
+            </button>
+            <div class="header-user-menu" role="menu">
+                <a href="/profile/" class="header-user-menu-item" role="menuitem">Мой профиль</a>
+                <form method="post" action="{% url 'app_user:logout' %}" style="width: 100%;">
+                    {% csrf_token %}
+                    <button type="submit" class="header-user-menu-item" role="menuitem" style="background: none; border: none; cursor: pointer; width: 100%; text-align: left; padding: .5rem .75rem; font: inherit; color: inherit;">Выйти</button>
+                </form>
+            </div>
+        </div>
+        {% else %}
+        <div class="header-auth-links" style="display: flex; gap: .75rem; align-items: center;">
+            <a href="{% url 'app_user:login' %}" class="header-icon header-icon--label" aria-label="Войти">
+                <span>👤</span><span class="header-icon-text">Войти</span>
+            </a>
+            <a href="{% url 'app_user:register' %}" class="header-icon header-icon--label" aria-label="Регистрация">
+                <span>📝</span><span class="header-icon-text">Регистрация</span>
+            </a>
+        </div>
+        {% endif %}
     </div>
     <nav class="header-menu" id="main-nav" aria-label="Меню сайта">
         <div class="header-menu-head">

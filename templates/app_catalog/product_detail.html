@@ -156,10 +156,6 @@
     <section class="container product-section">
         <h2 class="product-section__title">Характеристики</h2>
         <table class="specs-table">
-            {% if product.category %}<tr>
-                <th>Категория</th>
-                <td>{{ product.category.name }}</td>
-            </tr>{% endif %}
             <tr>
                 <th>Цвет</th>
                 <td id="specColor">{{ variant.color }}</td>
@@ -181,14 +177,6 @@
                 <td>{{ product.weight }} кг</td>
             </tr>{% endif %}
             <tr>
-                <th>Остаток</th>
-                <td id="specStock">{{ variant.stock }} шт.</td>
-            </tr>
-            <tr>
-                <th>Статус</th>
-                <td id="specStatus">{{ variant.get_status_display }}</td>
-            </tr>
-            <tr>
                 <th>Цена</th>
                 <td id="specBasePrice">{{ variant.price }} <span class="nbrb-icon nbrb-icon-byn"></span></td>
             </tr>
@@ -199,10 +187,6 @@
             <tr>
                 <th>Скидка</th>
                 <td id="specDiscount">{{ variant.discount_percent_display }}%</td>
-            </tr>
-            <tr>
-                <th>Добавлен</th>
-                <td>{{ product.created_at|date:"d.m.Y" }}</td>
             </tr>
         </table>
     </section>

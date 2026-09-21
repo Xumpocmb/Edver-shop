@@ -85,6 +85,41 @@
         .catch(function () { toast('Ошибка добавления в корзину', 'error'); });
     }
 
+    function updateCartSummary(data) {
+        // Обновляем счётчик товаров
+        var itemsRow = document.querySelector('.cart-summary__row');
+        if (itemsRow) {
+            itemsRow.innerHTML = '<span>Товаров:</span><span>' + data.total_items + ' шт.</span>';
+        }
+
+        // Итоговая сумма
+        var grandTotalEl = document.getElementById('grandTotal');
+        if (grandTotalEl) {
+            var price = Number(data.grand_total || 0);
+            grandTotalEl.innerHTML = price.toLocaleString('ru-RU') + ' <span class="nbrb-icon nbrb-icon-byn"></span>';
+        }
+
+        // Промокод
+        var promoRow = document.querySelector('.cart-summary__row--discount');
+        var promoInputRow = document.querySelector('.promo-row');
+        var removePromoBtn = document.querySelector('.js-remove-promo');
+
+        if (data.has_promo) {
+            // Промокод есть — показываем строку скидки, скрываем инпут
+            if (promoRow) {
+                promoRow.innerHTML = '<span>Промокод (' + data.promo_code + '):</span><span>-' + Number(data.promo_discount || 0).toLocaleString('ru-RU') + ' <span class="nbrb-icon nbrb-icon-byn"></span></span>';
+                promoRow.style.display = '';
+            }
+            if (promoInputRow) promoInputRow.style.display = 'none';
+            if (removePromoBtn) removePromoBtn.style.display = '';
+        } else {
+            // Промокода нет — скрываем строку скидки, показываем инпут
+            if (promoRow) promoRow.style.display = 'none';
+            if (promoInputRow) promoInputRow.style.display = 'flex';
+            if (removePromoBtn) removePromoBtn.style.display = 'none';
+        }
+    }
+
     function updateCartItem(itemId, quantity) {
         var fd = new FormData();
         fd.append('quantity', quantity);
@@ -97,7 +132,17 @@
         .then(function (r) { return r.json(); })
         .then(function (data) {
             updateCartBadge(data.total_items);
-            location.reload();
+            updateCartSummary(data);
+            // Обновляем сумму строки
+            var lineTotalEl = document.querySelector('[data-item-id="' + itemId + '"] .cart-item__total');
+            var lineItem = data.items.find(function(i) { return i.id == itemId; });
+            if (lineTotalEl && lineItem) {
+                var price = Number(lineItem.line_total);
+                lineTotalEl.textContent = price.toLocaleString('ru-RU') + ' ';
+                var nbrbIcon = document.createElement('span');
+                nbrbIcon.className = 'nbrb-icon nbrb-icon-byn';
+                lineTotalEl.appendChild(nbrbIcon);
+            }
         })
         .catch(function () { toast('Ошибка обновления корзины', 'error'); });
     }
@@ -113,9 +158,13 @@
         .then(function (r) { return r.json(); })
         .then(function (data) {
             updateCartBadge(data.total_items);
+            updateCartSummary(data);
+
             var el = document.querySelector('[data-item-id="' + itemId + '"]');
             if (el) el.remove();
+
             toast(data.message || 'Товар удалён', 'success');
+
             if (data.total_items === 0) location.reload();
         })
         .catch(function () { toast('Ошибка удаления', 'error'); });
@@ -532,6 +581,27 @@
         });
     }
 
+    // ====== Header user dropdown ======
+    function initUserDropdown() {
+        var btn = $('#header-user-btn') || document.querySelector('.header-user-btn');
+        if (!btn) return;
+        var dropdown = btn.closest('.header-user-dropdown');
+        if (!dropdown) return;
+
+        btn.addEventListener('click', function (e) {
+            e.stopPropagation();
+            dropdown.classList.toggle('open');
+            btn.setAttribute('aria-expanded', dropdown.classList.contains('open') ? 'true' : 'false');
+        });
+
+        document.addEventListener('click', function (e) {
+            if (!dropdown.contains(e.target)) {
+                dropdown.classList.remove('open');
+                btn.setAttribute('aria-expanded', 'false');
+            }
+        });
+    }
+
     // ====== Инициализация ======
     document.addEventListener('DOMContentLoaded', function () {
         initBurger();
@@ -546,6 +616,7 @@
         bindCatalogClicks();
         fetchCartCount();
         initAlerts();
+        initUserDropdown();
     });
 
 })();

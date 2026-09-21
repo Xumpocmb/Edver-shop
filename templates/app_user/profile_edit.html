@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+
+{% block title %}
+<title>Редактировать профиль — EDVER Shop</title>
+{% endblock %}
+
+{% block content %}
+<div class="catalog-page">
+    <div class="container breadcrumbs-wrap">
+        <nav class="breadcrumbs" aria-label="Навигация">
+            <a href="/">Главная</a>
+            <span class="breadcrumbs__sep">/</span>
+            <a href="{% url 'app_user:profile' %}">Личный кабинет</a>
+            <span class="breadcrumbs__sep">/</span>
+            <span class="breadcrumbs__current">Редактировать профиль</span>
+        </nav>
+    </div>
+
+    <section class="container" style="padding: 2rem 20px 4rem; max-width: 560px;">
+        <h1 class="catalog-head__title">Редактировать профиль</h1>
+
+        {% if messages %}
+        <div class="messages" style="margin-top: 1rem;">
+            {% for msg in messages %}
+            <div class="alert alert--{{ msg.tags }}">{{ msg }}</div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <form method="post" class="form form--stacked" style="margin-top: 1.5rem;">
+            {% csrf_token %}
+            <div class="form-row">
+                <label for="{{ form.full_name.id_for_label }}">ФИО</label>
+                {{ form.full_name }}
+                {% if form.full_name.errors %}
+                <div class="form-error">{{ form.full_name.errors.0 }}</div>
+                {% endif %}
+            </div>
+            <div class="form-row">
+                <label for="{{ form.phone.id_for_label }}">Телефон</label>
+                {{ form.phone }}
+                {% if form.phone.errors %}
+                <div class="form-error">{{ form.phone.errors.0 }}</div>
+                {% endif %}
+            </div>
+            <div class="form-row">
+                <label for="{{ form.address.id_for_label }}">Адрес доставки по умолчанию</label>
+                {{ form.address }}
+                {% if form.address.errors %}
+                <div class="form-error">{{ form.address.errors.0 }}</div>
+                {% endif %}
+            </div>
+            <button type="submit" class="btn btn--primary btn--block" style="margin-top: 1rem;">Сохранить</button>
+            <a href="{% url 'app_user:profile' %}" class="btn btn--ghost btn--block" style="margin-top: .75rem;">Отмена</a>
+        </form>
+    </section>
+</div>
+{% endblock %}

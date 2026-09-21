@@ -28,138 +28,140 @@
         {% endif %}
 
         {% if items %}
-            <form method="post" action="{% url 'app_cart:checkout' %}" id="checkoutForm">
-            {% csrf_token %}
-            <div class="cart-items" style="margin-top: 1.5rem;">
-                {% for item in items %}
-                <div class="cart-item" data-item-id="{{ item.id }}">
-                    <div class="cart-item__media">
-                        {% if item.variant.main_image %}
-                            <img src="{{ item.variant.main_image.image.url }}" alt="{{ item.variant.product.name }}">
-                        {% else %}
-                            <div class="product-card__noimg"><span>Нет фото</span></div>
-                        {% endif %}
-                    </div>
-                    <div class="cart-item__info">
-                        <a href="{{ item.variant.product.get_absolute_url }}" class="cart-item__name">{{ item.variant.product.name }}</a>
-                        <div class="cart-item__variant">{{ item.variant.color }}</div>
-                    </div>
-                    <div class="cart-item__qty">
-                        <div class="qty-counter">
-                            <button type="button" class="qty-btn qty-btn--minus js-cart-qty-minus"
-                                    data-item-id="{{ item.id }}">−</button>
-                            <input class="qty-input js-cart-qty-input" type="number" min="1"
-                                   max="{{ item.available_stock }}" value="{{ item.quantity }}"
-                                   data-item-id="{{ item.id }}">
-                            <button type="button" class="qty-btn qty-btn--plus js-cart-qty-plus"
-                                    data-item-id="{{ item.id }}">+</button>
-                        </div>
-                    </div>
-                    <div class="cart-item__price">
-                        <span class="cart-item__total">{{ item.line_total }} <span class="nbrb-icon nbrb-icon-byn"></span></span>
-                    </div>
-                    <button type="button" class="cart-item__remove js-cart-remove"
-                            data-item-id="{{ item.id }}" aria-label="Удалить">✕</button>
-                </div>
-                {% endfor %}
-            </div>
-
-            <div class="cart-layout">
-                <div class="cart-summary">
-                    <div class="cart-summary__row">
-                        <span>Товаров:</span>
-                        <span>{{ cart.total_items }} шт.</span>
-                    </div>
-
-                    {% if cart.promo_code %}
-                    <div class="cart-summary__row cart-summary__row--discount">
-                        <span>Промокод ({{ cart.promo_code.code }}):</span>
-                        <span>-{{ cart.promo_discount }} <span class="nbrb-icon nbrb-icon-byn"></span></span>
-                    </div>
-                    <button type="button" class="btn btn--text btn--sm js-remove-promo"
-                            style="align-self: flex-start;">Удалить промокод</button>
+        <form method="post" action="{% url 'app_cart:checkout' %}" id="checkoutForm">
+        {% csrf_token %}
+        <div class="cart-items" style="margin-top: 1.5rem;">
+            {% for item in items %}
+            <div class="cart-item" data-item-id="{{ item.id }}">
+                <div class="cart-item__media">
+                    {% if item.variant.main_image %}
+                        <img src="{{ item.variant.main_image.image.url }}" alt="{{ item.variant.product.name }}">
                     {% else %}
-                    <div class="promo-row">
-                        <input type="text" name="promo_code_input" id="promoInput"
-                               placeholder="Промокод" class="promo-input">
-                        <button type="button" class="btn btn--ghost btn--sm" id="applyPromoBtn">Применить</button>
-                    </div>
+                        <div class="product-card__noimg"><span>Нет фото</span></div>
                     {% endif %}
-
-                    <div class="cart-summary__row cart-summary__row--total">
-                        <span>Итого:</span>
-                        <span id="grandTotal">{{ cart.grand_total }} <span class="nbrb-icon nbrb-icon-byn"></span></span>
+                </div>
+                <div class="cart-item__info">
+                    <a href="{{ item.variant.product.get_absolute_url }}" class="cart-item__name">{{ item.variant.product.name }}</a>
+                    <div class="cart-item__variant">{{ item.variant.color }}</div>
+                </div>
+                <div class="cart-item__qty">
+                    <div class="qty-counter">
+                        <button type="button" class="qty-btn qty-btn--minus js-cart-qty-minus"
+                                data-item-id="{{ item.id }}">−</button>
+                        <input class="qty-input js-cart-qty-input" type="number" min="1"
+                               max="{{ item.available_stock }}" value="{{ item.quantity }}"
+                               data-item-id="{{ item.id }}">
+                        <button type="button" class="qty-btn qty-btn--plus js-cart-qty-plus"
+                                data-item-id="{{ item.id }}">+</button>
                     </div>
+                </div>
+                <div class="cart-item__price">
+                    <span class="cart-item__total">{{ item.line_total }} <span class="nbrb-icon nbrb-icon-byn"></span></span>
+                </div>
+                <button type="button" class="cart-item__remove js-cart-remove"
+                        data-item-id="{{ item.id }}" aria-label="Удалить">✕</button>
+            </div>
+            {% endfor %}
+        </div>
+
+        <div class="cart-layout">
+            <div class="cart-summary">
+                <div class="cart-summary__row">
+                    <span>Товаров:</span>
+                    <span>{{ cart.total_items }} шт.</span>
+                </div>
+
+                {% if cart.promo_code %}
+                <div class="cart-summary__row cart-summary__row--discount">
+                    <span>Промокод ({{ cart.promo_code.code }}):</span>
+                    <span>-{{ cart.promo_discount }} <span class="nbrb-icon nbrb-icon-byn"></span></span>
+                </div>
+                <button type="button" class="btn btn--text btn--sm js-remove-promo"
+                        style="align-self: flex-start;">Удалить промокод</button>
+                {% else %}
+                <div class="promo-row">
+                    <input type="text" name="promo_code_input" id="promoInput"
+                           placeholder="Промокод" class="promo-input">
+                    <button type="button" class="btn btn--ghost btn--sm" id="applyPromoBtn">Применить</button>
+                </div>
+                {% endif %}
+
+                <div class="cart-summary__row cart-summary__row--total">
+                    <span>Итого:</span>
+                    <span id="grandTotal">{{ cart.grand_total }} <span class="nbrb-icon nbrb-icon-byn"></span></span>
+                </div>
+            </div>
+        </div>
+
+        <div class="checkout-section">
+            <h2 class="checkout-section__title">Данные для доставки</h2>
+
+            <div class="form-grid">
+                <div class="form-row">
+                    <label for="fullName">ФИО *</label>
+                    <input id="fullName" name="full_name" type="text" required
+                           placeholder="Иванов Иван Иванович"
+                           value="{{ profile_data.full_name|default:'' }}">
+                </div>
+                <div class="form-row">
+                    <label for="phone">Телефон *</label>
+                    <input id="phone" name="phone" type="tel" required
+                           placeholder="+375 (XX) XXX-XX-XX"
+                           value="{{ profile_data.phone|default:'' }}">
                 </div>
             </div>
 
-            <div class="checkout-section">
-                <h2 class="checkout-section__title">Данные для доставки</h2>
-
-                <div class="form-grid">
-                    <div class="form-row">
-                        <label for="fullName">ФИО *</label>
-                        <input id="fullName" name="full_name" type="text" required
-                               placeholder="Иванов Иван Иванович">
-                    </div>
-                    <div class="form-row">
-                        <label for="phone">Телефон *</label>
-                        <input id="phone" name="phone" type="tel" required
-                               placeholder="+375 (XX) XXX-XX-XX">
-                    </div>
-                </div>
-
-                <div class="form-row" style="margin-top: 1.5rem;">
-                    <label>Способ доставки *</label>
-                    <div class="delivery-picker" id="deliveryPicker">
-                        <label class="delivery-option">
-                            <input type="radio" name="delivery_type" value="belpochta" checked>
-                            <span class="delivery-option__label">Белпочта</span>
-                            <span class="delivery-option__desc">Доставка по адресу</span>
-                        </label>
-                        <label class="delivery-option">
-                            <input type="radio" name="delivery_type" value="evropochta">
-                            <span class="delivery-option__label">Европочта</span>
-                            <span class="delivery-option__desc">Отделение / ПВЗ</span>
-                        </label>
-                    </div>
-                </div>
-
-                <div class="delivery-fields" id="deliveryFields">
-                    <div class="form-row" id="belpochtaField">
-                        <label for="address">Адрес доставки *</label>
-                        <textarea id="address" name="address" rows="2"
-                                  placeholder="Город, улица, дом, квартира"></textarea>
-                    </div>
-                    <div class="form-row" id="evropochtaField" style="display: none;">
-                        <label for="branchSearch">Отделение Европочты *</label>
-                        <input type="text" id="branchSearch" placeholder="Введите название города или отделения..."
-                               autocomplete="off">
-                        <input type="hidden" name="evropochta_branch_id" id="branchId">
-                        <input type="hidden" name="evropochta_branch_name" id="branchName">
-                        <div class="branch-list" id="branchList" style="display: none;"></div>
-                    </div>
-                </div>
-
-                <div class="form-row" style="margin-top: 1rem;">
-                    <label for="comment">Комментарий к заказу</label>
-                    <textarea id="comment" name="comment" rows="2"
-                              placeholder="Пожелания по доставке, время звонка и т.д."></textarea>
-                </div>
-
-                <div class="cart-summary__actions" style="margin-top: 1.5rem;">
-                    <a href="/catalog/" class="btn btn--ghost">Продолжить покупки</a>
-                    <button type="submit" class="btn btn--primary btn--lg">Оформить заказ</button>
+            <div class="form-row" style="margin-top: 1.5rem;">
+                <label>Способ доставки *</label>
+                <div class="delivery-picker" id="deliveryPicker">
+                    <label class="delivery-option">
+                        <input type="radio" name="delivery_type" value="belpochta" checked>
+                        <span class="delivery-option__label">Белпочта</span>
+                        <span class="delivery-option__desc">Доставка по адресу</span>
+                    </label>
+                    <label class="delivery-option">
+                        <input type="radio" name="delivery_type" value="evropochta">
+                        <span class="delivery-option__label">Европочта</span>
+                        <span class="delivery-option__desc">Отделение / ПВЗ</span>
+                    </label>
                 </div>
             </div>
-            </form>
+
+            <div class="delivery-fields" id="deliveryFields">
+                <div class="form-row" id="belpochtaField">
+                    <label for="address">Адрес доставки *</label>
+                    <textarea id="address" name="address" rows="2"
+                              placeholder="Город, улица, дом, квартира">{{ profile_data.address|default:'' }}</textarea>
+                </div>
+                <div class="form-row" id="evropochtaField" style="display: none;">
+                    <label for="branchSearch">Отделение Европочты *</label>
+                    <input type="text" id="branchSearch" placeholder="Введите название города или отделения..."
+                           autocomplete="off">
+                    <input type="hidden" name="evropochta_branch_id" id="branchId">
+                    <input type="hidden" name="evropochta_branch_name" id="branchName">
+                    <div class="branch-list" id="branchList" style="display: none;"></div>
+                </div>
+            </div>
+
+            <div class="form-row" style="margin-top: 1rem;">
+                <label for="comment">Комментарий к заказу</label>
+                <textarea id="comment" name="comment" rows="2"
+                          placeholder="Пожелания по доставке, время звонка и т.д."></textarea>
+            </div>
+
+            <div class="cart-summary__actions" style="margin-top: 1.5rem;">
+                <a href="/catalog/" class="btn btn--ghost">Продолжить покупки</a>
+                <button type="submit" class="btn btn--primary btn--lg">Оформить заказ</button>
+            </div>
+        </div>
+        </form>
         {% else %}
-            <div class="empty-state" style="margin-top: 2rem;">
-                <div class="empty-state__icon">🛒</div>
-                <h3 class="empty-state__title">Корзина пуста</h3>
-                <p class="empty-state__text">Добавьте товары из каталога, чтобы оформить заказ.</p>
-                <a href="/catalog/" class="btn btn--primary">Перейти в каталог</a>
-            </div>
+        <div class="empty-state" style="margin-top: 2rem;">
+            <div class="empty-state__icon">🛒</div>
+            <h3 class="empty-state__title">Корзина пуста</h3>
+            <p class="empty-state__text">Добавьте товары из каталога, чтобы оформить заказ.</p>
+            <a href="/catalog/" class="btn btn--primary">Перейти в каталог</a>
+        </div>
         {% endif %}
     </section>
 </div>

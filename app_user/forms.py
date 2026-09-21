@@ -3,6 +3,7 @@ from django.contrib.auth.forms import AuthenticationForm, UserCreationForm, User
 from django.contrib.auth import get_user_model
 
 from .utils import normalize_phone
+from .models import UserProfile
 
 User = get_user_model()
 
@@ -43,3 +44,16 @@ class PhoneUserCreationForm(UserCreationForm):
         if User.objects.filter(username=username).exists():
             raise forms.ValidationError('Пользователь с таким номером уже зарегистрирован.')
         return username
+
+
+class UserProfileForm(forms.ModelForm):
+    """Форма редактирования профиля: ФИО, телефон, адрес."""
+
+    class Meta:
+        model = UserProfile
+        fields = ('full_name', 'phone', 'address')
+        widgets = {
+            'full_name': forms.TextInput(attrs={'placeholder': 'Иванов Иван Иванович'}),
+            'phone': forms.TextInput(attrs={'placeholder': '+375 (29) XXX-XX-XX', 'inputmode': 'tel'}),
+            'address': forms.Textarea(attrs={'placeholder': 'Город, улица, дом, квартира', 'rows': 3}),
+        }
