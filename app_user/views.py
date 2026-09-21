@@ -2,11 +2,11 @@ from django.contrib.auth import login, update_session_auth_hash
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.views import LoginView, LogoutView, PasswordChangeView
 from django.contrib import messages
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.urls import reverse_lazy
 from django.views.generic import CreateView, UpdateView
 
-from app_cart.models import Cart
+from app_cart.models import Cart, CartItem
 from app_order.models import Order
 from .forms import PhoneAuthenticationForm, PhoneUserCreationForm, UserProfileForm
 from .models import UserProfile
@@ -81,3 +81,45 @@ class UserPasswordChangeView(PasswordChangeView):
         update_session_auth_hash(self.request, form.user)
         messages.success(self.request, 'Пароль изменён')
         return response
+
+
+@login_required
+def reorder(request, order_id):
+    """Повторный заказ: добавляет товары из заказа в корзину."""
+    order = get_object_or_404(Order, pk=order_id, user=request.user)
+    cart = Cart.get_or_create(request)
+    for item in order.items.select_related('variant'):
+        CartItem.objects.get_or_create(
+            cart=cart,
+            variant=item.variant,
+            defaults={'quantity': item.quantity}
+        )
+    messages.success(request, f'Товары из заказа #{order_id} добавлены в корзину')
+    return redirect('app_cart:cart_detail')
+
+
+@login_required
+def cancel_order(request, order_id):
+    order = get_object_or_404(Order, pk=order_id, user=request.user)
+    if order.status not in ('new', 'processing'):
+        messages.error(request, 'Этот заказ нельзя отменить.')
+        return redirect('app_user:order_detail', order_id=order.pk)
+
+    # Возвращаем товары на склад
+    for item in order.items.select_related('variant'):
+        item.variant.stock += item.quantity
+        item.variant.save(update_fields=['stock'])
+
+    order.status = 'cancelled'
+    order.save(update_fields=['status'])
+
+    messages.success(request, f'Заказ #{order.pk} отменён. Товары возвращены на склад.')
+    return redirect('app_user:order_detail', order_id=order.pk)
+
+
+@login_required
+def order_detail(request, order_id):
+    order = get_object_or_404(Order, pk=order_id, user=request.user)
+    items = order.items.select_related('variant__product')
+    context = {'order': order, 'items': items}
+    return render(request, 'app_user/order_detail.html', context)
