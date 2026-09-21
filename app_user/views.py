@@ -2,7 +2,7 @@ from django.contrib.auth import login, update_session_auth_hash
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.views import LoginView, LogoutView, PasswordChangeView
 from django.contrib import messages
-from django.shortcuts import render, redirect, get_object_or_404
+from django.shortcuts import render, redirect
 from django.urls import reverse_lazy
 from django.views.generic import CreateView, UpdateView
 
@@ -55,17 +55,7 @@ class UserLogoutView(LogoutView):
 
 @login_required
 def profile_dashboard(request):
-    orders = Order.objects.filter(user=request.user).order_by('-created_at')
-    context = {'orders': orders}
-    return render(request, 'app_user/profile.html', context)
-
-
-@login_required
-def order_detail(request, order_id):
-    order = get_object_or_404(Order, pk=order_id, user=request.user)
-    items = order.items.select_related('variant__product')
-    context = {'order': order, 'items': items}
-    return render(request, 'app_user/order_detail.html', context)
+    return render(request, 'app_user/profile.html')
 
 
 @login_required
@@ -91,18 +81,3 @@ class UserPasswordChangeView(PasswordChangeView):
         update_session_auth_hash(self.request, form.user)
         messages.success(self.request, 'Пароль изменён')
         return response
-
-
-@login_required
-def reorder(request, order_id):
-    """Повторный заказ: добавляет товары из заказа в корзину."""
-    order = get_object_or_404(Order, pk=order_id, user=request.user)
-    cart = Cart.get_or_create(request)
-    for item in order.items.select_related('variant'):
-        CartItem.objects.get_or_create(
-            cart=cart,
-            variant=item.variant,
-            defaults={'quantity': item.quantity}
-        )
-    messages.success(request, f'Товары из заказа #{order_id} добавлены в корзину')
-    return redirect('app_cart:cart_detail')

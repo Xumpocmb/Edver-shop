@@ -9,14 +9,6 @@ urlpatterns = [
     path('', views.profile_dashboard, name='profile'),
     path('edit/', views.profile_edit, name='profile_edit'),
 
-    # Заказы
-    path('orders/', views.profile_dashboard, name='orders_list'),
-    path('orders/<int:order_id>/', views.order_detail, name='order_detail'),
-    path('orders/<int:order_id>/reorder/', views.reorder, name='reorder'),
-
-    # Профиль
-    path('edit/', views.profile_edit, name='profile_edit'),
-
     # Пароль
     path('password/change/', views.UserPasswordChangeView.as_view(), name='password_change'),
     path('password/change/done/', auth_views.PasswordChangeDoneView.as_view(template_name='app_user/password_change_done.html'), name='password_change_done'),
