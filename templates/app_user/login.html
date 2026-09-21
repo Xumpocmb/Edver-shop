@@ -14,34 +14,33 @@
         </nav>
     </div>
 
-    <section class="container" style="padding: 2rem 20px 4rem; max-width: 460px;">
-        {# S T U B — TODO (Этап 3). см. app_user/views.py docstring. #}
-        <div class="alert alert--info" style="margin-bottom: 1rem;">
-            <strong>Заглушка.</strong> Форма входа ещё не реализована.
-        </div>
-        <h1 class="catalog-head__title">Вход</h1>
+    <section class="container" style="padding: 3rem 20px 4rem; max-width: 440px; margin: 0 auto;">
+        <h1 class="catalog-head__title" style="text-align: center;">Вход в аккаунт</h1>
 
-        <form method="post" class="form" style="margin-top: 1.5rem;">
+        {% if form.errors %}
+        <div class="alert alert--error" style="margin-top: 1rem;">
+            Неверный телефон или пароль. Попробуйте ещё раз.
+        </div>
+        {% endif %}
+
+        <form method="post" class="form form--stacked" style="margin-top: 1.5rem;">
             {% csrf_token %}
             <div class="form-row">
-                <label for="loginEmail">Email</label>
-                <input id="loginEmail" type="email" name="email" placeholder="you@example.com">
+                <label for="id_username">Телефон</label>
+                <input id="id_username" name="username" type="text" inputmode="tel"
+                       placeholder="+375 (29) XXX-XX-XX" autofocus
+                       value="{{ form.username.value|default:'' }}">
             </div>
             <div class="form-row">
-                <label for="loginPass">Пароль</label>
-                <input id="loginPass" type="password" name="password" placeholder="••••••••">
+                <label for="id_password">Пароль</label>
+                <input id="id_password" name="password" type="password" placeholder="Введите пароль">
             </div>
-            <div class="cart-summary__actions" style="margin-top: 1.25rem;">
-                <button type="submit" class="btn btn--primary">Войти</button>
-                <a href="{% url 'app_user:register' %}" class="btn btn--ghost">Регистрация</a>
-            </div>
+            <button type="submit" class="btn btn--primary btn--block" style="margin-top: 1rem;">Войти</button>
         </form>
 
-        {% comment %}
-        TODO (Этап 3):
-          - валидация, ошибки на форме, редирект на ?next= или /profile/;
-          - залогиненных пользователей уводить на /profile/.
-        {% endcomment %}
+        <p style="text-align: center; margin-top: 1.5rem; color: var(--color-text-muted);">
+            Нет аккаунта? <a href="{% url 'app_user:register' %}" style="color: var(--color-accent); font-weight: 500;">Зарегистрироваться</a>
+        </p>
     </section>
 </div>
 {% endblock %}

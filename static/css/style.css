@@ -2973,3 +2973,106 @@ button {
     border: 1px solid var(--color-border);
     box-shadow: inset 0 1px 2px rgba(0, 0, 0, .12);
 }
+
+/* ====== ORDER CARDS / PROFILE ====== */
+.order-card {
+    display: block;
+    padding: 1rem 1.25rem;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius);
+    margin-bottom: .75rem;
+    text-decoration: none;
+    color: inherit;
+    transition: border-color .2s, box-shadow .2s;
+}
+
+.order-card:hover {
+    border-color: var(--color-accent);
+    box-shadow: var(--shadow-sm);
+}
+
+.order-card__head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: .5rem;
+}
+
+.order-card__num {
+    font-weight: 600;
+    font-size: 1rem;
+}
+
+.order-card__status {
+    display: inline-block;
+    padding: .2rem .6rem;
+    border-radius: 999px;
+    font-size: .78rem;
+    font-weight: 600;
+    background: var(--color-bg-soft);
+}
+
+.order-card__status--new { background: #dbeafe; color: #1e40af; }
+.order-card__status--processing { background: #fef3c7; color: #92400e; }
+.order-card__status--shipped { background: #d1fae5; color: #065f46; }
+.order-card__status--delivered { background: #d1fae5; color: #065f46; }
+.order-card__status--cancelled { background: #fee2e2; color: #991b1b; }
+
+.order-card__meta {
+    display: flex;
+    gap: 1.5rem;
+    font-size: .88rem;
+    color: var(--color-text-muted);
+}
+
+.order-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: .75rem 0;
+    border-bottom: 1px solid var(--color-border);
+    gap: 1rem;
+}
+
+.order-item:last-child { border-bottom: none; }
+
+.order-item__info {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: .15rem;
+}
+
+.order-item__name {
+    font-weight: 500;
+    font-size: .92rem;
+}
+
+.order-item__color {
+    font-size: .82rem;
+    color: var(--color-text-muted);
+}
+
+.order-item__qty {
+    font-size: .88rem;
+    color: var(--color-text-muted);
+    white-space: nowrap;
+}
+
+.order-item__total {
+    font-weight: 600;
+    font-size: .95rem;
+    white-space: nowrap;
+}
+
+.form-error {
+    color: var(--color-danger);
+    font-size: .82rem;
+    margin-top: .25rem;
+}
+
+@media (max-width: 640px) {
+    .order-card__meta { flex-wrap: wrap; gap: .5rem 1.5rem; }
+    .order-item { flex-wrap: wrap; }
+    .order-item__qty { order: 3; width: 100%; }
+}

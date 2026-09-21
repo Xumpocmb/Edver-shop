@@ -1,53 +1,52 @@
-from django.shortcuts import render, redirect
-from django.contrib import messages
+from django.contrib.auth import login
+from django.contrib.auth.decorators import login_required
+from django.contrib.auth.views import LoginView, LogoutView
+from django.shortcuts import render
+from django.urls import reverse_lazy
+from django.views.generic import CreateView
+
+from app_cart.models import Cart, Order
+
+from .forms import PhoneAuthenticationForm, PhoneUserCreationForm
 
 
+def claim_guest_data(request, user):
+    """Привязывает корзину и заказы гостя (session_key) к аккаунту."""
+    cart = Cart.get_or_create(request)
+    if cart.user is None or cart.user != user:
+        cart.user = user
+        cart.save(update_fields=['user'])
+    Order.objects.filter(
+        session_key=request.session.session_key,
+        user__isnull=True,
+    ).update(user=user)
+
+
+class UserLoginView(LoginView):
+    template_name = 'app_user/login.html'
+    form_class = PhoneAuthenticationForm
+    redirect_authenticated_user = True
+    next_page = reverse_lazy('app_user:profile')
+
+
+class UserRegisterView(CreateView):
+    template_name = 'app_user/register.html'
+    form_class = PhoneUserCreationForm
+    success_url = reverse_lazy('app_user:profile')
+
+    def form_valid(self, form):
+        response = super().form_valid(form)
+        login(self.request, self.object)
+        claim_guest_data(self.request, self.object)
+        return response
+
+
+class UserLogoutView(LogoutView):
+    next_page = '/'
+
+
+@login_required
 def profile_dashboard(request):
-    """Заглушка «Личный кабинет» (Этап 3 плана).
-
-    Что нужно сделать разработчику:
-    - поставить @login_required (или LoginRequiredMixin) с редиректом на login?next=...;
-    - вывести данные пользователя: ФИО, email, телефон, адрес по умолчанию;
-    - показать N последних заказов со ссылками на order_detail;
-    - после входа переносить корзину и историю заказов гостя (по session_key)
-      на аккаунт, чтобы данные не потерялись;
-    - из шапки иконка 👤 уже ведёт на /profile/.
-    """
-    return render(request, 'app_user/profile.html')
-
-
-def login_view(request):
-    """Заглушка входа (Этап 3 плана).
-
-    Что нужно сделать разработчику:
-    - форма «логин + пароль» (или django.contrib.auth.views.LoginView +
-      собственный шаблон), CSRF;
-    - успешный вход -> редирект на ?next=... или на /profile/;
-    - ошибки — сообщения на форме (не только console);
-    - запрет повторного входа залогиненным пользователям (редирект на profile).
-    """
-    return render(request, 'app_user/login.html')
-
-
-def register_view(request):
-    """Заглушка регистрации (Этап 3 плана).
-
-    Что нужно сделать разработчику:
-    - форма: имя/Ник, email, пароль x2; валидация уникальности email;
-    - создать пользователя (django.contrib.auth), можно без активации по email;
-    - после регистрации — авто-вход и редирект на /profile/;
-    - привязать корзину/заказы гостя (session_key) к новому аккаунту.
-    """
-    return render(request, 'app_user/register.html')
-
-
-def logout_view(request):
-    """Заглушка выхода (Этап 3 плана).
-
-    Что нужно сделать разработчику:
-    - только POST (по современным требованиям безопасности) или действие по кнопке,
-      вызывающее django.contrib.auth.logout;
-    - после выхода — редирект на главную.
-    """
-    messages.info(request, 'Заглушка: выход ещё не реализован.')
-    return redirect('/')
+    orders = Order.objects.filter(user=request.user).order_by('-created_at')[:10]
+    context = {'orders': orders}
+    return render(request, 'app_user/profile.html', context)

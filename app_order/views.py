@@ -1,3 +1,4 @@
+from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
 from django.shortcuts import render, get_object_or_404
 from django.views.decorators.http import require_POST
@@ -40,7 +41,8 @@ def order_detail(request, order_id):
         order = get_object_or_404(
             qs, pk=order_id, session_key=request.session.session_key or ''
         )
-    return render(request, 'app_order/order_detail.html', {'order': order})
+    items = order.items.select_related('product')
+    return render(request, 'app_order/order_detail.html', {'order': order, 'items': items})
 
 
 @require_POST
