@@ -1,0 +1,207 @@
+РАЗВЁРТЫВАНИЕ REDIS + CELERY НА VPS
+=====================================
+
+Что это и зачем
+---------------
+Проект использует Celery для фоновой задачи «ежедневное обновление списка
+отделений Европочты в 07:00». Очередь задач и хранение результатов Celery
+держим в Redis.
+
+Все настройки уже лежат в коде (_settings/celery.py, _settings/settings.py,
+app_cart/tasks.py, app_cart/management/commands/fetch_evropochta.py), поэтому
+на VPS нужно только:
+
+  1. установить Redis и поднять его как сервис;
+  2. установить Python-зависимости (celery, redis уже в req.txt);
+  3. поднять два процесса Celery: worker и beat;
+  4. убедиться, что они живые.
+
+Проверено: Ubuntu/Debian, Python 3.14, venv в каталоге проекта.
+Ниже пути /var/www/edver-shop — замените на свои.
+
+
+1. Установка Redis
+------------------
+  sudo apt update
+  sudo apt install -y redis-server
+  sudo systemctl enable --now redis-server
+
+Проверка:
+  redis-cli ping          # должно вернуть PONG
+  redis-cli info server   # версия redis
+
+Проверка автозагрузки:
+  systemctl is-enabled redis-server      # enabled
+
+
+2. Python-зависимости
+---------------------
+  cd /var/www/edver-shop
+  python3 -m venv venv                # если venv ещё нет
+  ./venv/bin/pip install -U pip
+  ./venv/bin/pip install -r req.txt   # там уже есть celery==5.6.3, redis==8.1.0
+
+Проверить:
+  ./venv/bin/pip show celery redis | grep -E 'Name|Version'
+
+
+3. Конфигурация в проекте
+-------------------------
+Уже настроено в _settings/settings.py:
+
+  CELERY_BROKER_URL     = 'redis://127.0.0.1:6379/0'   # очередь задач
+  CELERY_RESULT_BACKEND = 'redis://127.0.0.1:6379/1'   # результаты
+  CELERY_TIMEZONE       = 'Europe/Moscow'
+  CELERY_BEAT_SCHEDULE  = { 'update-evropochta-branches-daily': {
+                                'task': 'app_cart.tasks.update_evropochta_branches',
+                                'schedule': crontab(hour=7, minute=0) } }
+
+Время расписания задаётся в CELERY_TIMEZONE (а не в системном времени сервера),
+менять под свой пояс — только в settings.py.
+
+Проверка расписания (из каталога проекта):
+  ./venv/bin/python manage.py shell -c "
+  from _settings.celery import app
+  e = app.conf.beat_schedule['update-evropochta-branches-daily']
+  print(e['task'])
+  print(e['schedule'])"   # увидите: 0 7 * * *
+
+
+4. Запуск celery (ручной, для быстрой проверки)
+------------------------------------------------
+Из каталога проекта:
+
+  # воркер (исполняет задачи)
+  ./venv/bin/celery -A _settings worker --loglevel=INFO
+
+  # планировщик/beat (в 07:00 кладёт задачу в очередь)
+  ./venv/bin/celery -A _settings beat --loglevel=INFO
+
+Держать долго так нельзя (умрёт при закрытии ssh). Для VPS используйте
+systemd (раздел 5).
+
+Быстрый тест «вручную», что всё работает:
+  ./venv/bin/python manage.py shell -c "
+  from app_cart.tasks import update_evropochta_branches
+  print(update_evropochta_branches.apply().state)"   # SUCCESS
+Или, если воркер уже запущен:
+  ./venv/bin/python manage.py shell -c "
+  import os, django
+  os.environ['DJANGO_SETTINGS_MODULE']='_settings.settings'
+  django.setup()
+  from _settings.celery import app
+  print(app.send_task('app_cart.tasks.update_evropochta_branches').id)"
+
+Проверить статус воркера:
+  ./venv/bin/celery -A _settings inspect ping
+
+
+5. Автозапуск через systemd (рекомендуется)
+--------------------------------------------
+Создайте два unit-файла (подставьте ПУТЬ, ПОЛЬЗОВАТЕЛЯ и venv).
+
+a) /etc/systemd/system/celery-worker.service
+
+  [Unit]
+  Description=Celery worker for Edver-shop
+  After=network.target redis-server.service
+  Wants=redis-server.service
+
+  [Service]
+  Type=simple
+  User=www-data
+  Group=www-data
+  WorkingDirectory=/var/www/edver-shop
+  Environment=DJANGO_SETTINGS_MODULE=_settings.settings
+  ExecStart=/var/www/edver-shop/venv/bin/celery -A _settings worker --loglevel=INFO
+  Restart=on-failure
+  RestartSec=10
+
+  [Install]
+  WantedBy=multi-user.target
+
+b) /etc/systemd/system/celery-beat.service
+
+  [Unit]
+  Description=Celery beat scheduler for Edver-shop
+  After=network.target redis-server.service
+  Wants=redis-server.service
+
+  [Service]
+  Type=simple
+  User=www-data
+  Group=www-data
+  WorkingDirectory=/var/www/edver-shop
+  Environment=DJANGO_SETTINGS_MODULE=_settings.settings
+  ExecStart=/var/www/edver-shop/venv/bin/celery -A _settings beat --loglevel=INFO
+  Restart=on-failure
+  RestartSec=10
+
+  [Install]
+  WantedBy=multi-user.target
+
+ВАЖНО: права на каталог проекта и venv должны позволять службе (www-data)
+читать их. Если запускаете от отдельного deploy-пользователя — замените
+User=/Group= на его имя.
+
+Включить и запустить:
+
+  sudo systemctl daemon-reload
+  sudo systemctl enable --now celery-worker celery-beat
+
+Проверка:
+
+  systemctl status celery-worker
+  systemctl status celery-beat
+  systemctl is-enabled celery-worker celery-beat   # enabled
+
+Журналы:
+
+  journalctl -u celery-worker -f
+  journalctl -u celery-beat -f
+
+
+6. Как проверить, что ежедневная задача реально работает
+---------------------------------------------------------
+  * В логе celery-beat в момент запуска (07:00) появляется
+    "Scheduler: Sending due task update-evropochta-branches-daily".
+  * В логе celery-worker — строка вида
+    "Task app_cart.tasks.update_evropochta_branches[...] succeeded",
+    до неё служебный вывод команды: «Запрос Postal.OfficesOut ... Готово:
+    340 обновлено».
+  * После выполнения рост/обновление данных:
+    ./venv/bin/python manage.py shell -c "
+    from app_cart.models import EvropochtaBranch
+    print(EvropochtaBranch.objects.count())"      # ~340
+
+
+7. Если Redis у вас с паролем
+-----------------------------
+В /etc/redis/redis.conf замените:
+  # requirepass foobared
+на:
+  requirepass ВАШ_ПАРОЛЬ
+и перезапустите:  sudo systemctl restart redis-server
+
+Тогда в _settings/settings.py поменяйте адреса:
+  CELERY_BROKER_URL     = 'redis://:ВАШ_ПАРОЛЬ@127.0.0.1:6379/0'
+  CELERY_RESULT_BACKEND = 'redis://:ВАШ_ПАРОЛЬ@127.0.0.1:6379/1'
+и перезапустите celery-worker и celery-beat.
+
+
+8. Полезные команды
+-------------------
+  # сбросить очередь (удалить все неисполненные задачи)
+  ./venv/bin/celery -A _settings purge -f
+
+  # запустить задачу прямо сейчас (не дожидаясь 07:00)
+  ./venv/bin/python manage.py shell -c "
+  from app_cart.tasks import update_evropochta_branches
+  update_evropochta_branches.delay()"
+
+  # выполнить задачу вручную как управляющую команду (без celery вообще)
+  ./venv/bin/python manage.py fetch_evropochta
+
+Примечание: файл celerybeat-schedule (состояние планировщика) создаётся в
+каталоге проекта автоматически; он уже в .gitignore. Пути в unit-файлах —
+без trailing slash.

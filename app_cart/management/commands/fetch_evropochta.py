@@ -1,116 +1,44 @@
-import xml.etree.ElementTree as ET
-import urllib.request
+import json
 import ssl
+import urllib.request
+
 from django.core.management.base import BaseCommand
+
 from app_cart.models import EvropochtaBranch
 
-
-SOAP_BODY = '''<?xml version="1.0" encoding="utf-8"?>
-<soap:Envelope xmlns:xsi="http://w3.org" xmlns:xsd="http://w3.org" xmlns:soap="http://xmlsoap.org">
-  <soap:Body>
-    <GetProductionInfo xmlns="http://evropochta.by">
-      <GetPostalFilters></GetPostalFilters>
-    </GetProductionInfo>
-  </soap:Body>
-</soap:Envelope>'''
-
-ENDPOINT = 'https://evropochta.by'
+ENDPOINT = 'https://evropochta.by/rest/Json'
+DEFAULT_METHOD = 'Postal.OfficesOut'
+DEFAULT_SERVICE_NUMBER = 'E811AE79-DFDE-4F85-8715-DD3A8308707E'
+USER_AGENT = 'Mozilla/5.0'
 
 
 class Command(BaseCommand):
-    help = 'Загрузить отделения Европочты через SOAP API'
+    help = 'Обновить отделения Европочты из JSON API evropochta.by'
 
-    def handle(self, *args, **options):
-        self.stdout.write('Запрос к SOAP API Европочты...')
-
-        ctx = ssl.create_default_context()
-        ctx.check_hostname = False
-        ctx.verify_mode = ssl.CERT_NONE
-
-        req = urllib.request.Request(
-            ENDPOINT,
-            data=SOAP_BODY.encode('utf-8'),
-            headers={
-                'Content-Type': 'text/xml; charset=utf-8',
-                'SOAPAction': 'http://evropochta.by/GetProductionInfo',
-            },
+    def add_arguments(self, parser):
+        parser.add_argument(
+            '--what',
+            default=DEFAULT_METHOD,
+            help='Имя метода JSON API (по умолчанию Postal.OfficesOut)',
+        )
+        parser.add_argument(
+            '--keep-stale',
+            action='store_true',
+            help='Не удалять отделения, которых больше нет в API',
         )
 
-        try:
-            with urllib.request.urlopen(req, context=ctx, timeout=60) as resp:
-                raw = resp.read().decode('utf-8')
-        except Exception as e:
-            self.stderr.write(self.style.ERROR(f'Ошибка SOAP-запроса: {e}'))
-            return
+    def handle(self, *args, **options):
+        method = options['what']
+        self.stdout.write(f'Запрос {method} к {ENDPOINT}...')
 
-        self.stdout.write(f'Получено {len(raw)} байт. Парсинг...')
+        table = self.fetch_offices(method, DEFAULT_SERVICE_NUMBER)
+        self.stdout.write(f'Получено {len(table)} отделений. Обновление БД...')
 
-        try:
-            root = ET.fromstring(raw)
-        except ET.ParseError as e:
-            self.stderr.write(self.style.ERROR(f'Ошибка парсинга XML: {e}'))
-            return
-
-        ns = {
-            'soap': 'http://xmlsoap.org',
-            'ep': 'http://evropochta.by',
-        }
-
-        branches_data = []
-        for elem in root.iter():
-            if elem.tag.endswith('PostalInfo') or elem.tag.endswith('ProductionInfo'):
-                address_id = ''
-                name = ''
-                address = ''
-                city = ''
-                lat = ''
-                lon = ''
-                is_cash = False
-                is_card = False
-
-                for child in elem:
-                    tag = child.tag.split('}')[-1] if '}' in child.tag else child.tag
-                    val = (child.text or '').strip()
-                    if tag == 'AddressId':
-                        address_id = val
-                    elif tag in ('WarehouseName', 'Name'):
-                        name = val
-                    elif tag == 'Note':
-                        address = val
-                    elif tag == 'CityName':
-                        city = val
-                    elif tag == 'Latitude':
-                        lat = val
-                    elif tag == 'Longitude':
-                        lon = val
-                    elif tag == 'IsCash':
-                        is_cash = val in ('1', 'true', 'True')
-                    elif tag == 'IsCard':
-                        is_card = val in ('1', 'true', 'True')
-
-                if address_id and name:
-                    branches_data.append({
-                        'address_id': address_id,
-                        'name': name,
-                        'address': address,
-                        'city': city,
-                        'latitude': lat,
-                        'longitude': lon,
-                        'is_cash': is_cash,
-                        'is_card': is_card,
-                    })
-
-        if not branches_data:
-            self.stdout.write(self.style.WARNING(
-                'Прямой парсинг не дал результатов. '
-                'Попробуйте: python manage.py fetch_evropochta --raw'
-            ))
-            return
-
+        branches = [self.to_branch(row) for row in table]
         created = 0
         updated = 0
-        for b in branches_data:
-            obj, is_new = EvropochtaBranch.objects.update_or_create(
+        for b in branches:
+            _, is_new = EvropochtaBranch.objects.update_or_create(
                 address_id=b['address_id'],
                 defaults=b,
             )
@@ -119,7 +47,83 @@ class Command(BaseCommand):
             else:
                 updated += 1
 
+        if not options['keep_stale']:
+            stale = EvropochtaBranch.objects.exclude(
+                address_id__in=[b['address_id'] for b in branches]
+            )
+            stale_count = stale.count()
+            stale.delete()
+        else:
+            stale_count = 0
+
         self.stdout.write(self.style.SUCCESS(
             f'Готово: {created} создано, {updated} обновлено, '
+            f'{stale_count} удалено как устаревшие, '
             f'всего {EvropochtaBranch.objects.count()} отделений'
         ))
+
+    def fetch_offices(self, method, service_number):
+        payload = {
+            'CRC': '',
+            'Packet': {
+                'MethodName': method,
+                'JWT': None,
+                'ServiceNumber': service_number,
+                'Data': {},
+            },
+        }
+        req = urllib.request.Request(
+            f'{ENDPOINT}?What={method}',
+            data=json.dumps(payload).encode('utf-8'),
+            headers={
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+                'User-Agent': USER_AGENT,
+                'Origin': 'https://evropochta.by',
+                'Referer': 'https://evropochta.by/about/offices/',
+            },
+        )
+        ctx = ssl.create_default_context()
+        ctx.check_hostname = False
+        ctx.verify_mode = ssl.CERT_NONE
+
+        with urllib.request.urlopen(req, context=ctx, timeout=60) as resp:
+            raw = resp.read().decode('utf-8')
+
+        try:
+            data = json.loads(raw)
+        except ValueError as e:
+            self.stderr.write(self.style.ERROR(f'Ответ не является JSON: {e}'))
+            raise SystemExit(1)
+
+        table = data.get('Table') or []
+        if not table:
+            self.stderr.write(self.style.ERROR(
+                f'API не вернул отделений: {raw[:300]}'
+            ))
+            raise SystemExit(1)
+        return table
+
+    @staticmethod
+    def _field(row, key, default=''):
+        value = row.get(key)
+        return (value or default).strip()
+
+    @classmethod
+    def to_branch(cls, row):
+        prefix = cls._field(row, 'Address4NamePrefix')
+        street = cls._field(row, 'Address4Name')
+        house = cls._field(row, 'Address3Name')
+        address_parts = [part for part in (
+            cls._field(row, 'Address6Name'),
+            f'{prefix} {street}'.strip(),
+            house,
+        ) if part]
+        return {
+            'address_id': cls._field(row, 'WarehouseId'),
+            'name': cls._field(row, 'WarehouseName'),
+            'address': ', '.join(address_parts),
+            'city': cls._field(row, 'Address7Name'),
+            'latitude': cls._field(row, 'Latitude'),
+            'longitude': cls._field(row, 'Longitude'),
+        }

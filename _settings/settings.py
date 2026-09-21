@@ -1,5 +1,7 @@
 from pathlib import Path
 
+from celery.schedules import crontab
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -151,4 +153,18 @@ SUMMERNOTE_CONFIG = {
 
 # Django MPTT
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+
+# Celery
+CELERY_BROKER_URL = 'redis://127.0.0.1:6379/0'
+CELERY_RESULT_BACKEND = 'redis://127.0.0.1:6379/1'
+CELERY_TIMEZONE = TIME_ZONE
+CELERY_TASK_TRACK_STARTED = True
+
+CELERY_BEAT_SCHEDULE = {
+    'update-evropochta-branches-daily': {
+        'task': 'app_cart.tasks.update_evropochta_branches',
+        'schedule': crontab(hour=7, minute=0),
+    },
+}
 
