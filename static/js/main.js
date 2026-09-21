@@ -47,6 +47,8 @@
         }, 3200);
     }
 
+    window.toast = toast;
+
     // ====== Server-side Cart ======
     var CART_BADGE = null;
 
