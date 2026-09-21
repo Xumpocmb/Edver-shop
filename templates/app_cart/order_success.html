@@ -78,6 +78,13 @@
 <script>
 (function () {
     'use strict';
+    if (typeof window.toast !== 'function') return;
+    window.toast('Заказ {{ order.number }} оформлен! Мы свяжемся с вами для подтверждения.', 'success');
+})();
+</script>
+<script>
+(function () {
+    'use strict';
     var payBtn = document.getElementById('payNowBtn');
     if (!payBtn) return;
 

@@ -223,7 +223,6 @@ def checkout(request):
         cart.promo_code.save(update_fields=['used_count'])
 
     cart.clear()
-    messages.success(request, f'Заказ {order.number} оформлен! Мы свяжемся с вами для подтверждения.')
     return redirect('app_cart:order_success', order_id=order.pk)
 
 
