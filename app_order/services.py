@@ -17,6 +17,7 @@ from django.utils import timezone
 
 from . import erip_api
 from .models import Order, Payment
+from .telegram import notify_paid_order
 from .utils import payment_idempotency_key
 
 logger = logging.getLogger(__name__)
@@ -96,7 +97,6 @@ def _payment_result(payment, created=True, error=None):
     }
 
 
-@transaction.atomic
 def finalize_payment(payment_id):
     """Подтвердить оплату заказа РОВНО ОДИН РАЗ.
 
@@ -104,20 +104,27 @@ def finalize_payment(payment_id):
     безопасны. После подтверждения отмечает заказ оплаченным (order.paid=True).
     Возвращает Order или None, если платёж не найден.
     """
-    payment = Payment.objects.select_for_update().filter(pk=payment_id).first()
-    if payment is None:
-        return None
+    with transaction.atomic():
+        payment = Payment.objects.select_for_update().filter(pk=payment_id).first()
+        if payment is None:
+            return None
 
-    if payment.status == 'succeeded':
-        return payment.order
+        if payment.status == 'succeeded':
+            return payment.order
 
-    order = Order.objects.select_for_update().get(pk=payment.order_id)
-    payment.status = 'succeeded'
-    payment.paid_at = timezone.now()
-    payment.save(update_fields=['status', 'paid_at', 'updated_at'])
-    order.paid = True
-    order.save(update_fields=['paid', 'updated_at'])
-    logger.info('ERIP: заказ %s оплачен (payment %s)', order.number, payment.pk)
+        order = Order.objects.select_for_update().get(pk=payment.order_id)
+        payment.status = 'succeeded'
+        payment.paid_at = timezone.now()
+        payment.save(update_fields=['status', 'paid_at', 'updated_at'])
+        order.paid = True
+        order.save(update_fields=['paid', 'updated_at'])
+        logger.info('ERIP: заказ %s оплачен (payment %s)', order.number, payment.pk)
+
+    # Уведомление вне транзакции — ошибки отправки не откатывают подтверждение.
+    try:
+        notify_paid_order(order)
+    except Exception:  # noqa: BLE001
+        logger.exception('Telegram: не удалось уведомить об оплате заказа %s', order.number)
     return order
 
 

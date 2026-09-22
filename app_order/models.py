@@ -172,3 +172,45 @@ class Payment(models.Model):
         verbose_name = 'Платёж'
         verbose_name_plural = 'Платежи'
         ordering = ['-created_at']
+
+
+class TelegramBotSettings(models.Model):
+    """Настройки Telegram-бота для уведомлений о заказах (синглтон)."""
+    is_singleton = models.BooleanField(default=True, unique=True, editable=False)
+    bot_token = models.CharField(
+        max_length=200, blank=True,
+        verbose_name='Токен бота',
+    )
+    is_active = models.BooleanField(default=True, verbose_name='Уведомления включены')
+
+    def save(self, *args, **kwargs):
+        self.is_singleton = True
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return 'Настройки Telegram-бота'
+
+    class Meta:
+        verbose_name = 'Настройки Telegram-бота'
+        verbose_name_plural = 'Настройки Telegram-бота'
+
+
+class TelegramRecipient(models.Model):
+    """Получатель Telegram-уведомлений (админ/владелец магазина)."""
+    chat_id = models.CharField(
+        max_length=50, unique=True,
+        verbose_name='Telegram ID (chat id)',
+    )
+    name = models.CharField(
+        max_length=150, blank=True,
+        verbose_name='Имя / подпись',
+    )
+    is_active = models.BooleanField(default=True, verbose_name='Получать уведомления')
+
+    def __str__(self):
+        return self.name or self.chat_id
+
+    class Meta:
+        verbose_name = 'Получатель уведомлений'
+        verbose_name_plural = 'Получатели уведомлений'
+        ordering = ['id']

@@ -2,11 +2,12 @@ import re
 from decimal import Decimal
 from unittest import mock
 
+import requests
 from django.contrib.auth.models import User
 from django.test import TestCase
 
-from app_order import erip_api, services
-from app_order.models import Order, Payment
+from app_order import erip_api, services, telegram
+from app_order.models import Order, Payment, TelegramBotSettings, TelegramRecipient
 from app_order.utils import create_order_with_number
 
 NUMBER_RE = re.compile(r'^EDV-\d{4}-\d{6}$')
@@ -211,3 +212,106 @@ class PaymentViewsTests(TestCase):
             headers={'Accept': 'application/json'},
         )
         self.assertEqual(resp.status_code, 404)
+
+
+class TelegramSendMessageTests(TestCase):
+    def setUp(self):
+        self.settings = TelegramBotSettings.objects.create(bot_token='123:token')
+        self.r1 = TelegramRecipient.objects.create(chat_id='111', name='Админ')
+        self.r2 = TelegramRecipient.objects.create(chat_id='222', name='Склад')
+
+    @mock.patch('app_order.telegram.requests.post')
+    def test_send_message_to_all_active(self, post):
+        post.return_value = mock.Mock(**{'raise_for_status': lambda: None})
+        sent = telegram.send_message('Привет')
+        self.assertEqual(sent, 2)
+        self.assertEqual(post.call_count, 2)
+        kwargs = post.call_args_list[0].kwargs
+        self.assertEqual(kwargs['data']['chat_id'], '111')
+        self.assertIn('Привет', kwargs['data']['text'])
+
+    @mock.patch('app_order.telegram.requests.post')
+    def test_inactive_recipient_skipped(self, post):
+        self.r2.is_active = False
+        self.r2.save()
+        post.return_value = mock.Mock(**{'raise_for_status': lambda: None})
+        sent = telegram.send_message('Привет')
+        self.assertEqual(sent, 1)
+        self.assertEqual(post.call_args.kwargs['data']['chat_id'], '111')
+
+    @mock.patch('app_order.telegram.requests.post')
+    def test_disabled_settings_send_nothing(self, post):
+        self.settings.bot_token = ''
+        self.settings.save()
+        self.assertEqual(telegram.send_message('Привет'), 0)
+        post.assert_not_called()
+
+    @mock.patch('app_order.telegram.requests.post')
+    def test_no_recipients_send_nothing(self, post):
+        TelegramRecipient.objects.all().delete()
+        self.assertEqual(telegram.send_message('Привет'), 0)
+        post.assert_not_called()
+
+    @mock.patch('app_order.telegram.requests.post')
+    def test_api_error_swallowed(self, post):
+        post.side_effect = requests.ConnectionError('boom')
+        self.assertEqual(telegram.send_message('Привет'), 0)
+
+
+class TelegramNotificationTests(TestCase):
+    def test_notify_new_order_builds_message(self):
+        order = create_order_with_number(
+            full_name='Иван Иванов', phone='+375296111111',
+            delivery_type='belpochta', address='ул. Ленина, 1',
+            grand_total=Decimal('150.00'), session_key='sess1',
+        )
+        with mock.patch.object(telegram, 'send_message') as send:
+            telegram.notify_new_order(order)
+            send.assert_called_once()
+            text = send.call_args.args[0]
+            self.assertIn(order.number, text)
+            self.assertIn('Иван Иванов', text)
+            self.assertIn('150.00', text)
+            self.assertIn('Новый заказ', text)
+
+    def test_notify_paid_order_builds_message(self):
+        order = create_order_with_number(
+            full_name='Иван Иванов', phone='+375296111111',
+            delivery_type='evropochta', evropochta_branch_name='Брест-4',
+            grand_total=Decimal('150.00'), session_key='sess2',
+        )
+        with mock.patch.object(telegram, 'send_message') as send:
+            telegram.notify_paid_order(order)
+            send.assert_called_once()
+            text = send.call_args.args[0]
+            self.assertIn('оплачен', text)
+            self.assertIn(order.number, text)
+
+    @mock.patch('app_order.services.notify_paid_order')
+    def test_finalize_payment_sends_notification(self, notify):
+        order = create_order_with_number(
+            full_name='Иван', phone='+375', delivery_type='belpochta',
+            grand_total=Decimal('100.00'), session_key='sess3',
+        )
+        payment = Payment.objects.create(
+            order=order,
+            amount=Decimal('100.00'),
+            idempotency_key='EDV-2026-000002-1',
+        )
+        services.finalize_payment(payment.pk)
+        notify.assert_called_once_with(order)
+
+    @mock.patch('app_order.services.notify_paid_order')
+    def test_finalize_payment_not_repeated_for_paid(self, notify):
+        order = create_order_with_number(
+            full_name='Иван', phone='+375', delivery_type='belpochta',
+            grand_total=Decimal('100.00'), session_key='sess4',
+        )
+        payment = Payment.objects.create(
+            order=order,
+            amount=Decimal('100.00'),
+            idempotency_key='EDV-2026-000003-1',
+        )
+        services.finalize_payment(payment.pk)
+        services.finalize_payment(payment.pk)
+        self.assertEqual(notify.call_count, 1)

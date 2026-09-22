@@ -1,4 +1,6 @@
 from decimal import Decimal
+import logging
+
 from django.shortcuts import render, redirect, get_object_or_404
 from django.http import JsonResponse
 from django.views.decorators.http import require_POST
@@ -6,8 +8,11 @@ from django.contrib import messages
 
 from app_catalog.models import ProductVariant
 from app_order.models import Order, OrderItem
+from app_order.telegram import notify_new_order
 from app_order.utils import create_order_with_number
 from .models import Cart, CartItem, PromoCode, EvropochtaBranch
+
+logger = logging.getLogger(__name__)
 
 
 def _cart_response(request, cart, message=None, success=True):
@@ -223,6 +228,10 @@ def checkout(request):
         cart.promo_code.save(update_fields=['used_count'])
 
     cart.clear()
+    try:
+        notify_new_order(order)
+    except Exception:  # noqa: BLE001
+        logger.exception('Telegram: не удалось уведомить о заказе %s', order.number)
     return redirect('app_cart:order_success', order_id=order.pk)
 
 

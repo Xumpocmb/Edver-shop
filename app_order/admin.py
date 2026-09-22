@@ -2,7 +2,7 @@ from django import forms
 from django.contrib import admin
 
 from app_cart.models import EvropochtaBranch
-from .models import Order, OrderItem, Payment
+from .models import Order, OrderItem, Payment, TelegramBotSettings, TelegramRecipient
 
 
 class OrderItemInline(admin.TabularInline):
@@ -117,3 +117,25 @@ class PaymentAdmin(admin.ModelAdmin):
         'account_no', 'provider_payment_id', 'payment_url',
         'raw_response', 'expires_at', 'paid_at', 'created_at', 'updated_at',
     )
+
+
+@admin.register(TelegramBotSettings)
+class TelegramBotSettingsAdmin(admin.ModelAdmin):
+    list_display = ('id', 'masked_token', 'is_active')
+    fields = ('bot_token', 'is_active')
+
+    @admin.display(description='Токен бота')
+    def masked_token(self, obj):
+        token = obj.bot_token
+        if not token:
+            return '-'
+        return f'…{token[-8:]}'
+
+
+@admin.register(TelegramRecipient)
+class TelegramRecipientAdmin(admin.ModelAdmin):
+    list_display = ('chat_id', 'name', 'is_active')
+    list_display_links = ('chat_id',)
+    list_editable = ('is_active',)
+    list_filter = ('is_active',)
+    search_fields = ('chat_id', 'name')
