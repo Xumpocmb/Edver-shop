@@ -186,3 +186,35 @@ REDIS_HOST = os.getenv("REDIS_HOST", "redis")
 REDIS_PORT = os.getenv("REDIS_PORT", "6379")
 REDIS_DB = os.getenv("REDIS_DB", "0")
 
+
+# Logging
+# Логи всего app_order пишутся в logs/app_order.log с ротацией по размеру:
+# максимум 1 МБ на файл, хранится 5 файлов (app_order.log, app_order.log.1, ...).
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'verbose': {
+            'format': '{asctime} {levelname} {name} {message}',
+            'style': '{',
+        },
+    },
+    'handlers': {
+        'app_order_file': {
+            'class': '_settings.logging.EnsureRotatingFileHandler',
+            'filename': BASE_DIR / 'logs' / 'app_order.log',
+            'maxBytes': 1_000_000,
+            'backupCount': 5,
+            'encoding': 'utf-8',
+            'formatter': 'verbose',
+        },
+    },
+    'loggers': {
+        'app_order': {
+            'handlers': ['app_order_file'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+    },
+}
+
