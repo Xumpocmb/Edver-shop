@@ -32,9 +32,9 @@
         </div>
 
         <nav class="profile-tabs" style="margin-top: 2rem; border-bottom: 1px solid var(--color-border); display: flex; gap: .5rem; flex-wrap: wrap;">
-            <a href="{% url 'app_order:orders_list' %}" class="profile-tab" style="padding: .75rem 1rem; text-decoration: none; color: var(--color-text); border-bottom: 2px solid transparent; font-weight: 500;">Мои заказы</a>
             <a href="{% url 'app_user:profile' %}" class="profile-tab active" style="padding: .75rem 1rem; text-decoration: none; color: var(--color-text); border-bottom: 2px solid var(--color-accent); font-weight: 500;">Профиль</a>
-            <a href="{% url 'app_user:password_change' %}" class="profile-tab {% if 'password' in request.path %}active{% endif %}" style="padding: .75rem 1rem; text-decoration: none; color: var(--color-text); border-bottom: 2px solid {% if 'password' in request.path %}var(--color-accent){% else %}transparent{% endif %}; font-weight: 500;">Смена пароля</a>
+            <a href="{% url 'app_order:orders_list' %}" class="profile-tab" style="padding: .75rem 1rem; text-decoration: none; color: var(--color-text); border-bottom: 2px solid transparent; font-weight: 500;">Мои заказы</a>
+            <a href="{% url 'app_user:password_change' %}" class="profile-tab" style="padding: .75rem 1rem; text-decoration: none; color: var(--color-text); border-bottom: 2px solid transparent; font-weight: 500;">Смена пароля</a>
         </nav>
 
         {% if messages %}
@@ -44,6 +44,21 @@
             {% endfor %}
         </div>
         {% endif %}
+
+        <div style="margin-top: 1.5rem; padding: 1.5rem; background: var(--color-bg-soft); border-radius: var(--radius);">
+            <div class="spec-row">
+                <span class="spec-row__key">ФИО</span>
+                <span class="spec-row__val">{% if user.profile.full_name %}{{ user.profile.full_name }}{% else %}—{% endif %}</span>
+            </div>
+            <div class="spec-row">
+                <span class="spec-row__key">Телефон</span>
+                <span class="spec-row__val">{% if user.profile.phone %}{{ user.profile.phone }}{% else %}—{% endif %}</span>
+            </div>
+            <div class="spec-row">
+                <span class="spec-row__key">Адрес доставки</span>
+                <span class="spec-row__val">{% if user.profile.address %}{{ user.profile.address }}{% else %}—{% endif %}</span>
+            </div>
+        </div>
     </section>
 </div>
 {% endblock %}

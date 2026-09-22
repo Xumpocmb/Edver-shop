@@ -13,7 +13,7 @@ class OrderItemInline(admin.TabularInline):
 class OrderAdmin(admin.ModelAdmin):
     list_display = (
         'number', 'full_name', 'phone', 'delivery_type',
-        'grand_total', 'status', 'created_at',
+        'grand_total', 'status', 'paid', 'created_at',
     )
     list_filter = ('status', 'delivery_type', 'created_at')
     search_fields = ('number', 'full_name', 'phone')
@@ -27,7 +27,7 @@ class OrderAdmin(admin.ModelAdmin):
     inlines = [OrderItemInline]
     fieldsets = (
         (None, {
-            'fields': ('status', 'number'),
+            'fields': ('status', 'paid', 'number'),
         }),
         ('Данные клиента', {
             'fields': ('full_name', 'phone', 'comment'),

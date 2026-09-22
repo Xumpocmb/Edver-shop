@@ -64,6 +64,7 @@ class Order(models.Model):
         max_length=20, choices=STATUS_CHOICES, default='new',
         verbose_name='Статус',
     )
+    paid = models.BooleanField(default=False, verbose_name='Оплачен')
     comment = models.TextField(blank=True, verbose_name='Комментарий к заказу')
 
     # публичный номер заказа, показываем клиенту и шлём в ЕРИП-счёт

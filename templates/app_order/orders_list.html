@@ -20,8 +20,8 @@
         <h1 class="catalog-head__title">Мои заказы</h1>
 
         <nav class="profile-tabs" style="margin-top: 2rem; border-bottom: 1px solid var(--color-border); display: flex; gap: .5rem; flex-wrap: wrap;">
-            <a href="{% url 'app_order:orders_list' %}" class="profile-tab active" style="padding: .75rem 1rem; text-decoration: none; color: var(--color-text); border-bottom: 2px solid var(--color-accent); font-weight: 500;">Мои заказы</a>
             <a href="{% url 'app_user:profile' %}" class="profile-tab" style="padding: .75rem 1rem; text-decoration: none; color: var(--color-text); border-bottom: 2px solid transparent; font-weight: 500;">Профиль</a>
+            <a href="{% url 'app_order:orders_list' %}" class="profile-tab active" style="padding: .75rem 1rem; text-decoration: none; color: var(--color-text); border-bottom: 2px solid var(--color-accent); font-weight: 500;">Мои заказы</a>
             <a href="{% url 'app_user:password_change' %}" class="profile-tab" style="padding: .75rem 1rem; text-decoration: none; color: var(--color-text); border-bottom: 2px solid transparent; font-weight: 500;">Смена пароля</a>
         </nav>
 
