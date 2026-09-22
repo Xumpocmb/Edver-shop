@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load static %}
 
 {% block title %}
 <title>Статус оплаты заказа {{ order.number }} — EDVER Shop</title>
@@ -19,27 +20,47 @@
     </div>
 
     <section class="container" style="padding: 3rem 20px 4rem; max-width: 640px; text-align: center;">
-        {# S T U B — TODO (Этап 2+3). см. app_order/views.py docstring. #}
-        <div style="font-size: 3rem; margin-bottom: 1rem;">💰</div>
-        <h1 class="catalog-head__title">Заказ {{ order.number }}</h1>
+        {% if order.paid %}
+        <div style="font-size: 3rem; margin-bottom: 1rem;">✅</div>
+        <h1 class="catalog-head__title">Заказ {{ order.number }} оплачен</h1>
         <p style="margin-top: 1rem; color: var(--color-text-muted); font-size: 1.05rem;">
-            Здесь будет отображаться статус оплаты.
+            Спасибо! Мы уже начали обрабатывать ваш заказ.
+        </p>
+        {% else %}
+        <div style="font-size: 3rem; margin-bottom: 1rem;">💳</div>
+        <h1 class="catalog-head__title">Оплата заказа {{ order.number }}</h1>
+        <p style="margin-top: 1rem; color: var(--color-text-muted); font-size: 1.05rem;">
+            Сумма к оплате: <strong>{{ order.grand_total }} BYN</strong>
         </p>
 
-        <div style="margin-top: 2rem;">
+        <p style="margin-top: 1rem; color: var(--color-text-muted); font-size: .95rem;">
+            Нажмите «Оплатить», чтобы перейти на страницу счёта в системе ЕРИП.
+            После оплаты вернитесь сюда и нажмите «Проверить статус оплаты».
+        </p>
+
+        <div style="margin-top: 2rem; display: flex; gap: .75rem; flex-wrap: wrap; justify-content: center;">
             <button type="button" class="btn btn--primary"
-                    onclick="alert('Заглушка: проверка статуса оплаты ещё не реализована');">
-                Проверить статус оплаты
-            </button>
+                    data-pay-url="{% url 'app_order:payment_create' order.pk %}">Оплатить</button>
+            <button type="button" class="btn btn--ghost"
+                    data-check-url="{% url 'app_order:payment_check_status' order.pk %}">Проверить статус оплаты</button>
         </div>
 
-        {% comment %}
-        TODO (Этап 2+3):
-          - вывести текущий статус последнего Payment (pending/succeeded/failed);
-          - подтверждая кнопку — POST на app_order:payment_check_status, по
-            ответу показать «Оплачено ✓» либо «Ещё не оплачено»;
-          - при succeeded — редирект на соответствующую страницу заказа.
-        {% endcomment %}
+        {% if payment %}
+        <p style="margin-top: 2rem; font-size: .85rem; color: var(--color-text-muted);">
+            Статус последнего счёта: {{ payment.get_status_display }}
+        </p>
+        {% endif %}
+        {% endif %}
+
+        <div style="margin-top: 2rem;">
+            <a href="{% url 'app_order:order_detail' order.pk %}" class="btn btn--ghost">← К заказу</a>
+            <a href="/catalog/" class="btn btn--ghost">Перейти в каталог</a>
+        </div>
     </section>
 </div>
+{% endblock %}
+
+{% block scripts %}
+{{ block.super }}
+<script src="{% static 'js/payment.js' %}"></script>
 {% endblock %}

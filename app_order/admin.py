@@ -2,13 +2,24 @@ from django import forms
 from django.contrib import admin
 
 from app_cart.models import EvropochtaBranch
-from .models import Order, OrderItem
+from .models import Order, OrderItem, Payment
 
 
 class OrderItemInline(admin.TabularInline):
     model = OrderItem
     extra = 0
     readonly_fields = ('variant', 'product_name', 'product_color', 'unit_price', 'quantity')
+
+
+class PaymentInline(admin.TabularInline):
+    model = Payment
+    extra = 0
+    can_delete = False
+    readonly_fields = (
+        'amount', 'currency', 'method', 'status', 'account_no',
+        'provider_payment_id', 'payment_url', 'idempotency_key',
+        'expires_at', 'paid_at', 'created_at',
+    )
 
 
 class OrderAdminForm(forms.ModelForm):
@@ -62,7 +73,7 @@ class OrderAdmin(admin.ModelAdmin):
         'promo_code', 'promo_discount', 'total_price', 'grand_total',
         'created_at', 'updated_at',
     )
-    inlines = [OrderItemInline]
+    inlines = [OrderItemInline, PaymentInline]
     fieldsets = (
         (None, {
             'fields': ('status', 'paid', 'number'),
@@ -91,3 +102,18 @@ class OrderAdmin(admin.ModelAdmin):
 
     class Media:
         js = ('admin/js/order_admin.js',)
+
+
+@admin.register(Payment)
+class PaymentAdmin(admin.ModelAdmin):
+    list_display = (
+        'idempotency_key', 'order', 'amount', 'currency',
+        'status', 'paid_at', 'created_at',
+    )
+    list_filter = ('status', 'method', 'created_at')
+    search_fields = ('idempotency_key', 'account_no', 'provider_payment_id', 'order__number')
+    readonly_fields = (
+        'order', 'amount', 'currency', 'method', 'idempotency_key',
+        'account_no', 'provider_payment_id', 'payment_url',
+        'raw_response', 'expires_at', 'paid_at', 'created_at', 'updated_at',
+    )

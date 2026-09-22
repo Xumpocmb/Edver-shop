@@ -1,5 +1,6 @@
 from django.http import JsonResponse
 from django.shortcuts import render, get_object_or_404
+from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 
 from .models import Order
@@ -7,15 +8,22 @@ from .models import Order
 from . import services
 
 
+def _get_order_for_request(request, order_id):
+    """Заказ, к которому у текущего пользователя/сессии есть доступ."""
+    qs = Order.objects.prefetch_related('items', 'payments')
+    if request.user.is_authenticated:
+        return get_object_or_404(qs, pk=order_id, user=request.user)
+    return get_object_or_404(
+        qs, pk=order_id, session_key=request.session.session_key or ''
+    )
+
+
 def orders_list(request):
-    """Список заказов пользователя (Этап 1 + 3).
+    """Список заказов пользователя.
 
     Для авторизованного — заказы, привязанные к аккаунту (user.orders);
     для гостя — заказы его сессии (session_key). После входа историю гостя
-    переносить на аккаунт (TODO, см. регистрацию).
-
-    Показывать: номер, дату, сумму, статус доставки (status) и оплаты
-    (payment_status — появится после Этапа 2, сейчас поле отсутствует).
+    переносить на аккаунт (см. регистрацию).
     """
     if request.user.is_authenticated:
         orders = Order.objects.filter(user=request.user)
@@ -26,89 +34,85 @@ def orders_list(request):
 
 
 def order_detail(request, order_id):
-    """Детали заказа пользователя (Этап 1 + 3).
-
-    Проверка прав: авторизованным — order.user == request.user, гость — по
-    session_key (иначе 404). Показывать позиции, суммы, доставку, статусы.
-    Блок платежей (кнопки «Оплатить» / «Проверить статус оплаты») появится
-    вместе с моделью Payment (Этап 2).
-    """
-    qs = Order.objects.prefetch_related('items')
-    if request.user.is_authenticated:
-        order = get_object_or_404(qs, pk=order_id, user=request.user)
-    else:
-        order = get_object_or_404(
-            qs, pk=order_id, session_key=request.session.session_key or ''
-        )
+    """Детали заказа пользователя."""
+    order = _get_order_for_request(request, order_id)
     items = order.items.select_related('variant__product')
-    return render(request, 'app_order/order_detail.html', {'order': order, 'items': items})
+    payment = order.payments.order_by('-created_at', '-pk').first()
+    return render(
+        request, 'app_order/order_detail.html',
+        {'order': order, 'items': items, 'payment': payment},
+    )
 
 
 @require_POST
 def payment_create(request, order_id):
-    """Заглушка «Оплатить» — создание ЕРИП-ссылки (Этап 2).
+    """Создать счёт ЕРИП и вернуть ссылку на оплату (кнопка «Оплатить»).
 
-    Что нужно сделать разработчику:
-    - проверить права: гость — по session_key, авторизованный — по request.user
-      (закрыть доступ к чужим платежам);
-    - проверить оплату статус заказа (payment_status == 'pending');
-    - вызвать services.create_payment_invoice(order);
-    - при наличии payment_url — вернуть клиенту редирект/JSON со ссылкой;
-    - метод «наличными при получении» — без ссылки, статус ставится вручную.
-
-    Сейчас — всегда заглушка: JSON с признаком not_implemented.
+    Клиент получает JSON: ok, result.payment_url, result.message, result.error.
     """
-    order = get_object_or_404(Order, pk=order_id)
+    order = _get_order_for_request(request, order_id)
     result = services.create_payment_invoice(order)
+    if order.paid:
+        return JsonResponse({
+            'ok': False,
+            'order_id': order_id,
+            'status': 'paid',
+            'result': result,
+            'message': 'Заказ уже оплачен',
+        })
     return JsonResponse({
-        'ok': False,
+        'ok': bool(result.get('payment_url')),
         'order_id': order_id,
+        'status': result.get('status'),
         'result': result,
-        'message': 'Заглушка: создание ссылки на оплату не реализовано',
+        'message': result.get('error') or result.get('message', ''),
     })
 
 
 @require_POST
 def payment_check_status(request, order_id):
-    """Заглушка «Проверить статус оплаты» (Этап 2 + 3).
+    """Проверить статус оплаты последнего счёта (кнопка «Проверить статус»)."""
+    order = _get_order_for_request(request, order_id)
+    if order.paid:
+        return JsonResponse({
+            'ok': True,
+            'order_id': order_id,
+            'status': 'paid',
+            'message': 'Заказ оплачен ✓',
+        })
 
-    Что нужно сделать разработчику:
-    - права доступа, как в payment_create;
-    - взять последний Payment заказа и вызвать services.get_payment_status(...);
-    - если провайдер подтвердил оплату — services.finalize_payment(...) и вернуть
-      {'status': 'paid'};
-    - иначе вернуть текущий статус и, опционально, кнопку «оплатить».
-    """
-    order = get_object_or_404(Order, pk=order_id)
-    result = services.get_payment_status(order_id)
+    payment = order.payments.order_by('-created_at', '-pk').first()
+    if payment is None:
+        return JsonResponse({
+            'ok': False,
+            'order_id': order_id,
+            'status': 'none',
+            'message': 'Счёт ещё не выставлен — нажмите «Оплатить»',
+        })
+
+    result = services.get_payment_status(payment.pk)
     return JsonResponse({
-        'ok': False,
+        'ok': result['status'] == 'paid',
         'order_id': order_id,
-        'result': result,
-        'message': 'Заглушка: проверка статуса оплаты не реализована',
+        'status': result['status'],
+        'message': result['message'],
+        'payment_url': result.get('payment_url'),
     })
 
 
-def payment_callback(request):
-    """Заглушка webhook провайдера (Этап 2).
-
-    Что нужно сделать разработчику:
-    - @csrf_exempt (внешний сервис) + проверка подписи payload;
-    - разобрать уведомление, найти Payment по provider_payment_id;
-    - при подтверждении оплаты — finalize_payment;
-    - ответ провайдеру 200, повторные уведомления безопасны (идемпотентность).
-    """
-    return JsonResponse({'ok': False, 'status': 'not_implemented'})
-
-
 def payment_status_page(request, order_id):
-    """Заглушка страницы статуса оплаты (после возврата с провайдера).
+    """Страница статуса оплаты (после возврата с провайдера)."""
+    order = _get_order_for_request(request, order_id)
+    payment = order.payments.order_by('-created_at', '-pk').first()
+    return render(
+        request, 'app_order/payment_status.html',
+        {'order': order, 'payment': payment},
+    )
 
-    Что нужно сделать разработчику:
-    - рендерить templates/app_order/payment_status.html со статусом последнего
-      Payment и кнопкой «Проверить статус оплаты»;
-    - при первом показе можно автоматически дернуть get_payment_status
-      (опционально), чтобы не заставлять клиента кликать дважды.
-    """
-    order = get_object_or_404(Order, pk=order_id)
-    return render(request, 'app_order/payment_status.html', {'order': order})
+
+@csrf_exempt
+def payment_callback(request):
+    """Webhook провайдера (внешний сервис — без CSRF)."""
+    payload = request.POST or request.GET
+    result = services.process_payment_callback(payload)
+    return JsonResponse(result)

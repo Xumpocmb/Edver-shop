@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load static %}
 
 {% block title %}
 <title>Заказ оформлен — EDVER Shop</title>
@@ -51,14 +52,14 @@
             </div>
         </div>
 
-        {% comment %}
-        S T U B (Этап 2): при оплате онлайн показать кнопку «Оплатить» (создаёт
-        ЕРИП-ссылку через app_order:payment_create) и кнопку проверки статуса.
-        При оплате наличными при получении этот блок скрывать.
-        {% endcomment %}
         <div style="margin-top: 1.5rem;">
-            <button type="button" class="btn btn--primary" id="payNowBtn">Оплатить</button>
+            <button type="button" class="btn btn--primary" data-pay-url="{% url 'app_order:payment_create' order.pk %}">Оплатить</button>
         </div>
+        <p style="margin-top: .75rem; color: var(--color-text-muted); font-size: .9rem;">
+            Нажмите «Оплатить» для получения ссылки на счёт в системе ЕРИП.
+            После оплаты проверьте статус на
+            <a href="{% url 'app_order:payment_status_page' order.pk %}" style="color: var(--color-accent);">странице заказа</a>.
+        </p>
 
         <div style="margin-top: 1rem;">
             <a href="/catalog/" class="btn btn--ghost">Продолжить покупки</a>
@@ -76,41 +77,5 @@
     window.toast('Заказ {{ order.number }} оформлен! Мы свяжемся с вами для подтверждения.', 'success');
 })();
 </script>
-<script>
-(function () {
-    'use strict';
-    var payBtn = document.getElementById('payNowBtn');
-    if (!payBtn) return;
-
-    function getCookie(name) {
-        var cookies = document.cookie.split(';');
-        for (var i = 0; i < cookies.length; i++) {
-            var c = cookies[i].trim();
-            if (c.substring(0, name.length + 1) === (name + '=')) {
-                return decodeURIComponent(c.substring(name.length + 1));
-            }
-        }
-        return null;
-    }
-
-    payBtn.addEventListener('click', function () {
-        var fd = new FormData();
-        fetch('{% url "app_order:payment_create" order.pk %}', {
-            method: 'POST',
-            headers: { 'X-CSRFToken': getCookie('csrftoken') || '', 'Accept': 'application/json' },
-            body: fd
-        })
-        .then(function (r) { return r.json(); })
-        .then(function (data) {
-            var url = data.result && data.result.payment_url;
-            if (url) {
-                window.location.href = url;
-            } else {
-                alert('Заглушка: создание ссылки на оплату ещё не реализовано.');
-            }
-        })
-        .catch(function () { alert('Ошибка при создании ссылки на оплату.'); });
-    });
-})();
-</script>
+<script src="{% static 'js/payment.js' %}"></script>
 {% endblock %}

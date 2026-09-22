@@ -87,5 +87,6 @@ class UserPasswordChangeView(PasswordChangeView):
 def order_detail(request, order_id):
     order = get_object_or_404(Order, pk=order_id, user=request.user)
     items = order.items.select_related('variant__product')
-    context = {'order': order, 'items': items}
-    return render(request, 'app_user/order_detail.html', context)
+    payment = order.payments.order_by('-created_at', '-pk').first()
+    context = {'order': order, 'items': items, 'payment': payment}
+    return render(request, 'app_order/order_detail.html', context)

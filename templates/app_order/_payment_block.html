@@ -1,0 +1,36 @@
+{% comment %}
+Общий блок оплаты заказа. Ожидает в контексте: order, payment (последний платёж).
+Используется на страницах деталей заказа (app_order / app_user).
+{% endcomment %}
+<div class="payment-block"
+     style="margin-top: 2rem; padding: 1.5rem; background: var(--color-bg-soft); border-radius: var(--radius);">
+
+    {% if order.paid %}
+        <div style="display: flex; align-items: center; gap: .75rem;">
+            <span style="font-size: 1.5rem;">✓</span>
+            <div>
+                <div style="font-weight: 600; color: var(--color-accent);">Оплачено</div>
+                <div style="font-size: .9rem; color: var(--color-text-muted);">Сумма: {{ order.grand_total }} BYN</div>
+            </div>
+        </div>
+    {% else %}
+        <div style="font-weight: 600; margin-bottom: .25rem;">Оплата</div>
+        <p style="margin-top: 0; font-size: .95rem; color: var(--color-text-muted);">
+            К оплате: <strong>{{ order.grand_total }} BYN</strong>. Нажмите «Оплатить», чтобы
+            получить ссылку на счёт в системе ЕРИП, затем оплатите его и вернитесь
+            на страницу, чтобы проверить статус.
+        </p>
+        <div style="display: flex; gap: .75rem; flex-wrap: wrap; margin-top: 1rem;">
+            <button type="button" class="btn btn--primary"
+                    data-pay-url="{% url 'app_order:payment_create' order.pk %}">Оплатить</button>
+            <button type="button" class="btn btn--ghost"
+                    data-check-url="{% url 'app_order:payment_check_status' order.pk %}">Проверить статус оплаты</button>
+        </div>
+    {% endif %}
+
+    {% if payment and not order.paid %}
+        <p style="margin: 1rem 0 0; font-size: .85rem; color: var(--color-text-muted);">
+            Статус последнего счёта: <strong>{{ payment.get_status_display }}</strong>
+        </p>
+    {% endif %}
+</div>

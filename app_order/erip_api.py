@@ -1,8 +1,12 @@
 from datetime import datetime, timedelta
 import hashlib
 import hmac
+import os
 from decimal import Decimal
+from pathlib import Path
+
 import requests
+from dotenv import load_dotenv
 
 """При создании платежа необходим order_number формата "EDV-2026-000007"
 Затем этот номер заказа парсится в payment_id формата "2026-000007", отбрасывая EDV
@@ -10,9 +14,12 @@ import requests
 34789-1 - это данные услуги "Оплата товара" в ЛК express pay
 """
 
-EXPRESS_PAY_TOKEN = "c97db2a0fc171b79667eb53de5a5bbba"  # токен для отправки запросов (данные из ЛК)
-EXPRESS_PAY_URL = "https://api.express-pay.by/v1/"  # url
-KEY = "Edver"  # кодовое слово для цифровой подписи (данные из ЛК)
+BASE_DIR = Path(__file__).resolve().parent.parent
+load_dotenv(BASE_DIR / ".env")
+
+EXPRESS_PAY_TOKEN = os.getenv("EXPRESS_PAY_TOKEN")  # токен для отправки запросов (данные из ЛК)
+EXPRESS_PAY_URL = os.getenv("EXPRESS_PAY_URL", "https://api.express-pay.by/v1/")  # url
+KEY = os.getenv("EXPRESS_PAY_KEY")  # кодовое слово для цифровой подписи (данные из ЛК)
 
 # словарь {статус express pay - перевод}
 PAYMENT_STATUS = {

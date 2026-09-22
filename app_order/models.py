@@ -114,3 +114,61 @@ class OrderItem(models.Model):
     class Meta:
         verbose_name = 'Позиция заказа'
         verbose_name_plural = 'Позиции заказа'
+
+
+class Payment(models.Model):
+    """Платёж заказа через ЕРИП-агрегатор (Express Pay).
+
+    Один заказ может иметь несколько попыток оплаты: на каждый клик по кнопке
+    «Оплатить» создаётся новый счёт (новая запись Payment). Подтверждение
+    приходит либо по webhook от провайдера, либо при проверке статуса по
+    кнопке «Проверить статус оплаты».
+    """
+    STATUS_CHOICES = [
+        ('pending', 'Ожидает оплаты'),
+        ('succeeded', 'Оплачен'),
+        ('failed', 'Не оплачен'),
+        ('refunded', 'Возврат'),
+    ]
+
+    order = models.ForeignKey(
+        Order, on_delete=models.CASCADE, related_name='payments',
+        verbose_name='Заказ',
+    )
+    amount = models.DecimalField(
+        max_digits=10, decimal_places=2,
+        verbose_name='Сумма',
+    )
+    currency = models.CharField(max_length=10, default='BYN', verbose_name='Валюта')
+    method = models.CharField(max_length=20, default='erip', verbose_name='Метод оплаты')
+    status = models.CharField(
+        max_length=20, choices=STATUS_CHOICES, default='pending',
+        verbose_name='Статус',
+    )
+    account_no = models.CharField(
+        max_length=100, blank=True,
+        verbose_name='Номер счёта (AccountNo)',
+    )
+    provider_payment_id = models.CharField(
+        max_length=100, blank=True,
+        verbose_name='Номер счёта у провайдера (InvoiceNo)',
+    )
+    payment_url = models.URLField(max_length=1000, blank=True, verbose_name='Ссылка на оплату')
+    idempotency_key = models.CharField(
+        max_length=120, unique=True,
+        verbose_name='Ключ идемпотентности',
+    )
+    raw_response = models.JSONField(null=True, blank=True, verbose_name='Ответ провайдера')
+    expires_at = models.DateTimeField(null=True, blank=True, verbose_name='Срок действия счёта')
+    paid_at = models.DateTimeField(null=True, blank=True, verbose_name='Дата оплаты')
+
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name='Дата создания')
+    updated_at = models.DateTimeField(auto_now=True, verbose_name='Дата обновления')
+
+    def __str__(self):
+        return f'Платёж {self.idempotency_key} — {self.get_status_display()}'
+
+    class Meta:
+        verbose_name = 'Платёж'
+        verbose_name_plural = 'Платежи'
+        ordering = ['-created_at']
