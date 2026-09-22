@@ -1,12 +1,15 @@
 from datetime import datetime, timedelta
 import hashlib
 import hmac
+import logging
 import os
 from decimal import Decimal
 from pathlib import Path
 
 import requests
 from dotenv import load_dotenv
+
+logger = logging.getLogger(__name__)
 
 """При создании платежа необходим order_number формата "EDV-2026-000007"
 Затем этот номер заказа парсится в payment_id формата "2026-000007", отбрасывая EDV
@@ -74,8 +77,14 @@ def erip_get_invoices(payment_id: str, status: int | None = None):
         url += f"?token={EXPRESS_PAY_TOKEN}&AccountNo={payment_id}&Status={status}&signature={signature}"
     else:
         url += f"?token={EXPRESS_PAY_TOKEN}&AccountNo={payment_id}&signature={signature}"
-    res_invoices = requests.get(url, data=params).json()
-    return res_invoices.get("Items", [])
+    try:
+        res_invoices = requests.get(url, data=params).json()
+    except Exception:  # noqa: BLE001
+        logger.exception('ERIP API: ошибка запроса get_invoices, payment_id=%s', payment_id)
+        raise
+    invoices = res_invoices.get("Items", [])
+    logger.info('ERIP API: получены счета по %s: %d шт.', payment_id, len(invoices))
+    return invoices
 
 
 def erip_clear_not_paid_invoices(payment_id: str):
@@ -85,6 +94,7 @@ def erip_clear_not_paid_invoices(payment_id: str):
 
     invoices = erip_get_invoices(payment_id, status=1)  # получаем все неоплаченные счета
 
+    logger.info('ERIP API: отмена неоплаченных счетов по %s: %d шт.', payment_id, len(invoices))
     for inv in invoices:  # отменяем каждый
         params = {
             "Token": EXPRESS_PAY_TOKEN,
@@ -97,7 +107,12 @@ def erip_clear_not_paid_invoices(payment_id: str):
         params["signature"] = signature
         url += f"/{str(inv.get('InvoiceNo'))}?token={EXPRESS_PAY_TOKEN}&InvoiceNo={str(inv.get('InvoiceNo'))}" \
                f"&signature={signature}"
-        requests.delete(url, data=params)
+        try:
+            requests.delete(url, data=params)
+        except Exception:  # noqa: BLE001
+            logger.exception(
+                'ERIP API: ошибка отмены счёта %s, payment_id=%s', inv.get("InvoiceNo"), payment_id,
+            )
 
 
 def erip_create_payment_invoice(amount: Decimal, order_number: str):
@@ -124,9 +139,17 @@ def erip_create_payment_invoice(amount: Decimal, order_number: str):
         data += str(p)
 
     params["signature"] = get_signature(data)
-    res = requests.post(url, data=params).json()
+    try:
+        res = requests.post(url, data=params).json()
+    except Exception:  # noqa: BLE001
+        logger.exception('ERIP API: ошибка запроса create_invoice, payment_id=%s', payment_id)
+        raise
 
     payment_url = res.get("InvoiceUrl", None)
+    if payment_url is None:
+        logger.warning('ERIP API: create_invoice не вернул ссылку, ответ: %s', str(res)[:200])
+    else:
+        logger.info('ERIP API: счёт создан, payment_id=%s', payment_id)
 
     return {
         "payment_id": payment_id,
@@ -138,6 +161,7 @@ def erip_check_invoice_status(payment_id: str):
     """Проверка статуса выставленных счетов"""
     invoices = erip_get_invoices(payment_id)  # получаем все счета, выставленные на этот заказ
     if len(invoices) == 0:  # если ни одного нужного счета не найдено
+        logger.warning('ERIP API: счетов по %s не найдено', payment_id)
         return {
             "payment_id": None,
             "status": None
@@ -154,6 +178,7 @@ def erip_check_invoice_status(payment_id: str):
                 "payment_id": inv.get("AccountNo", None),
                 "status": PAYMENT_STATUS.get(str(inv["Status"]), None)
             }
+    logger.info('ERIP API: по %s все счета отменены/просрочены', payment_id)
     return {  # если нет ни одного оплаченного или ожидает оплаты счета (то есть все отменены или просрочены)
         "payment_id": payment_id,
         "status": PAYMENT_STATUS.get("5", None)

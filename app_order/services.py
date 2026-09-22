@@ -47,12 +47,17 @@ def create_payment_invoice(order):
 
     attempt = order.payments.count() + 1
     idempotency_key = payment_idempotency_key(order.number, attempt)
+    logger.info(
+        'ERIP: создание счёта, order=%s attempt=%s сумма=%s',
+        order.number, attempt, order.grand_total,
+    )
 
     # Дубликат (повторный вызов с тем же ключом) — отдаём уже созданный счёт.
     existing = Payment.objects.filter(
         idempotency_key=idempotency_key,
     ).first()
     if existing is not None:
+        logger.info('ERIP: счёт уже создан (дубликат), payment=%s', existing.pk)
         return _payment_result(existing, created=False)
 
     payment = Payment.objects.create(
@@ -77,6 +82,8 @@ def create_payment_invoice(order):
             logger.warning('ERIP: счёт создан без ссылки на оплату, order=%s', order.number)
             payment.status = 'failed'
             payment.save(update_fields=['status', 'updated_at'])
+        else:
+            logger.info('ERIP: счёт создан, payment=%s account_no=%s', payment.pk, payment.account_no)
         return _payment_result(payment)
     except Exception as exc:  # noqa: BLE001
         logger.exception('ERIP: ошибка создания счёта, order=%s', order.number)
@@ -107,9 +114,11 @@ def finalize_payment(payment_id):
     with transaction.atomic():
         payment = Payment.objects.select_for_update().filter(pk=payment_id).first()
         if payment is None:
+            logger.warning('ERIP: финализация — платёж не найден, payment=%s', payment_id)
             return None
 
         if payment.status == 'succeeded':
+            logger.info('ERIP: финализация — платёж уже подтверждён, payment=%s', payment.pk)
             return payment.order
 
         order = Order.objects.select_for_update().get(pk=payment.order_id)
@@ -152,6 +161,7 @@ def get_payment_status(payment_id):
         provider_status = None
 
     if provider_status == 'paid':
+        logger.info('ERIP: провайдер подтвердил оплату payment=%s, финализирую', payment.pk)
         finalize_payment(payment.pk)
         return _status_result('paid', 'Заказ оплачен', payment.payment_url)
 
@@ -163,6 +173,10 @@ def get_payment_status(payment_id):
         provider_status,
         ('pending', 'Не удалось получить статус. Попробуйте ещё раз.'),
     )
+    if provider_status is None:
+        logger.warning('ERIP: не удалось получить статус от провайдера, payment=%s', payment.pk)
+    else:
+        logger.info('ERIP: статус от провайдера=%s payment=%s', provider_status, payment.pk)
     return _status_result(status, message, payment.payment_url)
 
 
@@ -227,11 +241,14 @@ def process_payment_callback(request_data):
     data = dict(request_data) if hasattr(request_data, 'items') else dict(request_data or {})
     signature = data.pop('signature', '') or ''
 
-    if not _notification_signature_matches(data, signature):
-        return {'ok': False, 'status': 'bad_signature'}
-
     account_no = str(data.get('AccountNo', '') or '')
     status_raw = str(data.get('Status', '') or '')
+    logger.info('ERIP: webhook AccountNo=%s Status=%s', account_no, status_raw)
+
+    if not _notification_signature_matches(data, signature):
+        logger.warning('ERIP: webhook — подпись не совпала, AccountNo=%s', account_no)
+        return {'ok': False, 'status': 'bad_signature'}
+
     payment_status = erip_api.PAYMENT_STATUS.get(status_raw)
 
     if status_raw != '3':  # 3 = оплачен; остальные финализации не требуют
@@ -246,14 +263,21 @@ def process_payment_callback(request_data):
             status='succeeded', account_no=account_no,
         ).order_by('-created_at', '-pk').first()
         if already is not None:
+            logger.info('ERIP: webhook уже обработан ранее, payment=%s', already.pk)
             return {'ok': True, 'status': 'paid'}
+        logger.warning('ERIP: webhook — платёж не найден, AccountNo=%s', account_no)
         return {'ok': False, 'status': 'payment_not_found'}
 
     amount = _parse_amount(data.get('Amount'))
     if amount is not None and amount != payment.amount:
+        logger.warning(
+            'ERIP: webhook — сумма не совпала, payment=%s ожидалось=%s пришло=%s',
+            payment.pk, payment.amount, amount,
+        )
         return {'ok': False, 'status': 'amount_mismatch'}
 
     order = finalize_payment(payment.pk)
     if order is None:
         return {'ok': False, 'status': 'payment_not_found'}
+    logger.info('ERIP: webhook — оплата подтверждена, order=%s', order.number)
     return {'ok': True, 'status': 'paid'}

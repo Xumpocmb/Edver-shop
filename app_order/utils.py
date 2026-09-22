@@ -8,11 +8,14 @@
 """
 
 from datetime import date
+import logging
 
 from django.db import IntegrityError
 from django.db.models import Max
 
 from app_order.models import Order
+
+logger = logging.getLogger(__name__)
 
 NUMBER_PREFIX = 'EDV'
 SEQUENCE_DIGITS = 6
@@ -58,9 +61,13 @@ def create_order_with_number(queryset=None, prefix=NUMBER_PREFIX, year=None,
     for _ in range(max_attempts):
         fields['number'] = fields.get('number') or next_order_number(queryset, prefix, year)
         try:
-            return queryset.create(**fields)
+            order = queryset.create(**fields)
+            logger.info('Заказ создан: %s (пользователь=%s)', order.number, fields.get('user'))
+            return order
         except IntegrityError:
+            logger.warning('Коллизия номера заказа %s, повторная попытка', fields['number'])
             continue
+    logger.critical('Не удалось создать заказ после %d попыток', max_attempts)
     raise RuntimeError('Не удалось создать заказ: не получилось сгенерировать уникальный номер')
 
 
