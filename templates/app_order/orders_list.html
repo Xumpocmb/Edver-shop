@@ -32,7 +32,7 @@
                    style="display: flex; align-items: center; gap: 1rem; text-decoration: none; color: inherit; padding: 1rem;">
                     <div class="cart-item__info" style="flex: 1;">
                         <div class="cart-item__name">Заказ {{ order.number }}</div>
-                        <div class="cart-item__variant">{{ order.created_at|date:"d.m.Y H:i" }} — {{ order.items.count }} поз. на {{ order.grand_total }} <span class="nbrb-icon nbrb-icon-byn"></span></div>
+                        <div class="cart-item__variant">{{ order.created_at|date:"d.m.Y H:i" }} — {{ order.items.count }} поз. на {{ order.grand_total }} BYN</div>
                     </div>
                     <span class="status status--ok" style="text-transform: none;">{{ order.get_status_display }}</span>
                     <span class="cart-item__total">›</span>

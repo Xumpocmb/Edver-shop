@@ -12,7 +12,6 @@ urlpatterns = [
     # Заказы
     path('orders/', views.profile_dashboard, name='orders_list'),
     path('orders/<int:order_id>/', views.order_detail, name='order_detail'),
-    path('orders/<int:order_id>/reorder/', views.reorder, name='reorder'),
 
     # Пароль
     path('password/change/', views.UserPasswordChangeView.as_view(), name='password_change'),

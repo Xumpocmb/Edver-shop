@@ -66,8 +66,8 @@
                     <span class="order-item__name">{{ item.product_name }}</span>
                     <span class="order-item__color">{{ item.product_color }}</span>
                 </div>
-                <div class="order-item__qty">{{ item.quantity }} шт. × {{ item.unit_price }} <span class="nbrb-icon nbrb-icon-byn"></span></div>
-                <div class="order-item__total">{{ item.line_total }} <span class="nbrb-icon nbrb-icon-byn"></span></div>
+                <div class="order-item__qty">{{ item.quantity }} шт. × {{ item.unit_price }} BYN</div>
+                <div class="order-item__total">{{ item.line_total }} BYN</div>
             </div>
             {% endfor %}
         </div>
@@ -76,17 +76,18 @@
             {% if order.promo_discount > 0 %}
             <div class="cart-summary__row cart-summary__row--discount">
                 <span>Скидка по промокоду:</span>
-                <span>-{{ order.promo_discount }} <span class="nbrb-icon nbrb-icon-byn"></span></span>
+                <span>-{{ order.promo_discount }} BYN</span>
             </div>
             {% endif %}
             <div class="cart-summary__row cart-summary__row--total">
                 <span>Итого:</span>
-                <span>{{ order.grand_total }} <span class="nbrb-icon nbrb-icon-byn"></span></span>
+                <span>{{ order.grand_total }} BYN</span>
             </div>
         </div>
 
         <div style="margin-top: 2rem; display: flex; gap: 1rem; flex-wrap: wrap;">
             <a href="{% url 'app_order:orders_list' %}" class="btn btn--ghost">← Ко всем заказам</a>
+            <a class="btn btn--ghost" href="{% url 'app_order:payment_status_page' order.pk %}">Проверить статус оплаты</a>
             <a href="/catalog/" class="btn btn--ghost">Перейти в каталог</a>
         </div>
     </section>

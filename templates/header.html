@@ -51,14 +51,11 @@
         {% if user.is_authenticated %}
         <div class="header-user-dropdown">
             <button type="button" class="header-icon header-user-btn" id="header-user-btn" aria-label="Профиль" aria-expanded="false">
-                {% if user.profile.full_name %}
-                    {{ user.profile.full_name|truncatechars:15 }}
-                {% else %}
-                    {{ user.username }}
-                {% endif %}
+                <span>👤</span>
             </button>
             <div class="header-user-menu" role="menu">
                 <a href="/profile/" class="header-user-menu-item" role="menuitem">Мой профиль</a>
+                <a href="{% url 'app_order:orders_list' %}" class="header-user-menu-item" role="menuitem">Мои заказы</a>
                 <form method="post" action="{% url 'app_user:logout' %}" style="width: 100%;">
                     {% csrf_token %}
                     <button type="submit" class="header-user-menu-item" role="menuitem" style="background: none; border: none; cursor: pointer; width: 100%; text-align: left; padding: .5rem .75rem; font: inherit; color: inherit;">Выйти</button>
@@ -66,13 +63,14 @@
             </div>
         </div>
         {% else %}
-        <div class="header-auth-links" style="display: flex; gap: .75rem; align-items: center;">
-            <a href="{% url 'app_user:login' %}" class="header-icon header-icon--label" aria-label="Войти">
-                <span>👤</span><span class="header-icon-text">Войти</span>
-            </a>
-            <a href="{% url 'app_user:register' %}" class="header-icon header-icon--label" aria-label="Регистрация">
-                <span>📝</span><span class="header-icon-text">Регистрация</span>
-            </a>
+        <div class="header-user-dropdown">
+            <button type="button" class="header-icon header-user-btn" id="header-user-btn" aria-label="Профиль" aria-expanded="false">
+                <span>👤</span>
+            </button>
+            <div class="header-user-menu" role="menu">
+                <a href="{% url 'app_user:login' %}" class="header-user-menu-item" role="menuitem">Войти</a>
+                <a href="{% url 'app_user:register' %}" class="header-user-menu-item" role="menuitem">Регистрация</a>
+            </div>
         </div>
         {% endif %}
     </div>
@@ -112,13 +110,13 @@
             <div class="header-menu-divider"></div>
             {% if user.is_authenticated %}
             <a href="/profile/">Мой профиль</a>
+            <a href="{% url 'app_order:orders_list' %}">Мои заказы</a>
             <form method="post" action="{% url 'app_user:logout' %}">
                 {% csrf_token %}
                 <button type="submit" style="background: none; border: none; cursor: pointer; font-size: inherit; color: inherit; width: 100%; text-align: left; padding: .6rem .75rem; font-weight: 500; border-radius: 8px; transition: background .15s, color .15s;">Выйти</button>
             </form>
             {% else %}
             <a href="{% url 'app_user:login' %}">Войти</a>
-            <a href="{% url 'app_user:register' %}">Регистрация</a>
             {% endif %}
         </div>
         <div class="header-menu-foot">

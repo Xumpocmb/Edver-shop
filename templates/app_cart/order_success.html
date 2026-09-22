@@ -47,7 +47,7 @@
             {% endif %}
             <div class="spec-row">
                 <span class="spec-row__key">Оплата</span>
-                <span class="spec-row__val">{{ order.grand_total }} <span class="nbrb-icon nbrb-icon-byn"></span></span>
+                <span class="spec-row__val">{{ order.grand_total }} BYN</span>
             </div>
         </div>
 
@@ -58,12 +58,6 @@
         {% endcomment %}
         <div style="margin-top: 1.5rem;">
             <button type="button" class="btn btn--primary" id="payNowBtn">Оплатить</button>
-        </div>
-
-        <div style="margin-top: 1rem;">
-            <a class="btn btn--ghost" href="{% url 'app_order:payment_status_page' order.pk %}">
-                Проверить статус оплаты
-            </a>
         </div>
 
         <div style="margin-top: 1rem;">

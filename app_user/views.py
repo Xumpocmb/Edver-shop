@@ -84,21 +84,6 @@ class UserPasswordChangeView(PasswordChangeView):
 
 
 @login_required
-def reorder(request, order_id):
-    """Повторный заказ: добавляет товары из заказа в корзину."""
-    order = get_object_or_404(Order, pk=order_id, user=request.user)
-    cart = Cart.get_or_create(request)
-    for item in order.items.select_related('variant'):
-        CartItem.objects.get_or_create(
-            cart=cart,
-            variant=item.variant,
-            defaults={'quantity': item.quantity}
-        )
-    messages.success(request, f'Товары из заказа #{order_id} добавлены в корзину')
-    return redirect('app_cart:cart_detail')
-
-
-@login_required
 def order_detail(request, order_id):
     order = get_object_or_404(Order, pk=order_id, user=request.user)
     items = order.items.select_related('variant__product')
