@@ -1,7 +1,7 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 from app_catalog.models import Product, Category
-from .models import SiteReview, StaticPage
+from .models import Advantage, SiteReview, StaticPage
 
 
 def home(request):
@@ -59,14 +59,7 @@ def home(request):
 
 
 def about(request):
-    advantages = [
-        ('✓', 'Гарантия качества', 'Все товары сертифицированы и проверены перед продажей'),
-        ('🚚', 'Быстрая доставка', 'Отправляем по всей России в течение 1-2 рабочих дней'),
-        ('💳', 'Удобная оплата', 'Оплата картой, СБП, наличными при получении'),
-        ('↩️', 'Возврат 14 дней', 'Вернём товар без вопросов в течение двух недель'),
-        ('🎁', 'Бонусы и акции', 'Регулярные скидки, распродажи и акции для постоянных клиентов'),
-        ('💬', 'Поддержка 24/7', 'Всегда готовы ответить на вопросы и помочь с выбором'),
-    ]
+    advantages = Advantage.objects.filter(is_active=True).values_list('icon', 'title', 'text')
 
     context = {
         'advantages': advantages,

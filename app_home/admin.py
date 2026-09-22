@@ -1,7 +1,7 @@
 from django.contrib import admin
 from django.utils.html import format_html
 from django_summernote.admin import SummernoteModelAdmin
-from .models import FooterInfo, Instagram, PhoneNumber, SiteFavicon, SiteLogo, SiteReview, StaticPage, TikTok
+from .models import Advantage, FooterInfo, Instagram, PhoneNumber, SiteFavicon, SiteLogo, SiteReview, StaticPage, TikTok
 
 
 @admin.register(SiteLogo)
@@ -50,6 +50,15 @@ class TikTokAdmin(admin.ModelAdmin):
 @admin.register(FooterInfo)
 class FooterInfoAdmin(admin.ModelAdmin):
     list_display = ('id', 'text')
+
+
+@admin.register(Advantage)
+class AdvantageAdmin(admin.ModelAdmin):
+    list_display = ('icon', 'title', 'order', 'is_active')
+    list_display_links = ('title',)
+    list_editable = ('order', 'is_active')
+    list_filter = ('is_active',)
+    ordering = ('order', 'id')
 
 
 @admin.register(SiteReview)

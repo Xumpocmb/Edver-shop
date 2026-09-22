@@ -109,6 +109,22 @@ class FooterInfo(models.Model):
         verbose_name_plural = 'Информация в футере'
 
 
+class Advantage(models.Model):
+    icon = models.CharField(max_length=10, verbose_name='Иконка (эмодзи)')
+    title = models.CharField(max_length=100, verbose_name='Заголовок')
+    text = models.TextField(verbose_name='Описание')
+    order = models.PositiveIntegerField(default=0, verbose_name='Порядок сортировки')
+    is_active = models.BooleanField(default=True, verbose_name='Активно')
+
+    def __str__(self):
+        return self.title
+
+    class Meta:
+        verbose_name = 'Преимущество'
+        verbose_name_plural = 'Преимущества'
+        ordering = ['order', 'id']
+
+
 class StaticPage(models.Model):
     title = models.CharField(max_length=200, verbose_name='Заголовок')
     slug = models.SlugField(max_length=120, unique=True, verbose_name='Адрес (slug)')

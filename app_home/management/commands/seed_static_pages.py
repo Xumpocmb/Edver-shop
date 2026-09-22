@@ -1,6 +1,6 @@
 from django.core.management.base import BaseCommand
 
-from app_home.models import StaticPage
+from app_home.models import Advantage, StaticPage
 
 PRIVACY_TITLE = 'Политика обработки данных'
 
@@ -464,3 +464,18 @@ class Command(BaseCommand):
                 self.stdout.write(self.style.SUCCESS(f'Страница "{page.title}" создана.'))
             else:
                 self.stdout.write(f'Страница "{page.title}" уже существует — пропускаю.')
+
+        advantages = [
+            ('✓', 'Гарантия качества', 'Все товары сертифицированы и проверены перед продажей'),
+            ('🚚', 'Быстрая доставка', 'Отправляем по всей России в течение 1-2 рабочих дней'),
+            ('🎁', 'Бонусы и акции', 'Регулярные скидки, распродажи и акции для постоянных клиентов'),
+        ]
+        for order, (icon, title, text) in enumerate(advantages, start=1):
+            adv, created = Advantage.objects.get_or_create(
+                title=title,
+                defaults={'icon': icon, 'text': text, 'order': order},
+            )
+            if created:
+                self.stdout.write(self.style.SUCCESS(f'Преимущество "{adv.title}" создано.'))
+            else:
+                self.stdout.write(f'Преимущество "{adv.title}" уже существует — пропускаю.')
