@@ -1,0 +1,55 @@
+/* Переопределение цветовой схемы Django Admin на основе #2d6a4f */
+:root,
+html[data-theme="light"] {
+    --primary: #2d6a4f;
+    --secondary: #2d6a4f;
+    --accent: #d8f3dc;
+    --primary-fg: #fff;
+
+    --header-color: #d8f3dc;
+    --header-branding-color: var(--accent);
+    --header-bg: var(--secondary);
+    --header-link-color: var(--primary-fg);
+
+    --breadcrumbs-fg: #95d5b2;
+    --breadcrumbs-link-fg: #d8f3dc;
+    --breadcrumbs-bg: #1b4332;
+
+    --link-fg: #2d6a4f;
+    --link-hover-color: #1b4332;
+    --link-selected-fg: #2d6a4f;
+
+    --button-bg: var(--secondary);
+    --button-hover-bg: #1b4332;
+    --default-button-bg: #1b4332;
+    --default-button-hover-bg: var(--secondary);
+
+    --selected-bg: #d8f3dc;
+    --selected-row: #b7e4c7;
+}
+
+html[data-theme="dark"] {
+    --primary: #40916c;
+    --secondary: #2d6a4f;
+    --accent: #b7e4c7;
+    --primary-fg: #fff;
+
+    --header-color: #b7e4c7;
+    --header-branding-color: var(--accent);
+    --header-bg: var(--secondary);
+    --header-link-color: var(--primary-fg);
+
+    --breadcrumbs-fg: #95d5b2;
+    --breadcrumbs-bg: #1b4332;
+
+    --link-fg: #74c69d;
+    --link-hover-color: #95d5b2;
+    --link-selected-fg: #95d5b2;
+
+    --button-hover-bg: #1b4332;
+    --default-button-bg: #1b4332;
+    --default-button-hover-bg: var(--secondary);
+
+    --selected-bg: #2d6a4f;
+    --selected-row: #1b4332;
+}
