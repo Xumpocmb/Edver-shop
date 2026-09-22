@@ -58,6 +58,30 @@
             {% endif %}
         </div>
 
+        {% if order.shipped_at or order.tracking_number or order.received_at %}
+        <div style="margin-top: 1rem; padding: 1.5rem; background: var(--color-bg-soft); border-radius: var(--radius);">
+            <h3 style="font-size: 1rem; font-weight: 600; margin-bottom: .75rem;">Отправка и получение</h3>
+            {% if order.shipped_at %}
+            <div class="spec-row">
+                <span class="spec-row__key">Дата отправки</span>
+                <span class="spec-row__val">{{ order.shipped_at|date:"d.m.Y H:i" }}</span>
+            </div>
+            {% endif %}
+            {% if order.tracking_number %}
+            <div class="spec-row">
+                <span class="spec-row__key">Трек-номер</span>
+                <span class="spec-row__val">{{ order.tracking_number }}</span>
+            </div>
+            {% endif %}
+            {% if order.received_at %}
+            <div class="spec-row">
+                <span class="spec-row__key">Дата получения</span>
+                <span class="spec-row__val">{{ order.received_at|date:"d.m.Y H:i" }}</span>
+            </div>
+            {% endif %}
+        </div>
+        {% endif %}
+
         <h2 style="margin-top: 2rem; font-size: 1.05rem; font-weight: 600;">Товары</h2>
         <div style="margin-top: .75rem;">
             {% for item in items %}

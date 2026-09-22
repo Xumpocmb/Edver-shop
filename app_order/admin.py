@@ -1,5 +1,7 @@
+from django import forms
 from django.contrib import admin
 
+from app_cart.models import EvropochtaBranch
 from .models import Order, OrderItem
 
 
@@ -9,8 +11,44 @@ class OrderItemInline(admin.TabularInline):
     readonly_fields = ('variant', 'product_name', 'product_color', 'unit_price', 'quantity')
 
 
+class OrderAdminForm(forms.ModelForm):
+    branch_select = forms.ChoiceField(
+        label='Отделение Европочты',
+        required=False,
+        choices=[('', '— Не выбрано —')],
+    )
+
+    class Meta:
+        model = Order
+        fields = '__all__'
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        branches = EvropochtaBranch.objects.order_by('city', 'name')
+        choices = [('', '— Не выбрано —')]
+        for b in branches:
+            choices.append((b.address_id, f'{b.name} — {b.address}'))
+        self.fields['branch_select'].choices = choices
+
+        if self.instance and self.instance.pk and self.instance.evropochta_branch_id:
+            self.fields['branch_select'].initial = self.instance.evropochta_branch_id
+
+    def clean(self):
+        cleaned_data = super().clean()
+        branch_id = cleaned_data.get('branch_select')
+        if branch_id:
+            try:
+                branch = EvropochtaBranch.objects.get(address_id=branch_id)
+                cleaned_data['evropochta_branch_id'] = branch.address_id
+                cleaned_data['evropochta_branch_name'] = f'{branch.name} — {branch.address}'
+            except EvropochtaBranch.DoesNotExist:
+                pass
+        return cleaned_data
+
+
 @admin.register(Order)
 class OrderAdmin(admin.ModelAdmin):
+    form = OrderAdminForm
     list_display = (
         'number', 'full_name', 'phone', 'delivery_type',
         'grand_total', 'status', 'paid', 'created_at',
@@ -19,10 +57,10 @@ class OrderAdmin(admin.ModelAdmin):
     search_fields = ('number', 'full_name', 'phone')
     list_editable = ('status',)
     readonly_fields = (
-        'number', 'user', 'session_key', 'full_name', 'phone', 'address',
-        'delivery_type', 'evropochta_branch_id', 'evropochta_branch_name',
+        'number', 'user', 'session_key', 'phone',
+        'evropochta_branch_id', 'evropochta_branch_name',
         'promo_code', 'promo_discount', 'total_price', 'grand_total',
-        'comment', 'created_at', 'updated_at',
+        'created_at', 'updated_at',
     )
     inlines = [OrderItemInline]
     fieldsets = (
@@ -35,8 +73,12 @@ class OrderAdmin(admin.ModelAdmin):
         ('Доставка', {
             'fields': (
                 'delivery_type', 'address',
+                'branch_select',
                 'evropochta_branch_id', 'evropochta_branch_name',
             ),
+        }),
+        ('Отправка и получение', {
+            'fields': ('shipped_at', 'tracking_number', 'received_at'),
         }),
         ('Оплата', {
             'fields': ('total_price', 'promo_discount', 'grand_total', 'promo_code'),
@@ -46,3 +88,6 @@ class OrderAdmin(admin.ModelAdmin):
             'classes': ('collapse',),
         }),
     )
+
+    class Media:
+        js = ('admin/js/order_admin.js',)

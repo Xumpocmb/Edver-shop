@@ -68,6 +68,10 @@ class Order(models.Model):
     paid = models.BooleanField(default=False, verbose_name='Оплачен')
     comment = models.TextField(blank=True, verbose_name='Комментарий к заказу')
 
+    shipped_at = models.DateTimeField(null=True, blank=True, verbose_name='Дата отправки')
+    tracking_number = models.CharField(max_length=100, blank=True, verbose_name='Трек-номер')
+    received_at = models.DateTimeField(null=True, blank=True, verbose_name='Дата получения')
+
     # публичный номер заказа, показываем клиенту и шлём в ЕРИП-счёт
     number = models.CharField(
         max_length=30, unique=True, db_index=True,
