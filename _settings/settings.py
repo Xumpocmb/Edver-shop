@@ -160,6 +160,8 @@ CKEDITOR_CONFIGS = {
 # Django MPTT
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
+FIXTURE_DIRS = [BASE_DIR / 'fixtures']
+
 
 # Celery
 CELERY_BROKER_URL = 'redis://127.0.0.1:6379/0'
