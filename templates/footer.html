@@ -4,7 +4,7 @@
     </div>
     <div class="footer-side">
         {% if phone and phone.number %}
-        <a href="tel:{{ phone.number }}" class="footer-phone" aria-label="Телефон">
+        <a href="tel:{{ phone.number }}" class="footer-social" aria-label="Телефон">
             {% if phone.icon_image %}<img src="{{ phone.icon_image.url }}" alt="" style="width: 1.1em; height: 1.1em; vertical-align: -0.15em; margin-right: .2em;">{% else %}{{ phone.icon|default:"📞" }} {% endif %}{{ phone.number }}
         </a>
         {% endif %}
