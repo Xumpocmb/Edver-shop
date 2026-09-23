@@ -636,7 +636,11 @@
         if (!banner) return;
         banner.hidden = false;
         banner.style.display = 'block';
-        requestAnimationFrame(function () { banner.classList.add('is-visible'); });
+        requestAnimationFrame(function () {
+            requestAnimationFrame(function () {
+                banner.classList.add('is-visible');
+            });
+        });
     }
 
     function hideCookieBanner() {
