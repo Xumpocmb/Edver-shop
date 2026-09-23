@@ -40,7 +40,7 @@
     <div class="header-right">
         {% if phone and phone.number %}
             <a href="tel:{{ phone.number }}" class="header-icon header-icon--label header-phone-link" aria-label="Телефон">
-                <span>📞</span><span class="header-icon-text">{{ phone.number }}</span>
+                <span>{% if phone.icon_image %}<img src="{{ phone.icon_image.url }}" alt="" style="width: 1.1em; height: 1.1em; vertical-align: -0.15em;">{% else %}{{ phone.icon|default:"📞" }}{% endif %}</span><span class="header-icon-text">{{ phone.number }}</span>
             </a>
         {% endif %}
         <a href="/cart/" class="header-icon" aria-label="Корзина">
@@ -133,7 +133,7 @@
         </div>
         <div class="header-menu-foot">
             {% if phone and phone.number %}
-                <a href="tel:{{ phone.number }}" class="header-menu-contact">📞 {{ phone.number }}</a>
+                <a href="tel:{{ phone.number }}" class="header-menu-contact">{% if phone.icon_image %}<img src="{{ phone.icon_image.url }}" alt="" style="width: 1.1em; height: 1.1em; vertical-align: -0.15em; margin-right: .2em;">{% else %}{{ phone.icon|default:"📞" }} {% endif %}{{ phone.number }}</a>
             {% endif %}
             {% if instagram and instagram.url %}
                 <a href="{{ instagram.url }}" class="header-menu-contact" target="_blank" rel="noopener">{% if instagram.icon_image %}<img src="{{ instagram.icon_image.url }}" alt="" style="width: 1.1em; height: 1.1em; vertical-align: -0.15em; margin-right: .2em;">{% else %}{{ instagram.icon|default:"📷" }} {% endif %}Мы в Instagram</a>
