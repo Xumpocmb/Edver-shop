@@ -628,6 +628,53 @@
         }
     }
 
+    // ====== Cookie consent ======
+    var COOKIE_NAME = 'cookie_consent';
+
+    function showCookieBanner() {
+        var banner = $('#cookie-banner');
+        if (!banner) return;
+        banner.hidden = false;
+        requestAnimationFrame(function () { banner.classList.add('is-visible'); });
+    }
+
+    function hideCookieBanner() {
+        var banner = $('#cookie-banner');
+        if (!banner) return;
+        banner.classList.remove('is-visible');
+        setTimeout(function () { banner.hidden = true; }, 300);
+    }
+
+    function setConsent(value) {
+        var expires = new Date();
+        expires.setFullYear(expires.getFullYear() + 1);
+        document.cookie = COOKIE_NAME + '=' + value + ';expires=' + expires.toUTCString() + ';path=/;SameSite=Lax';
+        hideCookieBanner();
+    }
+
+    function initCookieConsent() {
+        if (!getCookie(COOKIE_NAME)) {
+            showCookieBanner();
+        }
+
+        var acceptBtn = $('#cookie-accept');
+        var rejectBtn = $('#cookie-reject');
+        var settingsBtn = $('#cookie-settings-btn');
+
+        if (acceptBtn) {
+            acceptBtn.addEventListener('click', function () { setConsent('accepted'); });
+        }
+        if (rejectBtn) {
+            rejectBtn.addEventListener('click', function () { setConsent('necessary'); });
+        }
+        if (settingsBtn) {
+            settingsBtn.addEventListener('click', function (e) {
+                e.preventDefault();
+                showCookieBanner();
+            });
+        }
+    }
+
     // ====== Инициализация ======
     document.addEventListener('DOMContentLoaded', function () {
         initBurger();
@@ -644,6 +691,7 @@
         initAlerts();
         initUserDropdown();
         initPhoneLink();
+        initCookieConsent();
     });
 
 })();
