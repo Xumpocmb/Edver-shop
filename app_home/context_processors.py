@@ -1,4 +1,4 @@
-from .models import CartIcon, FooterInfo, Instagram, PhoneNumber, ProfileIcon, SiteFavicon, SiteLogo, StaticPage, TikTok
+from .models import CartIcon, FooterInfo, Instagram, PhoneNumber, ProfileIcon, SiteEmail, SiteFavicon, SiteLogo, StaticPage, TikTok
 
 
 def site_logo(request):
@@ -14,6 +14,11 @@ def site_favicon(request):
 def phone(request):
     phone = PhoneNumber.objects.first()
     return {'phone': phone}
+
+
+def site_email(request):
+    email = SiteEmail.objects.first()
+    return {'site_email': email}
 
 
 def instagram(request):

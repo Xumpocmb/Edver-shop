@@ -69,6 +69,7 @@ TEMPLATES = [
                 'app_home.context_processors.site_logo',
                 'app_home.context_processors.site_favicon',
                 'app_home.context_processors.phone',
+                'app_home.context_processors.site_email',
                 'app_home.context_processors.instagram',
                 'app_home.context_processors.profile_icon',
                 'app_home.context_processors.cart_icon',

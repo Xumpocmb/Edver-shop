@@ -44,6 +44,15 @@
                 </div>
             </li>
             {% endif %}
+            {% if site_email and site_email.email %}
+            <li class="contacts-list__item">
+                <span class="contacts-list__icon">{% if site_email.icon_image %}<img src="{{ site_email.icon_image.url }}" alt="" style="width: 1.3em; height: 1.3em;">{% else %}{{ site_email.icon|default:"✉️" }}{% endif %}</span>
+                <div class="contacts-list__body">
+                    <span class="contacts-list__label">Email</span>
+                    <a href="mailto:{{ site_email.email }}" class="contacts-list__value">{{ site_email.email }}</a>
+                </div>
+            </li>
+            {% endif %}
             {% if tiktok and tiktok.url %}
             <li class="contacts-list__item">
                 <span class="contacts-list__icon">{% if tiktok.icon_image %}<img src="{{ tiktok.icon_image.url }}" alt="" style="width: 1.3em; height: 1.3em;">{% else %}{{ tiktok.icon|default:"🎵" }}{% endif %}</span>
@@ -53,7 +62,7 @@
                 </div>
             </li>
             {% endif %}
-            {% if not phone.number and not instagram.url and not tiktok.url %}
+            {% if not phone.number and not site_email.email and not instagram.url and not tiktok.url %}
             <li class="contacts-list__empty">Контактные данные скоро появятся.</li>
             {% endif %}
         </ul>

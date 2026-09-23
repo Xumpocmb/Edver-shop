@@ -1,6 +1,6 @@
 from django.contrib import admin
 from django.utils.html import format_html
-from .models import Advantage, CartIcon, FooterInfo, Instagram, PhoneNumber, ProfileIcon, SiteFavicon, SiteLogo, SiteReview, StaticPage, TikTok
+from .models import Advantage, CartIcon, FooterInfo, Instagram, PhoneNumber, ProfileIcon, SiteEmail, SiteFavicon, SiteLogo, SiteReview, StaticPage, TikTok
 
 
 @admin.register(SiteLogo)
@@ -34,6 +34,11 @@ class SiteFaviconAdmin(admin.ModelAdmin):
 @admin.register(PhoneNumber)
 class PhoneNumberAdmin(admin.ModelAdmin):
     list_display = ('id', 'number',)
+
+
+@admin.register(SiteEmail)
+class SiteEmailAdmin(admin.ModelAdmin):
+    list_display = ('id', 'email',)
 
 
 @admin.register(Instagram)

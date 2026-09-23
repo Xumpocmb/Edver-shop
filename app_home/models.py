@@ -183,6 +183,36 @@ class TikTok(models.Model):
         verbose_name_plural = 'TikTok'
 
 
+class SiteEmail(models.Model):
+    is_singleton = models.BooleanField(default=True, unique=True, editable=False)
+    email = models.EmailField(
+        verbose_name='Email',
+    )
+    icon = models.CharField(
+        max_length=10,
+        default='✉️',
+        blank=True,
+        verbose_name='Иконка (эмодзи)',
+    )
+    icon_image = models.ImageField(
+        upload_to='icons/',
+        blank=True,
+        null=True,
+        verbose_name='Иконка (картинка)',
+    )
+
+    def save(self, *args, **kwargs):
+        self.is_singleton = True
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return self.email
+
+    class Meta:
+        verbose_name = 'Email'
+        verbose_name_plural = 'Email'
+
+
 class FooterInfo(models.Model):
     is_singleton = models.BooleanField(default=True, unique=True, editable=False)
     text = models.TextField(verbose_name='Текст', default='')
