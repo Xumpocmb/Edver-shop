@@ -1,7 +1,7 @@
 from django.contrib import admin
 from django.utils.html import format_html
 from django_summernote.admin import SummernoteModelAdmin
-from .models import Advantage, FooterInfo, Instagram, PhoneNumber, SiteFavicon, SiteLogo, SiteReview, StaticPage, TikTok
+from .models import Advantage, FooterInfo, Instagram, PhoneNumber, ProfileIcon, SiteFavicon, SiteLogo, SiteReview, StaticPage, TikTok
 
 
 @admin.register(SiteLogo)
@@ -39,7 +39,26 @@ class PhoneNumberAdmin(admin.ModelAdmin):
 
 @admin.register(Instagram)
 class InstagramAdmin(admin.ModelAdmin):
-    list_display = ('id', 'url',)
+    list_display = ('id', 'url', 'icon', 'icon_preview')
+
+    def icon_preview(self, obj):
+        if obj.icon_image:
+            return format_html('<img src="{}" style="max-height: 32px;" />', obj.icon_image.url)
+        return obj.icon or '-'
+
+    icon_preview.short_description = 'Иконка'
+
+
+@admin.register(ProfileIcon)
+class ProfileIconAdmin(admin.ModelAdmin):
+    list_display = ('id', 'icon', 'icon_preview')
+
+    def icon_preview(self, obj):
+        if obj.icon_image:
+            return format_html('<img src="{}" style="max-height: 32px;" />', obj.icon_image.url)
+        return obj.icon or '-'
+
+    icon_preview.short_description = 'Иконка'
 
 
 @admin.register(TikTok)

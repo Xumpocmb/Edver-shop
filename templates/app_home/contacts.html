@@ -37,7 +37,7 @@
             {% endif %}
             {% if instagram and instagram.url %}
             <li class="contacts-list__item">
-                <span class="contacts-list__icon">📷</span>
+                <span class="contacts-list__icon">{% if instagram.icon_image %}<img src="{{ instagram.icon_image.url }}" alt="" style="width: 1.3em; height: 1.3em;">{% else %}{{ instagram.icon|default:"📷" }}{% endif %}</span>
                 <div class="contacts-list__body">
                     <span class="contacts-list__label">Instagram</span>
                     <a href="{{ instagram.url }}" class="contacts-list__value" target="_blank" rel="noopener">Мы в Instagram</a>

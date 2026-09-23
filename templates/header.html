@@ -51,7 +51,11 @@
         {% if user.is_authenticated %}
         <div class="header-user-dropdown">
             <button type="button" class="header-icon header-user-btn" id="header-user-btn" aria-label="Профиль" aria-expanded="false">
-                <span>👤</span>
+                {% if profile_icon and profile_icon.icon_image %}
+                    <span><img src="{{ profile_icon.icon_image.url }}" alt="" style="width: 1.1em; height: 1.1em; vertical-align: -0.15em;"></span>
+                {% else %}
+                    <span>{{ profile_icon.icon|default:"👤" }}</span>
+                {% endif %}
             </button>
             <div class="header-user-menu" role="menu">
                 <a href="/profile/" class="header-user-menu-item" role="menuitem">Мой профиль</a>
@@ -65,7 +69,11 @@
         {% else %}
         <div class="header-user-dropdown">
             <button type="button" class="header-icon header-user-btn" id="header-user-btn" aria-label="Профиль" aria-expanded="false">
-                <span>👤</span>
+                {% if profile_icon and profile_icon.icon_image %}
+                    <span><img src="{{ profile_icon.icon_image.url }}" alt="" style="width: 1.1em; height: 1.1em; vertical-align: -0.15em;"></span>
+                {% else %}
+                    <span>{{ profile_icon.icon|default:"👤" }}</span>
+                {% endif %}
             </button>
             <div class="header-user-menu" role="menu">
                 <a href="{% url 'app_user:login' %}" class="header-user-menu-item" role="menuitem">Войти</a>
@@ -124,7 +132,7 @@
                 <a href="tel:{{ phone.number }}" class="header-menu-contact">📞 {{ phone.number }}</a>
             {% endif %}
             {% if instagram and instagram.url %}
-                <a href="{{ instagram.url }}" class="header-menu-contact" target="_blank" rel="noopener">📷 Мы в Instagram</a>
+                <a href="{{ instagram.url }}" class="header-menu-contact" target="_blank" rel="noopener">{% if instagram.icon_image %}<img src="{{ instagram.icon_image.url }}" alt="" style="width: 1.1em; height: 1.1em; vertical-align: -0.15em; margin-right: .2em;">{% else %}{{ instagram.icon|default:"📷" }} {% endif %}Мы в Instagram</a>
             {% endif %}
             {% if tiktok and tiktok.url %}
                 <a href="{{ tiktok.url }}" class="header-menu-contact" target="_blank" rel="noopener">🎵 Мы в TikTok</a>

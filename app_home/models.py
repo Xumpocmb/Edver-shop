@@ -61,6 +61,18 @@ class Instagram(models.Model):
         default='https://instagram.com/',
         verbose_name='Ссылка на Instagram',
     )
+    icon = models.CharField(
+        max_length=10,
+        default='📷',
+        blank=True,
+        verbose_name='Иконка (эмодзи)',
+    )
+    icon_image = models.ImageField(
+        upload_to='icons/',
+        blank=True,
+        null=True,
+        verbose_name='Иконка (картинка)',
+    )
 
     def save(self, *args, **kwargs):
         self.is_singleton = True
@@ -72,6 +84,33 @@ class Instagram(models.Model):
     class Meta:
         verbose_name = 'Instagram'
         verbose_name_plural = 'Instagram'
+
+
+class ProfileIcon(models.Model):
+    is_singleton = models.BooleanField(default=True, unique=True, editable=False)
+    icon = models.CharField(
+        max_length=10,
+        default='👤',
+        blank=True,
+        verbose_name='Иконка (эмодзи)',
+    )
+    icon_image = models.ImageField(
+        upload_to='icons/',
+        blank=True,
+        null=True,
+        verbose_name='Иконка (картинка)',
+    )
+
+    def save(self, *args, **kwargs):
+        self.is_singleton = True
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return 'Иконка профиля'
+
+    class Meta:
+        verbose_name = 'Иконка профиля'
+        verbose_name_plural = 'Иконка профиля'
 
 
 class TikTok(models.Model):
