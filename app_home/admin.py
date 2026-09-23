@@ -98,10 +98,17 @@ class AdvantageAdmin(admin.ModelAdmin):
 
 @admin.register(Slide)
 class SlideAdmin(admin.ModelAdmin):
-    list_display = ('title', 'order', 'is_active')
+    list_display = ('title', 'order', 'is_active', 'preview')
     list_display_links = ('title',)
     list_editable = ('order', 'is_active')
     ordering = ('order', 'id')
+
+    def preview(self, obj):
+        if obj.image:
+            return format_html('<img src="{}" style="max-height: 40px;" />', obj.image.url)
+        return obj.bg or '-'
+
+    preview.short_description = 'Превью'
 
 
 @admin.register(SiteReview)

@@ -1,5 +1,7 @@
 from django.db import models
 from django.core.validators import MinValueValidator, MaxValueValidator
+from django.db.models.signals import post_delete
+from django.dispatch import receiver
 from ckeditor.fields import RichTextField
 
 
@@ -255,8 +257,22 @@ class Slide(models.Model):
         default='var(--color-accent)',
         verbose_name='Цвет фона (CSS)',
     )
+    image = models.ImageField(
+        upload_to='slides/',
+        blank=True,
+        null=True,
+        verbose_name='Фоновая картинка',
+        help_text='Если загрузить, будет использоваться вместо цвета фона.',
+    )
     order = models.PositiveIntegerField(default=0, verbose_name='Порядок сортировки')
     is_active = models.BooleanField(default=True, verbose_name='Активно')
+
+    def save(self, *args, **kwargs):
+        if self.pk:
+            old = Slide.objects.filter(pk=self.pk).first()
+            if old and old.image and old.image != self.image:
+                old.image.delete(save=False)
+        super().save(*args, **kwargs)
 
     def __str__(self):
         return self.title
@@ -265,6 +281,12 @@ class Slide(models.Model):
         verbose_name = 'Слайд'
         verbose_name_plural = 'Слайды'
         ordering = ['order', 'id']
+
+
+@receiver(post_delete, sender=Slide)
+def delete_slide_image(sender, instance, **kwargs):
+    if instance.image:
+        instance.image.delete(save=False)
 
 
 class StaticPage(models.Model):
