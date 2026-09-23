@@ -734,7 +734,7 @@ button {
     align-items: center;
     gap: 2rem;
     color: #fff;
-    padding: 3.5rem 20px;
+    padding: 6rem 20px 3.5rem;
     max-width: var(--container);
     margin: 0 auto;
 }
@@ -2664,7 +2664,7 @@ button {
     .slide-inner {
         grid-template-columns: 1fr;
         min-height: 360px;
-        padding: 2.5rem 20px;
+        padding: 5rem 20px 2.5rem;
     }
 
     .slide-visual {
