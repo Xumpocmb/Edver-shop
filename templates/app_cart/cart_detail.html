@@ -157,7 +157,7 @@
         </form>
         {% else %}
         <div class="empty-state" style="margin-top: 2rem;">
-            <div class="empty-state__icon">🛒</div>
+            <div class="empty-state__icon">{% if cart_icon and cart_icon.icon_image %}<img src="{{ cart_icon.icon_image.url }}" alt="" style="width: 2.5em; height: 2.5em;">{% else %}{{ cart_icon.icon|default:"🛒" }}{% endif %}</div>
             <h3 class="empty-state__title">Корзина пуста</h3>
             <p class="empty-state__text">Добавьте товары из каталога, чтобы оформить заказ.</p>
             <a href="/catalog/" class="btn btn--primary">Перейти в каталог</a>

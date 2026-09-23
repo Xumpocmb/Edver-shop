@@ -44,7 +44,11 @@
             </a>
         {% endif %}
         <a href="/cart/" class="header-icon" aria-label="Корзина">
-            <span>🛒</span>
+            {% if cart_icon and cart_icon.icon_image %}
+                <span><img src="{{ cart_icon.icon_image.url }}" alt="" style="width: 1.1em; height: 1.1em; vertical-align: -0.15em;"></span>
+            {% else %}
+                <span>{{ cart_icon.icon|default:"🛒" }}</span>
+            {% endif %}
             <span class="header-badge" id="cart-badge" {% if not cart_total_items %}hidden{% endif %}>{{ cart_total_items|default:"0" }}</span>
         </a>
 

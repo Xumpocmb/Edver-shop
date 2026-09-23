@@ -113,6 +113,33 @@ class ProfileIcon(models.Model):
         verbose_name_plural = 'Иконка профиля'
 
 
+class CartIcon(models.Model):
+    is_singleton = models.BooleanField(default=True, unique=True, editable=False)
+    icon = models.CharField(
+        max_length=10,
+        default='🛒',
+        blank=True,
+        verbose_name='Иконка (эмодзи)',
+    )
+    icon_image = models.ImageField(
+        upload_to='icons/',
+        blank=True,
+        null=True,
+        verbose_name='Иконка (картинка)',
+    )
+
+    def save(self, *args, **kwargs):
+        self.is_singleton = True
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return 'Иконка корзины'
+
+    class Meta:
+        verbose_name = 'Иконка корзины'
+        verbose_name_plural = 'Иконка корзины'
+
+
 class TikTok(models.Model):
     is_singleton = models.BooleanField(default=True, unique=True, editable=False)
     url = models.URLField(

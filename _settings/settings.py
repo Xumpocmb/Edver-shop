@@ -71,6 +71,7 @@ TEMPLATES = [
                 'app_home.context_processors.phone',
                 'app_home.context_processors.instagram',
                 'app_home.context_processors.profile_icon',
+                'app_home.context_processors.cart_icon',
                 'app_home.context_processors.tiktok',
                 'app_home.context_processors.footer_info',
                 'app_home.context_processors.cart_count',

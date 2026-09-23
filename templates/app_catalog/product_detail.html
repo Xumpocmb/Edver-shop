@@ -130,7 +130,7 @@
                             class="btn btn--primary btn--lg js-add-to-cart"
                             data-variant-id="{{ variant.id }}"
                             data-product-name="{{ product.name }} {{ variant.color }}">
-                        🛒 Добавить в корзину
+                        {% if cart_icon and cart_icon.icon_image %}<img src="{{ cart_icon.icon_image.url }}" alt="" style="width: 1.1em; height: 1.1em; vertical-align: -0.15em; margin-right: .3em;">{% else %}{{ cart_icon.icon|default:"🛒" }} {% endif %}Добавить в корзину
                     </button>
                 </div>
             </div>
