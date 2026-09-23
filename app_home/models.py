@@ -199,21 +199,6 @@ class FooterInfo(models.Model):
         verbose_name_plural = 'Информация в футере'
 
 
-class FooterLink(models.Model):
-    title = models.CharField(max_length=100, verbose_name='Текст ссылки')
-    url = models.CharField(max_length=200, verbose_name='Ссылка')
-    order = models.PositiveIntegerField(default=0, verbose_name='Порядок сортировки')
-    is_active = models.BooleanField(default=True, verbose_name='Активно')
-
-    def __str__(self):
-        return self.title
-
-    class Meta:
-        verbose_name = 'Ссылка в футере'
-        verbose_name_plural = 'Ссылки в футере'
-        ordering = ['order', 'id']
-
-
 class Advantage(models.Model):
     icon = models.CharField(max_length=10, verbose_name='Иконка (эмодзи)')
     title = models.CharField(max_length=100, verbose_name='Заголовок')

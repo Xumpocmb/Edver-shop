@@ -74,7 +74,7 @@ TEMPLATES = [
                 'app_home.context_processors.cart_icon',
                 'app_home.context_processors.tiktok',
                 'app_home.context_processors.footer_info',
-                'app_home.context_processors.footer_links',
+                'app_home.context_processors.footer_pages',
                 'app_home.context_processors.payment_page',
                 'app_home.context_processors.cart_count',
                 'app_home.context_processors.gender_categories',

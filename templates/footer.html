@@ -19,8 +19,8 @@
         </a>
         {% endif %}
         <nav class="footer-links">
-            {% for link in footer_links %}
-            <a href="{{ link.url }}">{{ link.title }}</a>
+            {% for page in footer_pages %}
+            <a href="/{{ page.slug }}/">{{ page.title }}</a>
             {% endfor %}
             <button type="button" class="footer-links__btn" id="cookie-settings-btn">Настройки cookie</button>
         </nav>

@@ -1,6 +1,6 @@
 from django.core.management.base import BaseCommand
 
-from app_home.models import Advantage, FooterLink, StaticPage
+from app_home.models import Advantage, StaticPage
 
 PRIVACY_TITLE = 'Политика обработки данных'
 
@@ -479,17 +479,3 @@ class Command(BaseCommand):
                 self.stdout.write(self.style.SUCCESS(f'Преимущество "{adv.title}" создано.'))
             else:
                 self.stdout.write(f'Преимущество "{adv.title}" уже существует — пропускаю.')
-
-        footer_links = [
-            ('Договор оферты', '/offer/'),
-            ('Политика обработки данных', '/privacy/'),
-        ]
-        for order, (title, url) in enumerate(footer_links, start=1):
-            link, created = FooterLink.objects.get_or_create(
-                title=title,
-                defaults={'url': url, 'order': order, 'is_active': True},
-            )
-            if created:
-                self.stdout.write(self.style.SUCCESS(f'Ссылка футера "{link.title}" создана.'))
-            else:
-                self.stdout.write(f'Ссылка футера "{link.title}" уже существует — пропускаю.')

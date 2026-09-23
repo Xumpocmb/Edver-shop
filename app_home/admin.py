@@ -1,6 +1,6 @@
 from django.contrib import admin
 from django.utils.html import format_html
-from .models import Advantage, CartIcon, FooterInfo, FooterLink, Instagram, PhoneNumber, ProfileIcon, SiteFavicon, SiteLogo, SiteReview, StaticPage, TikTok
+from .models import Advantage, CartIcon, FooterInfo, Instagram, PhoneNumber, ProfileIcon, SiteFavicon, SiteLogo, SiteReview, StaticPage, TikTok
 
 
 @admin.register(SiteLogo)
@@ -80,14 +80,6 @@ class TikTokAdmin(admin.ModelAdmin):
 @admin.register(FooterInfo)
 class FooterInfoAdmin(admin.ModelAdmin):
     list_display = ('id', 'text')
-
-
-@admin.register(FooterLink)
-class FooterLinkAdmin(admin.ModelAdmin):
-    list_display = ('title', 'url', 'order', 'is_active')
-    list_display_links = ('title',)
-    list_editable = ('order', 'is_active')
-    ordering = ('order', 'id')
 
 
 @admin.register(Advantage)
