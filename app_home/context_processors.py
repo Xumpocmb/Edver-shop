@@ -1,4 +1,4 @@
-from .models import CartIcon, FooterInfo, Instagram, PhoneNumber, ProfileIcon, SiteFavicon, SiteLogo, TikTok
+from .models import CartIcon, FooterInfo, FooterLink, Instagram, PhoneNumber, ProfileIcon, SiteFavicon, SiteLogo, StaticPage, TikTok
 
 
 def site_logo(request):
@@ -39,6 +39,16 @@ def tiktok(request):
 def footer_info(request):
     info = FooterInfo.objects.first()
     return {'footer_info': info}
+
+
+def footer_links(request):
+    links = FooterLink.objects.filter(is_active=True)
+    return {'footer_links': links}
+
+
+def payment_page(request):
+    page = StaticPage.objects.filter(slug='payment').first()
+    return {'payment_page': page}
 
 
 def gender_categories(request):

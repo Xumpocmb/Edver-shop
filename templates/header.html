@@ -117,7 +117,7 @@
             <a href="/contacts/">Контакты</a>
             <div class="header-menu-divider"></div>
             <div class="header-menu-caption">Покупателям</div>
-            <a href="/payment/">Оплата и Доставка</a>
+            <a href="/payment/">{{ payment_page.title|default:"Оплата и Доставка" }}</a>
             <a href="/reviews/">Отзывы</a>
             <div class="header-menu-divider"></div>
             {% if user.is_authenticated %}
