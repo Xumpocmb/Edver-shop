@@ -248,10 +248,55 @@ class Advantage(models.Model):
 
 
 class Slide(models.Model):
+    LINK_TARGET_CHOICES = [
+        ('catalog', 'Каталог (все товары)'),
+        ('on_sale', 'Скидки и акции'),
+        ('category', 'Категория каталога'),
+        ('product', 'Товар'),
+        ('page', 'Страница сайта'),
+        ('custom', 'Своя ссылка'),
+    ]
+
     title = models.CharField(max_length=200, verbose_name='Заголовок')
     subtitle = models.CharField(max_length=300, blank=True, verbose_name='Подзаголовок')
     cta = models.CharField(max_length=100, default='Подробнее', verbose_name='Текст кнопки')
-    href = models.CharField(max_length=200, default='/catalog/', verbose_name='Ссылка с кнопки')
+    link_target = models.CharField(
+        max_length=20,
+        choices=LINK_TARGET_CHOICES,
+        default='catalog',
+        verbose_name='Куда ведёт кнопка',
+    )
+    category = models.ForeignKey(
+        'app_catalog.Category',
+        on_delete=models.SET_NULL,
+        blank=True,
+        null=True,
+        verbose_name='Категория',
+        help_text='Для выбора «Категория каталога».',
+    )
+    product = models.ForeignKey(
+        'app_catalog.Product',
+        on_delete=models.SET_NULL,
+        blank=True,
+        null=True,
+        verbose_name='Товар',
+        help_text='Для выбора «Товар».',
+    )
+    page = models.ForeignKey(
+        'StaticPage',
+        on_delete=models.SET_NULL,
+        blank=True,
+        null=True,
+        verbose_name='Страница',
+        help_text='Для выбора «Страница сайта».',
+    )
+    href = models.CharField(
+        max_length=200,
+        blank=True,
+        default='',
+        verbose_name='Своя ссылка',
+        help_text='Например: /catalog/?gender=M. Заполняется для выбора «Своя ссылка».',
+    )
     bg = models.CharField(
         max_length=50,
         default='var(--color-accent)',
@@ -266,6 +311,19 @@ class Slide(models.Model):
     )
     order = models.PositiveIntegerField(default=0, verbose_name='Порядок сортировки')
     is_active = models.BooleanField(default=True, verbose_name='Активно')
+
+    def get_url(self):
+        if self.link_target == 'catalog':
+            return '/catalog/'
+        if self.link_target == 'on_sale':
+            return '/catalog/?on_sale=1'
+        if self.link_target == 'category':
+            return self.category.get_absolute_url() if self.category else '/catalog/'
+        if self.link_target == 'product':
+            return self.product.get_absolute_url() if self.product else '/catalog/'
+        if self.link_target == 'page':
+            return f'/{self.page.slug}/' if self.page else '/catalog/'
+        return self.href or '/catalog/'
 
     def save(self, *args, **kwargs):
         if self.pk:

@@ -1,3 +1,4 @@
+from django import forms
 from django.contrib import admin
 from django.utils.html import format_html
 from .models import Advantage, CartIcon, FooterInfo, Instagram, PhoneNumber, ProfileIcon, SiteEmail, SiteFavicon, SiteLogo, SiteReview, Slide, StaticPage, TikTok
@@ -96,12 +97,39 @@ class AdvantageAdmin(admin.ModelAdmin):
     ordering = ('order', 'id')
 
 
+class SlideForm(forms.ModelForm):
+    class Meta:
+        model = Slide
+        fields = '__all__'
+
+    def clean(self):
+        cleaned = super().clean()
+        target = cleaned.get('link_target')
+        if target == 'category' and not cleaned.get('category'):
+            self.add_error('category', 'Выберите категорию для кнопки.')
+        if target == 'product' and not cleaned.get('product'):
+            self.add_error('product', 'Выберите товар для кнопки.')
+        if target == 'page' and not cleaned.get('page'):
+            self.add_error('page', 'Выберите страницу для кнопки.')
+        if target == 'custom' and not cleaned.get('href'):
+            self.add_error('href', 'Укажите свою ссылку для кнопки.')
+        return cleaned
+
+
 @admin.register(Slide)
 class SlideAdmin(admin.ModelAdmin):
-    list_display = ('title', 'order', 'is_active', 'preview')
+    form = SlideForm
+    list_display = ('title', 'order', 'is_active', 'link_target', 'preview')
     list_display_links = ('title',)
     list_editable = ('order', 'is_active')
     ordering = ('order', 'id')
+    autocomplete_fields = ('product',)
+    fieldsets = (
+        (None, {'fields': ('title', 'subtitle')}),
+        ('Кнопка', {'fields': ('cta', 'link_target', 'category', 'product', 'page', 'href')}),
+        ('Оформление', {'fields': ('bg', 'image')}),
+        (None, {'fields': ('order', 'is_active')}),
+    )
 
     def preview(self, obj):
         if obj.image:
@@ -109,6 +137,9 @@ class SlideAdmin(admin.ModelAdmin):
         return obj.bg or '-'
 
     preview.short_description = 'Превью'
+
+    class Media:
+        js = ('js/slide_admin.js',)
 
 
 @admin.register(SiteReview)
