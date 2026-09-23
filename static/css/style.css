@@ -613,8 +613,12 @@ button {
 }
 
 .header-menu-contact {
+    display: flex;
+    align-items: center;
+    gap: .4rem;
     color: var(--color-accent);
     font-weight: 700;
+    font-size: .8rem;
 }
 
 .header-menu-toggle {
