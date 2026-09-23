@@ -1178,7 +1178,7 @@ button {
     padding: 3rem 20px;
     display: grid;
     gap: 2rem;
-    grid-template-columns: 2fr 1fr;
+    grid-template-columns: 1.5fr 1fr 1fr;
 }
 
 .footer-info p {
@@ -1192,27 +1192,55 @@ button {
     margin-top: .5rem;
 }
 
-.footer-copy {
-    font-size: .85rem;
-    opacity: .65;
-    text-align: center;
-    grid-column: 1 / -1;
+.footer-title {
+    font-size: .78rem;
+    font-weight: 700;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    opacity: .6;
+    margin-bottom: 1rem;
 }
 
-.footer-side {
+.footer-col {
     display: flex;
     flex-direction: column;
     align-items: flex-start;
-    gap: .75rem;
+    gap: .6rem;
+}
+
+.footer-nav a,
+.footer-contact {
+    font-size: .92rem;
+    opacity: .9;
+    transition: opacity .2s;
+}
+
+.footer-nav a:hover,
+.footer-contact:hover {
+    opacity: 1;
+    text-decoration: underline;
+}
+
+.footer-contact {
+    display: inline-flex;
+    align-items: center;
+    gap: .5rem;
+}
+
+.footer-socials {
+    display: flex;
+    gap: .5rem;
+    margin-top: .25rem;
 }
 
 .footer-social {
     display: inline-flex;
     align-items: center;
-    gap: .5rem;
-    font-weight: 600;
+    justify-content: center;
+    width: 2.4rem;
+    height: 2.4rem;
+    font-size: 1.1rem;
     border: 1px solid rgba(255, 255, 255, .4);
-    padding: .6rem 1.1rem;
     border-radius: var(--radius);
     transition: background-color .2s, color .2s, border-color .2s;
 }
@@ -1221,34 +1249,6 @@ button {
     background: #fff;
     color: var(--color-footer-bg);
     border-color: #fff;
-}
-
-.footer-phone {
-    font-weight: 700;
-    color: #fff;
-    font-size: 1.05rem;
-    letter-spacing: .02em;
-}
-
-.footer-phone:hover {
-    color: var(--color-accent-hover);
-}
-
-.footer-links {
-    display: flex;
-    flex-direction: column;
-    gap: .6rem;
-}
-
-.footer-links a {
-    font-size: .92rem;
-    opacity: .9;
-    transition: opacity .2s;
-}
-
-.footer-links a:hover {
-    opacity: 1;
-    text-decoration: underline;
 }
 
 .footer-links__btn {
@@ -1267,6 +1267,13 @@ button {
 .footer-links__btn:hover {
     opacity: 1;
     text-decoration: underline;
+}
+
+.footer-copy {
+    font-size: .85rem;
+    opacity: .65;
+    text-align: center;
+    grid-column: 1 / -1;
 }
 
 /* ====== COOKIE BANNER ====== */

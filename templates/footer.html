@@ -2,33 +2,38 @@
     <div class="footer-info">
         <p>{{ footer_info.text|linebreaksbr }}</p>
     </div>
-    <div class="footer-side">
+
+    <nav class="footer-col footer-nav" aria-label="Разделы сайта">
+        <h3 class="footer-title">Разделы</h3>
+        {% for page in footer_pages %}
+        <a href="/{{ page.slug }}/">{{ page.title }}</a>
+        {% endfor %}
+        <button type="button" class="footer-links__btn" id="cookie-settings-btn">Настройки cookie</button>
+    </nav>
+
+    <div class="footer-col footer-contacts">
+        <h3 class="footer-title">Контакты</h3>
         {% if phone and phone.number %}
-        <a href="tel:{{ phone.number }}" class="footer-social" aria-label="Телефон">
-            {% if phone.icon_image %}<img src="{{ phone.icon_image.url }}" alt="" style="width: 1.1em; height: 1.1em; vertical-align: -0.15em; margin-right: .2em;">{% else %}{{ phone.icon|default:"📞" }} {% endif %}{{ phone.number }}
-        </a>
-        {% endif %}
-        {% if instagram and instagram.url %}
-        <a href="{{ instagram.url }}" class="footer-social" target="_blank" rel="noopener" aria-label="Instagram">
-            {% if instagram.icon_image %}<img src="{{ instagram.icon_image.url }}" alt="" style="width: 1.1em; height: 1.1em; vertical-align: -0.15em; margin-right: .2em;">{% else %}{{ instagram.icon|default:"📷" }} {% endif %}Мы в Instagram
-        </a>
-        {% endif %}
-        {% if tiktok and tiktok.url %}
-        <a href="{{ tiktok.url }}" class="footer-social" target="_blank" rel="noopener" aria-label="TikTok">
-            {% if tiktok.icon_image %}<img src="{{ tiktok.icon_image.url }}" alt="" style="width: 1.1em; height: 1.1em; vertical-align: -0.15em; margin-right: .2em;">{% else %}{{ tiktok.icon|default:"🎵" }} {% endif %}Мы в TikTok
+        <a href="tel:{{ phone.number }}" class="footer-contact" aria-label="Телефон">
+            {% if phone.icon_image %}<img src="{{ phone.icon_image.url }}" alt="" style="width: 1.1em; height: 1.1em; vertical-align: -0.15em;">{% else %}{{ phone.icon|default:"📞" }}{% endif %}
+            <span>{{ phone.number }}</span>
         </a>
         {% endif %}
         {% if site_email and site_email.email %}
-        <a href="mailto:{{ site_email.email }}" class="footer-social" aria-label="Email">
-            {% if site_email.icon_image %}<img src="{{ site_email.icon_image.url }}" alt="" style="width: 1.1em; height: 1.1em; vertical-align: -0.15em; margin-right: .2em;">{% else %}{{ site_email.icon|default:"✉️" }} {% endif %}{{ site_email.email }}
+        <a href="mailto:{{ site_email.email }}" class="footer-contact" aria-label="Email">
+            {% if site_email.icon_image %}<img src="{{ site_email.icon_image.url }}" alt="" style="width: 1.1em; height: 1.1em; vertical-align: -0.15em;">{% else %}{{ site_email.icon|default:"✉️" }}{% endif %}
+            <span>{{ site_email.email }}</span>
         </a>
         {% endif %}
-        <nav class="footer-links">
-            {% for page in footer_pages %}
-            <a href="/{{ page.slug }}/">{{ page.title }}</a>
-            {% endfor %}
-            <button type="button" class="footer-links__btn" id="cookie-settings-btn">Настройки cookie</button>
-        </nav>
+        <div class="footer-socials">
+            {% if instagram and instagram.url %}
+            <a href="{{ instagram.url }}" class="footer-social" target="_blank" rel="noopener" aria-label="Instagram">{% if instagram.icon_image %}<img src="{{ instagram.icon_image.url }}" alt="" style="width: 1.2em; height: 1.2em;">{% else %}{{ instagram.icon|default:"📷" }}{% endif %}</a>
+            {% endif %}
+            {% if tiktok and tiktok.url %}
+            <a href="{{ tiktok.url }}" class="footer-social" target="_blank" rel="noopener" aria-label="TikTok">{% if tiktok.icon_image %}<img src="{{ tiktok.icon_image.url }}" alt="" style="width: 1.2em; height: 1.2em;">{% else %}{{ tiktok.icon|default:"🎵" }}{% endif %}</a>
+            {% endif %}
+        </div>
     </div>
+
     <div class="footer-copy">© {% now "Y" %} EDVER Shop. Все права защищены.</div>
 </footer>
