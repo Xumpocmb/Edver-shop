@@ -22,6 +22,14 @@
             Мы отбираем только проверенную продукцию известных брендов, чтобы каждая покупка радовала долгие годы.</p>
     </section>
 
+    {% if page and page.content %}
+    <section class="container static-page">
+        <div class="static-page__body">
+            {{ page.content|safe }}
+        </div>
+    </section>
+    {% endif %}
+
     <!-- ===== ПРЕИМУЩЕСТВА ===== -->
     <section class="section section--gray container">
         <div class="section-head section-head--center">

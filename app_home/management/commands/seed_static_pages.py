@@ -441,6 +441,20 @@ OFFER_CONTENT = """<h2>Публичная оферта (предложение) 
 <p><strong>7.2.</strong> Споры по настоящему договору разрешаются сторонами путем проведения переговоров. При недостижении согласия &ndash; в суде по месту жительства Продавца.</p>
 """
 
+ABOUT_TITLE = 'О нас'
+
+ABOUT_CONTENT = """<h2>Кто мы</h2>
+<p>EDVER Shop — это магазин сумок, чемоданов, кошельков и дорожных аксессуаров. Мы отбираем только проверенную продукцию известных брендов, чтобы каждая покупка радовала долгие годы.</p>
+<h2>Наши принципы</h2>
+<ul>
+<li>Честные цены без скрытых наценок;</li>
+<li>Быстрая доставка по всей России;</li>
+<li>Гарантия качества на каждый товар;</li>
+<li>Поддержка на всех этапах покупки.</li>
+</ul>
+<p>Если у вас есть вопросы — напишите нам, и мы с радостью поможем с выбором.</p>
+"""
+
 
 class Command(BaseCommand):
     help = 'Создаёт (или обновляет отсутствующие) статические страницы сайта с содержимым по умолчанию.'
@@ -450,6 +464,7 @@ class Command(BaseCommand):
             {'slug': 'privacy', 'title': PRIVACY_TITLE, 'content': PRIVACY_CONTENT},
             {'slug': 'payment', 'title': PAYMENT_TITLE, 'content': PAYMENT_CONTENT},
             {'slug': 'offer', 'title': OFFER_TITLE, 'content': OFFER_CONTENT},
+            {'slug': 'about', 'title': ABOUT_TITLE, 'content': ABOUT_CONTENT},
         ]
         for data in pages:
             page, created = StaticPage.objects.get_or_create(

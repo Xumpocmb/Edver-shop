@@ -60,9 +60,11 @@ def home(request):
 
 def about(request):
     advantages = Advantage.objects.filter(is_active=True).values_list('icon', 'title', 'text')
+    page = StaticPage.objects.filter(slug='about', is_published=True).first()
 
     context = {
         'advantages': advantages,
+        'page': page,
     }
     return render(request, 'app_home/about.html', context)
 
