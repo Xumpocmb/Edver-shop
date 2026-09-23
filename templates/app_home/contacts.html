@@ -46,7 +46,7 @@
             {% endif %}
             {% if tiktok and tiktok.url %}
             <li class="contacts-list__item">
-                <span class="contacts-list__icon">🎵</span>
+                <span class="contacts-list__icon">{% if tiktok.icon_image %}<img src="{{ tiktok.icon_image.url }}" alt="" style="width: 1.3em; height: 1.3em;">{% else %}{{ tiktok.icon|default:"🎵" }}{% endif %}</span>
                 <div class="contacts-list__body">
                     <span class="contacts-list__label">TikTok</span>
                     <a href="{{ tiktok.url }}" class="contacts-list__value" target="_blank" rel="noopener">Мы в TikTok</a>

@@ -146,6 +146,18 @@ class TikTok(models.Model):
         default='https://www.tiktok.com/',
         verbose_name='Ссылка на TikTok',
     )
+    icon = models.CharField(
+        max_length=10,
+        default='🎵',
+        blank=True,
+        verbose_name='Иконка (эмодзи)',
+    )
+    icon_image = models.ImageField(
+        upload_to='icons/',
+        blank=True,
+        null=True,
+        verbose_name='Иконка (картинка)',
+    )
 
     def save(self, *args, **kwargs):
         self.is_singleton = True

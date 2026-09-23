@@ -15,7 +15,7 @@
         {% endif %}
         {% if tiktok and tiktok.url %}
         <a href="{{ tiktok.url }}" class="footer-social" target="_blank" rel="noopener" aria-label="TikTok">
-            🎵 Мы в TikTok
+            {% if tiktok.icon_image %}<img src="{{ tiktok.icon_image.url }}" alt="" style="width: 1.1em; height: 1.1em; vertical-align: -0.15em; margin-right: .2em;">{% else %}{{ tiktok.icon|default:"🎵" }} {% endif %}Мы в TikTok
         </a>
         {% endif %}
         <nav class="footer-links">
