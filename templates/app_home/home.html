@@ -9,6 +9,7 @@
 <div class="home">
 
     <!-- ===== СЛАЙДЕР ===== -->
+    {% if slides %}
     <section class="hero-slider" aria-label="Акционные предложения">
         <div class="slider" id="heroSlider">
             {% for slide in slides %}
@@ -40,6 +41,7 @@
             {% endfor %}
         </div>
     </section>
+    {% endif %}
 
 
     <!-- ===== КАТЕГОРИИ ===== -->
