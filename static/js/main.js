@@ -635,6 +635,7 @@
         var banner = $('#cookie-banner');
         if (!banner) return;
         banner.hidden = false;
+        banner.style.display = 'block';
         requestAnimationFrame(function () { banner.classList.add('is-visible'); });
     }
 
@@ -642,7 +643,10 @@
         var banner = $('#cookie-banner');
         if (!banner) return;
         banner.classList.remove('is-visible');
-        setTimeout(function () { banner.hidden = true; }, 300);
+        setTimeout(function () {
+            banner.hidden = true;
+            banner.style.display = '';
+        }, 300);
     }
 
     function setConsent(value) {
@@ -677,21 +681,21 @@
 
     // ====== Инициализация ======
     document.addEventListener('DOMContentLoaded', function () {
-        initBurger();
-        initSlider();
-        bindGalleryThumbs();
-        initQtyCounter();
-        initRatingPicker();
-        initFilters();
-        initFiltersToggle();
-        initVariantSelector();
-        initCartPage();
-        bindCatalogClicks();
-        fetchCartCount();
-        initAlerts();
-        initUserDropdown();
-        initPhoneLink();
-        initCookieConsent();
+        try { initCookieConsent(); } catch (e) { console.error('cookie consent init failed', e); }
+        try { initBurger(); } catch (e) {}
+        try { initSlider(); } catch (e) {}
+        try { bindGalleryThumbs(); } catch (e) {}
+        try { initQtyCounter(); } catch (e) {}
+        try { initRatingPicker(); } catch (e) {}
+        try { initFilters(); } catch (e) {}
+        try { initFiltersToggle(); } catch (e) {}
+        try { initVariantSelector(); } catch (e) {}
+        try { initCartPage(); } catch (e) {}
+        try { bindCatalogClicks(); } catch (e) {}
+        try { fetchCartCount(); } catch (e) {}
+        try { initAlerts(); } catch (e) {}
+        try { initUserDropdown(); } catch (e) {}
+        try { initPhoneLink(); } catch (e) {}
     });
 
 })();
