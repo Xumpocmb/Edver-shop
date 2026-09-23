@@ -18,6 +18,11 @@
             {% if tiktok.icon_image %}<img src="{{ tiktok.icon_image.url }}" alt="" style="width: 1.1em; height: 1.1em; vertical-align: -0.15em; margin-right: .2em;">{% else %}{{ tiktok.icon|default:"🎵" }} {% endif %}Мы в TikTok
         </a>
         {% endif %}
+        {% if site_email and site_email.email %}
+        <a href="mailto:{{ site_email.email }}" class="footer-social" aria-label="Email">
+            {% if site_email.icon_image %}<img src="{{ site_email.icon_image.url }}" alt="" style="width: 1.1em; height: 1.1em; vertical-align: -0.15em; margin-right: .2em;">{% else %}{{ site_email.icon|default:"✉️" }} {% endif %}{{ site_email.email }}
+        </a>
+        {% endif %}
         <nav class="footer-links">
             {% for page in footer_pages %}
             <a href="/{{ page.slug }}/">{{ page.title }}</a>
