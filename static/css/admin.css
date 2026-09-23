@@ -1,10 +1,28 @@
-/* ====== Summernote в админке: растягиваем редактор на всю ширину поля ====== */
-.admin .summernote-div,
-.summernote-div {
-    display: block;
-    width: 100%;
+/* ====== CKEditor в админке: растягиваем редактор на всю ширину поля ====== */
+.cke_reset_all,
+.cke_reset_all *,
+.cke_reset_all a,
+.cke_reset_all a:hover,
+.cke_reset_all a:link,
+.cke_reset_all a:visited,
+.cke_reset_all iframe {
+    color: inherit !important;
+    font: inherit !important;
+    word-spacing: normal !important;
 }
 
-.summernote-div iframe {
+.cke_chrome {
+    width: 100% !important;
+}
+
+.cke_inner {
+    width: 100% !important;
+}
+
+.cke_contents {
+    width: 100% !important;
+}
+
+textarea.ckeditor-source-area {
     width: 100% !important;
 }

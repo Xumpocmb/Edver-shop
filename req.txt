@@ -1,6 +1,7 @@
 asgiref==3.12.1
 Django==6.1.1
-django-summernote==0.8.20.0
+django-ckeditor==6.7.3
+django-js-asset==4.1.0
 bleach==4.1.0
 django-mptt==0.18.0
 pillow==12.3.0

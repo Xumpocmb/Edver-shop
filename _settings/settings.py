@@ -33,7 +33,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
 
-    'django_summernote',
+    'ckeditor',
 
     "app_home.apps.AppHomeConfig",
     "app_catalog.apps.AppCatalogConfig",
@@ -147,21 +147,12 @@ MAILERS = {
     },
 }
 
-SUMMERNOTE_CONFIG = {
-    'disable_upload': True,
-    'width': '100%',
-    'height': 600,
-    'toolbar': [
-        ['style', ['style']],
-        ['font', ['bold', 'italic', 'underline', 'clear']],
-        ['fontname', ['fontname']],
-        ['fontsize', ['fontsize']],
-        ['color', ['color']],
-        ['para', ['ul', 'ol', 'paragraph']],
-        ['table', ['table']],
-        ['insert', ['link']],
-        ['view', ['fullscreen', 'codeview']],
-    ],
+CKEDITOR_CONFIGS = {
+    'default': {
+        'toolbar': 'full',
+        'height': 600,
+        'width': '100%',
+    },
 }
 
 # Django MPTT

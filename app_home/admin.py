@@ -1,6 +1,5 @@
 from django.contrib import admin
 from django.utils.html import format_html
-from django_summernote.admin import SummernoteModelAdmin
 from .models import Advantage, CartIcon, FooterInfo, Instagram, PhoneNumber, ProfileIcon, SiteFavicon, SiteLogo, SiteReview, StaticPage, TikTok
 
 
@@ -100,8 +99,7 @@ class SiteReviewAdmin(admin.ModelAdmin):
 
 
 @admin.register(StaticPage)
-class StaticPageAdmin(SummernoteModelAdmin):
-    summernote_fields = ('content',)
+class StaticPageAdmin(admin.ModelAdmin):
     list_display = ('title', 'slug', 'is_published', 'updated_at')
     list_filter = ('is_published',)
     list_editable = ('is_published',)

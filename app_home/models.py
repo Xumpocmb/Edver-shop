@@ -1,6 +1,6 @@
 from django.db import models
 from django.core.validators import MinValueValidator, MaxValueValidator
-from django_summernote.fields import SummernoteTextField
+from ckeditor.fields import RichTextField
 
 
 class SiteLogo(models.Model):
@@ -194,7 +194,7 @@ class Advantage(models.Model):
 class StaticPage(models.Model):
     title = models.CharField(max_length=200, verbose_name='Заголовок')
     slug = models.SlugField(max_length=120, unique=True, verbose_name='Адрес (slug)')
-    content = SummernoteTextField(blank=True, verbose_name='Содержимое')
+    content = RichTextField(blank=True, verbose_name='Содержимое', config_name='default')
     is_published = models.BooleanField(default=True, verbose_name='Опубликована')
     updated_at = models.DateTimeField(auto_now=True, verbose_name='Дата обновления')
 
