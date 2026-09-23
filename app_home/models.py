@@ -245,6 +245,28 @@ class Advantage(models.Model):
         ordering = ['order', 'id']
 
 
+class Slide(models.Model):
+    title = models.CharField(max_length=200, verbose_name='Заголовок')
+    subtitle = models.CharField(max_length=300, blank=True, verbose_name='Подзаголовок')
+    cta = models.CharField(max_length=100, default='Подробнее', verbose_name='Текст кнопки')
+    href = models.CharField(max_length=200, default='/catalog/', verbose_name='Ссылка с кнопки')
+    bg = models.CharField(
+        max_length=50,
+        default='var(--color-accent)',
+        verbose_name='Цвет фона (CSS)',
+    )
+    order = models.PositiveIntegerField(default=0, verbose_name='Порядок сортировки')
+    is_active = models.BooleanField(default=True, verbose_name='Активно')
+
+    def __str__(self):
+        return self.title
+
+    class Meta:
+        verbose_name = 'Слайд'
+        verbose_name_plural = 'Слайды'
+        ordering = ['order', 'id']
+
+
 class StaticPage(models.Model):
     title = models.CharField(max_length=200, verbose_name='Заголовок')
     slug = models.SlugField(max_length=120, unique=True, verbose_name='Адрес (slug)')

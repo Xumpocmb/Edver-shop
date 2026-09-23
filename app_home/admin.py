@@ -1,6 +1,6 @@
 from django.contrib import admin
 from django.utils.html import format_html
-from .models import Advantage, CartIcon, FooterInfo, Instagram, PhoneNumber, ProfileIcon, SiteEmail, SiteFavicon, SiteLogo, SiteReview, StaticPage, TikTok
+from .models import Advantage, CartIcon, FooterInfo, Instagram, PhoneNumber, ProfileIcon, SiteEmail, SiteFavicon, SiteLogo, SiteReview, Slide, StaticPage, TikTok
 
 
 @admin.register(SiteLogo)
@@ -93,6 +93,14 @@ class AdvantageAdmin(admin.ModelAdmin):
     list_display_links = ('title',)
     list_editable = ('order', 'is_active')
     list_filter = ('is_active',)
+    ordering = ('order', 'id')
+
+
+@admin.register(Slide)
+class SlideAdmin(admin.ModelAdmin):
+    list_display = ('title', 'order', 'is_active')
+    list_display_links = ('title',)
+    list_editable = ('order', 'is_active')
     ordering = ('order', 'id')
 
 

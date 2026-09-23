@@ -1,7 +1,7 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 from app_catalog.models import Product, Category
-from .models import Advantage, SiteReview, StaticPage
+from .models import Advantage, SiteReview, Slide, StaticPage
 
 
 def home(request):
@@ -15,38 +15,7 @@ def home(request):
         is_active=True
     ).order_by('order', 'name')[:8]
 
-    slides = [
-        {
-            'title': 'Новая коллекция 2026',
-            'subtitle': 'Сумки, чемоданы, кошельки — со скидкой до 30%',
-            'cta': 'Смотреть каталог',
-            'href': '/catalog/',
-            'bg': 'var(--color-accent)',
-        },
-        {
-            'title': 'Бесплатная доставка',
-            'subtitle': 'При заказе от 5 000 бел. руб. — бесплатная доставка',
-            'cta': 'Узнать подробнее',
-            'href': '/catalog/?on_sale=1',
-            'bg': 'var(--color-accent-light)',
-        },
-        {
-            'title': 'Коллекция чемоданов',
-            'subtitle': 'Прочные, лёгкие, вместительные — готовы к путешествию',
-            'cta': 'К чемоданам',
-            'href': '/catalog/',
-            'bg': '#2b5a3f',
-        },
-    ]
-
-    advantages = [
-        ('✓', 'Гарантия качества', 'Все товары сертифицированы и проверены перед продажей'),
-        ('🚚', 'Быстрая доставка', 'Отправляем по всей России в течение 1-2 рабочих дней'),
-        ('💳', 'Удобная оплата', 'Оплата картой, СБП, наличными при получении'),
-        ('↩️', 'Возврат 14 дней', 'Вернём товар без вопросов в течение двух недель'),
-        ('🎁', 'Бонусы и акции', 'Регулярные скидки, распродажи и акции для постоянных клиентов'),
-        ('💬', 'Поддержка 24/7', 'Всегда готовы ответить на вопросы и помочь с выбором'),
-    ]
+    slides = Slide.objects.filter(is_active=True)
 
     context = {
         'slides': slides,

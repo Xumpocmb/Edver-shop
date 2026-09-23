@@ -1,6 +1,6 @@
 from django.core.management.base import BaseCommand
 
-from app_home.models import Advantage, StaticPage
+from app_home.models import Advantage, Slide, StaticPage
 
 PRIVACY_TITLE = 'Политика обработки данных'
 
@@ -494,3 +494,18 @@ class Command(BaseCommand):
                 self.stdout.write(self.style.SUCCESS(f'Преимущество "{adv.title}" создано.'))
             else:
                 self.stdout.write(f'Преимущество "{adv.title}" уже существует — пропускаю.')
+
+        slides = [
+            ('Новая коллекция 2026', 'Сумки, чемоданы, кошельки — со скидкой до 30%', 'Смотреть каталог', '/catalog/', 'var(--color-accent)'),
+            ('Бесплатная доставка', 'При заказе от 5 000 бел. руб. — бесплатная доставка', 'Узнать подробнее', '/catalog/?on_sale=1', 'var(--color-accent-light)'),
+            ('Коллекция чемоданов', 'Прочные, лёгкие, вместительные — готовы к путешествию', 'К чемоданам', '/catalog/', '#2b5a3f'),
+        ]
+        for order, (title, subtitle, cta, href, bg) in enumerate(slides, start=1):
+            slide, created = Slide.objects.get_or_create(
+                title=title,
+                defaults={'subtitle': subtitle, 'cta': cta, 'href': href, 'bg': bg, 'order': order, 'is_active': True},
+            )
+            if created:
+                self.stdout.write(self.style.SUCCESS(f'Слайд "{slide.title}" создан.'))
+            else:
+                self.stdout.write(f'Слайд "{slide.title}" уже существует — пропускаю.')
