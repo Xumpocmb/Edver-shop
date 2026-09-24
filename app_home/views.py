@@ -1,5 +1,6 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
+from django.http import HttpResponse
 from app_catalog.models import Product, Category
 from .models import Advantage, SiteReview, Slide, StaticPage
 
@@ -72,3 +73,45 @@ def site_reviews(request):
 def static_page(request, slug):
     page = get_object_or_404(StaticPage, slug=slug, is_published=True)
     return render(request, 'app_home/static_page.html', {'page': page})
+
+
+def robots(request):
+    lines = [
+        "User-agent: *",
+        "Disallow: /admin/",
+        "Disallow: /cart/",
+        "Disallow: /profile/",
+        "Disallow: /orders/",
+        "Disallow: /catalog/search/",
+        "",
+        f"Sitemap: {request.build_absolute_uri('/sitemap.xml')}",
+    ]
+    return HttpResponse("\n".join(lines), content_type="text/plain; charset=utf-8")
+
+
+def sitemap(request):
+    def add(path, lastmod=None, changefreq=None, priority=None):
+        items.append({
+            'loc': request.build_absolute_uri(path),
+            'lastmod': lastmod,
+            'changefreq': changefreq,
+            'priority': priority,
+        })
+
+    items = []
+    add('/', changefreq='daily', priority='1.0')
+    add('/catalog/', changefreq='daily', priority='0.9')
+    add('/about/', changefreq='monthly', priority='0.5')
+    add('/contacts/', changefreq='monthly', priority='0.5')
+    add('/reviews/', changefreq='weekly', priority='0.5')
+
+    for c in Category.objects.filter(is_active=True):
+        add(c.get_absolute_url(), lastmod=c.updated_at, changefreq='weekly', priority='0.8')
+    for p in Product.objects.filter(is_active=True):
+        add(p.get_absolute_url(), lastmod=p.updated_at, changefreq='weekly', priority='0.7')
+    for page in StaticPage.objects.filter(is_published=True).exclude(slug='about'):
+        add(f'/{page.slug}/', lastmod=page.updated_at, changefreq='monthly', priority='0.5')
+
+    response = render(request, 'app_home/sitemap.xml', {'items': items})
+    response['Content-Type'] = 'application/xml'
+    return response

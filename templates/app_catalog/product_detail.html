@@ -5,7 +5,34 @@
 <title>{{ product.name }} {{ variant.color }} — купить в EDVER Shop</title>
 {% endblock %}
 
+{% block meta_description %}
+<meta name="description" content="{% firstof product.short_description product.name %} — купить {{ product.name }} в EDVER Shop по цене {{ variant.sale_price }} BYN.">
+{% endblock %}
+
+{% block og_type %}product{% endblock %}
+{% block og_title %}{{ product.name }}{% endblock %}
+{% block og_description %}{% firstof product.short_description product.description product.name %}{% endblock %}
+{% block og_image %}
+{% if images %}<meta property="og:image" content="{{ request.build_absolute_uri }}{{ images.0.image.url }}">{% endif %}
+{% endblock %}
+
 {% block content %}
+<script type="application/ld+json">
+{
+    "@context": "https://schema.org",
+    "@type": "Product",
+    "name": "{{ product.name|escapejs }} {{ variant.color|escapejs }}",
+    {% if images %}"image": "{{ request.build_absolute_uri }}{{ images.0.image.url }}",
+    {% endif %}{% if product.short_description %}"description": "{{ product.short_description|truncatechars:200|escapejs }}",
+    {% elif product.description %}"description": "{{ product.description|truncatechars:200|escapejs }}",
+    {% endif %}"offers": {
+        "@type": "Offer",
+        "price": "{{ schema_price }}",
+        "priceCurrency": "BYN",
+        "availability": "{% if variant.stock > 0 %}https://schema.org/InStock{% elif variant.status == 'preorder' %}https://schema.org/PreOrder{% else %}https://schema.org/OutOfStock{% endif %}"
+    }
+}
+</script>
 <div class="product-page">
 
     <!-- Хлебные крошки -->

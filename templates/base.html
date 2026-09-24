@@ -5,6 +5,21 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    {% block meta_description %}
+    <meta name="description" content="EDVER Shop — интернет-магазин сумок, чемоданов, кошельков и аксессуаров. Широкий выбор, быстрая доставка по Беларуси.">
+    {% endblock %}
+    <meta name="robots" content="index, follow">
+    <link rel="canonical" href="{{ request.build_absolute_uri }}">
+    <meta property="og:site_name" content="EDVER Shop">
+    <meta property="og:type" content="{% block og_type %}website{% endblock %}">
+    <meta property="og:title" content="{% block og_title %}EDVER Shop{% endblock %}">
+    <meta property="og:description" content="{% block og_description %}EDVER Shop — интернет-магазин сумок, чемоданов, кошельков и аксессуаров. Широкий выбор, быстрая доставка по Беларуси.{% endblock %}">
+    <meta property="og:url" content="{{ request.build_absolute_uri }}">
+    {% block og_image %}
+    {% if site_logo and site_logo.image %}
+    <meta property="og:image" content="{{ request.build_absolute_uri }}{{ site_logo.image.url }}">
+    {% endif %}
+    {% endblock %}
     {% if site_favicon and site_favicon.image %}
         <link rel="icon" type="image/png" href="{{ site_favicon.image.url }}">
         <link rel="apple-touch-icon" href="{{ site_favicon.image.url }}">

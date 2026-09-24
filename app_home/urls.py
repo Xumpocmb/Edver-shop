@@ -11,4 +11,6 @@ urlpatterns = [
     path('privacy/', views.static_page, {'slug': 'privacy'}, name='privacy'),
     path('payment/', views.static_page, {'slug': 'payment'}, name='payment'),
     path('offer/', views.static_page, {'slug': 'offer'}, name='offer'),
+    path('robots.txt', views.robots, name='robots'),
+    path('sitemap.xml', views.sitemap, name='sitemap'),
 ]

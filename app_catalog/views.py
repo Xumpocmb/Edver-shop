@@ -246,5 +246,6 @@ def product_detail(request, slug):
         'cross_sell_products': cross_sell,
         'breadcrumbs': crumbs,
         'page_title': product.name,
+        'schema_price': f'{selected.sale_price:.2f}' if selected else None,
     }
     return render(request, 'app_catalog/product_detail.html', context)
