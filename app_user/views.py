@@ -4,11 +4,11 @@ from django.contrib.auth.views import LoginView, LogoutView, PasswordChangeView
 from django.contrib import messages
 from django.shortcuts import render, redirect, get_object_or_404
 from django.urls import reverse_lazy
-from django.views.generic import CreateView, UpdateView
+from django.views.generic import CreateView, FormView, UpdateView
 
 from app_cart.models import Cart, CartItem
 from app_order.models import Order
-from .forms import PhoneAuthenticationForm, PhoneUserCreationForm, UserProfileForm
+from .forms import PhoneAuthenticationForm, PhonePasswordResetForm, PhoneUserCreationForm, UserProfileForm
 from .models import UserProfile
 
 
@@ -81,6 +81,17 @@ class UserPasswordChangeView(PasswordChangeView):
         update_session_auth_hash(self.request, form.user)
         messages.success(self.request, 'Пароль изменён')
         return response
+
+
+class UserPasswordResetView(FormView):
+    """Заявка на сброс пароля. Ссылка/письмо не отправляются —
+    администратор сбрасывает пароль вручную и связывается с пользователем."""
+    template_name = 'app_user/password_reset.html'
+    form_class = PhonePasswordResetForm
+    success_url = reverse_lazy('app_user:password_reset_done')
+
+    def form_valid(self, form):
+        return super().form_valid(form)
 
 
 @login_required

@@ -46,6 +46,22 @@ class PhoneUserCreationForm(UserCreationForm):
         return username
 
 
+class PhonePasswordResetForm(forms.Form):
+    """Сброс пароля по номеру телефона. Письма не отправляются."""
+
+    username = forms.CharField(label='Телефон', widget=forms.TextInput(attrs={
+        'autofocus': True,
+        'inputmode': 'tel',
+        'placeholder': '+375 (29) XXX-XX-XX',
+    }))
+
+    def clean_username(self):
+        username = normalize_phone(self.cleaned_data['username'])
+        if not username:
+            raise forms.ValidationError('Укажите номер в формате +375 (29) XXX-XX-XX.')
+        return username
+
+
 class UserProfileForm(forms.ModelForm):
     """Форма редактирования профиля: ФИО, телефон, адрес."""
 
