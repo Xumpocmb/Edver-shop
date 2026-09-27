@@ -1,8 +1,12 @@
 from django.contrib import admin
+from django.http import HttpResponse
+from django.urls import path
+from django.utils import timezone
 from django.utils.html import format_html
 
 from app_media.processing import preview_url
 
+from . import yml_feed
 from .models import Category, Product, ProductVariant, ProductImage
 
 
@@ -45,6 +49,7 @@ class ProductAdmin(admin.ModelAdmin):
     prepopulated_fields = {'slug': ('name',)}
     inlines = [ProductVariantInline]
     save_on_top = True
+    change_list_template = 'admin/app_catalog/product/change_list.html'
     fieldsets = (
         (None, {
             'fields': (('name', 'slug'), ('category',), 'gender')
@@ -75,6 +80,23 @@ class ProductAdmin(admin.ModelAdmin):
             'border-radius:4px;display:block;">',
             preview_url(img.image),
         )
+
+    def get_urls(self):
+        return [
+            path(
+                'export-yml/',
+                self.admin_site.admin_view(self.export_yml),
+                name='app_catalog_product_export_yml',
+            ),
+        ] + super().get_urls()
+
+    def export_yml(self, request):
+        """Скачивание YML-фида для Яндекс Маркета прямо со списка товаров."""
+        text, _ = yml_feed.build_feed()
+        filename = f'edver-shop-yml-{timezone.now():%Y-%m-%d}.yml'
+        response = HttpResponse(text, content_type='application/x-yaml; charset=utf-8')
+        response['Content-Disposition'] = f'attachment; filename="{filename}"'
+        return response
 
 
 @admin.register(ProductVariant)

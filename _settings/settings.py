@@ -176,6 +176,18 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 FIXTURE_DIRS = [BASE_DIR / 'fixtures']
 
+# YML-фид товаров для Яндекс Маркета.
+# SITE_URL нужен management-командам и фоновым задачам, где нет request.
+FEED = {
+    'site_url': os.getenv('SITE_URL', 'https://edvershop.by'),
+    'shop_name': 'EDVER Shop',
+    'company_name': 'EDVER Shop',
+    'vendor_name': 'EDVER Shop',
+    'currency': 'BYN',
+    # Яндекс не принимает SVG, поэтому в фид попадают только эти форматы.
+    'picture_extensions': {'.jpg', '.jpeg', '.png'},
+}
+
 
 # Celery
 CELERY_BROKER_URL = 'redis://127.0.0.1:6379/0'

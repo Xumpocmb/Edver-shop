@@ -17,6 +17,16 @@ class Category(models.Model):
         blank=True,
         verbose_name="Описание"
     )
+    market_category_id = models.CharField(
+        max_length=50,
+        blank=True,
+        default='',
+        verbose_name="ID категории в Яндекс Маркете",
+        help_text=(
+            "ID из справочника категорий Яндекс Маркета. Пока поле пустое, "
+            "в фид попадёт slug категории — такой файл Маркет не примет."
+        ),
+    )
     order = models.PositiveIntegerField(
         default=0,
         verbose_name="Порядок"
