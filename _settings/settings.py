@@ -52,6 +52,7 @@ INSTALLED_APPS = [
     "app_user.apps.AppUserConfig",
     "app_cart.apps.AppCartConfig",
     "app_order.apps.AppOrderConfig",
+    "app_media.apps.AppMediaConfig",
 
 ]
 

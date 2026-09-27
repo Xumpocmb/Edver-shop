@@ -1,0 +1,7 @@
+{% if srcset or webp %}<picture class="slide-picture">
+    {% if webp %}<source type="image/webp" srcset="{{ webp }}" sizes="100vw">{% endif %}
+    {% if srcset %}<source srcset="{{ srcset }}" sizes="100vw">{% endif %}
+    <img src="{{ src }}" alt="" loading="eager" fetchpriority="high" decoding="async">
+</picture>{% else %}
+<img class="slide-picture" src="{{ src }}" alt="" loading="eager" fetchpriority="high" decoding="async">
+{% endif %}

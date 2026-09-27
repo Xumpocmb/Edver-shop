@@ -1,0 +1,13 @@
+{% if webp or srcset %}<picture>
+    {% if webp %}<source type="image/webp" srcset="{{ webp }}"{% if sizes %} sizes="{{ sizes }}"{% endif %}>{% endif %}
+    {% if srcset %}<source srcset="{{ srcset }}"{% if sizes %} sizes="{{ sizes }}"{% endif %}>{% endif %}
+    <img src="{{ src }}"{% if srcset %} srcset="{{ srcset }}"{% if sizes %} sizes="{{ sizes }}"{% endif %}{% endif %}
+         alt="{{ alt }}"
+         class="{{ classes }}"
+         {% if image_id %}id="{{ image_id }}" {% endif %}
+         loading="{{ loading }}"
+         {% if fetchpriority %}fetchpriority="{{ fetchpriority }}" {% endif %}decoding="async">
+</picture>{% else %}
+<img src="{{ src }}" alt="{{ alt }}" class="{{ classes }}" {% if image_id %}id="{{ image_id }}" {% endif %}
+     loading="{{ loading }}" {% if fetchpriority %}fetchpriority="{{ fetchpriority }}" {% endif %}decoding="async">
+{% endif %}
