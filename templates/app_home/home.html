@@ -48,10 +48,6 @@
             {% endfor %}
         </div>
     </section>
-    {% else %}
-    <section class="section container">
-        {% include '_empty.html' with icon='🧳' title='Акции ещё в дороге' text='Слайды грузятся медленно — загляните позже, а пока мы уже собрали кое-что интересное.' link='/catalog/' link_text='Открыть каталог' %}
-    </section>
     {% endif %}
 
 
@@ -80,8 +76,6 @@
                 </a>
             {% endfor %}
         </div>
-        {% else %}
-        {% include '_empty.html' with icon='🗂️' size='sm' title='Категории разбежались' text='Пока их ловят по полкам, загляните в каталог — там есть что присмотреть.' link='/catalog/' link_text='Открыть каталог' %}
         {% endif %}
     </section>
 
@@ -98,8 +92,6 @@
                 {% include 'app_catalog/_product_card.html' with product=p %}
             {% endfor %}
         </div>
-        {% else %}
-        {% include '_empty.html' with icon='📦' size='sm' title='Новинок пока нет' text='Поставщики собирают их вручную, поэтому приходится подождать.' link='/catalog/' link_text='Смотреть каталог' %}
         {% endif %}
     </section>
 
@@ -116,8 +108,6 @@
                 {% include 'app_catalog/_product_card.html' with product=p %}
             {% endfor %}
         </div>
-        {% else %}
-        {% include '_empty.html' with icon='🏖️' size='sm' title='Всё в отпуске' text='Популярные товары уехали на отдых и не сказали, когда вернутся.' link='/catalog/' link_text='Смотреть каталог' %}
         {% endif %}
     </section>
 
@@ -134,8 +124,6 @@
                 {% include 'app_catalog/_product_card.html' with product=p %}
             {% endfor %}
         </div>
-        {% else %}
-        {% include '_empty.html' with icon='🕳️' size='sm' title='Скидки спрятались' text='Мы ищем их так же усердно, как кот — по шкафу в 3 часа ночи.' link='/catalog/?on_sale=1' link_text='Все акции' %}
         {% endif %}
     </section>
 
