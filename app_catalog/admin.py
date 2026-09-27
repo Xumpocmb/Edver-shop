@@ -1,6 +1,8 @@
 from django.contrib import admin
 from django.utils.html import format_html
 
+from app_media.processing import preview_url
+
 from .models import Category, Product, ProductVariant, ProductImage
 
 
@@ -71,7 +73,7 @@ class ProductAdmin(admin.ModelAdmin):
         return format_html(
             '<img src="{}" style="width:48px;height:48px;object-fit:cover;'
             'border-radius:4px;display:block;">',
-            img.image.url,
+            preview_url(img.image),
         )
 
 

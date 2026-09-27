@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% load static %}
+{% load image_tags %}
 
 {% block title %}
 <title>Корзина — EDVER Shop</title>
@@ -35,7 +36,7 @@
             <div class="cart-item" data-item-id="{{ item.id }}">
                 <div class="cart-item__media">
                     {% if item.variant.main_image %}
-                        <img src="{{ item.variant.main_image.image.url }}" alt="{{ item.variant.product.name }}">
+                        {% responsive_image item.variant.main_image.image 'product' alt=item.variant.product.name sizes='80px' %}
                     {% else %}
                         <div class="product-card__noimg"><span>Нет фото</span></div>
                     {% endif %}

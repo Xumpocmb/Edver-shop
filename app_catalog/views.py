@@ -2,6 +2,8 @@ from django.shortcuts import render, get_object_or_404
 from django.core.paginator import Paginator
 from django.db.models import Q, Min, Max
 
+from app_media.payload import image_payload, variant_payload
+
 from .models import Product, Category
 
 
@@ -208,21 +210,7 @@ def product_detail(request, slug):
 
     images = list(selected.images.all()) if selected else []
 
-    variants_data = [
-        {
-            'id': v.id,
-            'name': f'{product.name} {v.color}',
-            'color': v.color,
-            'hex': v.color_hex or '#cccccc',
-            'price': str(v.price),
-            'sale_price': str(v.sale_price),
-            'discount': v.discount_percent_display,
-            'stock': v.stock,
-            'status': v.status,
-            'images': [img.image.url for img in v.images.all()],
-        }
-        for v in variants
-    ]
+    variants_data = [variant_payload(v) for v in variants]
 
     related = Product.objects.filter(
         is_active=True, category=product.category
@@ -241,6 +229,7 @@ def product_detail(request, slug):
         'variants': variants,
         'variant': selected,
         'images': images,
+        'gallery_images': [image_payload(img) for img in images],
         'variants_data': variants_data,
         'related_products': related,
         'cross_sell_products': cross_sell,

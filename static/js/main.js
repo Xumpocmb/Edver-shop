@@ -255,32 +255,61 @@
     }
 
     // ====== Галерея карточки товара ======
-    function bindGalleryThumbs() {
+    function readJson(id) {
+        var el = document.getElementById(id);
+        if (!el) return [];
+        try { return JSON.parse(el.textContent); } catch (e) { return []; }
+    }
+
+    // Собирает <picture> с WebP-вариантами по данным из payload'а.
+    function buildPicture(data, alt, sizes) {
+        var picture = document.createElement('picture');
+        if (data.webp) {
+            var source = document.createElement('source');
+            source.type = 'image/webp';
+            source.srcset = data.webp;
+            if (sizes) source.sizes = sizes;
+            picture.appendChild(source);
+        }
+        var img = document.createElement('img');
+        img.src = data.src;
+        if (data.srcset) {
+            img.srcset = data.srcset;
+            if (sizes) img.sizes = sizes;
+        }
+        img.alt = alt || '';
+        picture.appendChild(img);
+        return picture;
+    }
+
+    function showMainImage(data, alt) {
+        var current = $('#galleryMain > picture');
+        if (!current || !data) return;
+        var currentImg = current.querySelector('img');
+        if (currentImg && currentImg.getAttribute('src') === data.src) return;
+
+        var sizes = currentImg ? currentImg.sizes : '';
+        var next = buildPicture(data, alt, sizes);
+        var nextImg = next.querySelector('img');
+        nextImg.id = 'mainImage';
+        if (currentImg) currentImg.classList.remove('is-active');
+        current.parentNode.insertBefore(next, current.nextSibling);
+        requestAnimationFrame(function () { nextImg.classList.add('is-active'); });
+        setTimeout(function () {
+            if (current.parentNode) current.parentNode.removeChild(current);
+        }, 350);
+    }
+
+    function bindGalleryThumbs(images) {
         var thumbs = $$('#galleryThumbs .thumb');
-        var mainImg = $('#mainImage');
-        if (!thumbs.length || !mainImg) return;
+        if (!thumbs.length || !images) return;
 
         thumbs.forEach(function (t) {
             t.addEventListener('click', function () {
-                var url = t.getAttribute('data-image');
-                var alt = t.getAttribute('data-alt') || '';
                 thumbs.forEach(function (x) { x.classList.remove('is-active'); });
                 t.classList.add('is-active');
-                if (!mainImg.parentNode) return;
-                if (mainImg.getAttribute('src') === url) return;
-                var next = document.createElement('img');
-                next.src = url;
-                next.alt = alt;
-                var old = mainImg;
-                old.classList.remove('is-active');
-                old.id = '';
-                old.parentNode.insertBefore(next, old.nextSibling);
-                next.id = 'mainImage';
-                requestAnimationFrame(function () { next.classList.add('is-active'); });
-                setTimeout(function () {
-                    if (old.parentNode) old.parentNode.removeChild(old);
-                }, 350);
-                mainImg = next;
+                var data = images[Number(t.getAttribute('data-index'))];
+                showMainImage(data, data && data.alt);
             });
         });
     }
@@ -412,45 +441,25 @@
             });
 
             // Галерея: обновляем главное фото и пересобираем миниатюры
-            var mainImgTmp = $('#mainImage');
             var gallery = $('#galleryMain');
             if (thumbsWrap && gallery && v.images.length) {
-                if (mainImgTmp) {
-                    var url0 = v.images[0];
-                    if (mainImgTmp.getAttribute('src') !== url0) {
-                        var next = document.createElement('img');
-                        next.src = url0;
-                        next.alt = v.name || '';
-                        var oldImg = mainImgTmp;
-                        oldImg.classList.remove('is-active');
-                        oldImg.id = '';
-                        oldImg.parentNode.insertBefore(next, oldImg.nextSibling);
-                        next.id = 'mainImage';
-                        requestAnimationFrame(function () { next.classList.add('is-active'); });
-                        setTimeout(function () {
-                            if (oldImg.parentNode) oldImg.parentNode.removeChild(oldImg);
-                        }, 350);
-                    }
-                }
+                showMainImage(v.images[0], v.images[0].alt || v.name);
 
                 thumbsWrap.innerHTML = '';
-                v.images.forEach(function (src, i) {
+                v.images.forEach(function (data, i) {
                     var b = document.createElement('button');
                     b.type = 'button';
                     b.className = 'thumb' + (i === 0 ? ' is-active' : '');
-                    b.setAttribute('data-image', src);
-                    b.setAttribute('data-alt', v.name || '');
+                    b.setAttribute('data-index', String(i));
                     b.setAttribute('role', 'option');
                     b.setAttribute('aria-label', 'Фото ' + (i + 1));
-                    var im = document.createElement('img');
-                    im.src = src;
-                    im.alt = '';
-                    im.setAttribute('loading', 'lazy');
-                    b.appendChild(im);
+                    var thumb = buildPicture(data, '', '120px');
+                    thumb.querySelector('img').setAttribute('loading', 'lazy');
+                    b.appendChild(thumb);
                     thumbsWrap.appendChild(b);
                 });
                 thumbsWrap.style.display = v.images.length > 1 ? '' : 'none';
-                bindGalleryThumbs();
+                bindGalleryThumbs(v.images);
             }
 
             if (priceEl) setPrice(priceEl, v.sale_price);
@@ -688,7 +697,7 @@
         try { initCookieConsent(); } catch (e) { console.error('cookie consent init failed', e); }
         try { initBurger(); } catch (e) {}
         try { initSlider(); } catch (e) {}
-        try { bindGalleryThumbs(); } catch (e) {}
+        try { bindGalleryThumbs(readJson('gallery-images')); } catch (e) {}
         try { initQtyCounter(); } catch (e) {}
         try { initRatingPicker(); } catch (e) {}
         try { initFilters(); } catch (e) {}

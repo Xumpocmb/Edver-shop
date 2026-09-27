@@ -1,6 +1,9 @@
 from django import forms
 from django.contrib import admin
 from django.utils.html import format_html
+
+from app_media.processing import preview_url
+
 from .models import Advantage, CartIcon, FooterInfo, Instagram, PhoneNumber, ProfileIcon, SiteEmail, SiteFavicon, SiteLogo, SiteReview, Slide, StaticPage, TikTok
 
 
@@ -133,7 +136,7 @@ class SlideAdmin(admin.ModelAdmin):
 
     def preview(self, obj):
         if obj.image:
-            return format_html('<img src="{}" style="max-height: 40px;" />', obj.image.url)
+            return format_html('<img src="{}" style="max-height: 40px;" />', preview_url(obj.image, 'slide'))
         return obj.bg or '-'
 
     preview.short_description = 'Превью'

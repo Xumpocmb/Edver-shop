@@ -1,4 +1,5 @@
 {% load static %}
+{% load image_tags %}
 <article class="product-card">
     <a href="{{ product.get_absolute_url }}" class="product-card__link" aria-label="{{ product.name }}">
         <div class="product-card__media">
@@ -6,7 +7,7 @@
                 {% if v %}
                     {% with img=v.main_image %}
                         {% if img %}
-                            <img src="{{ img.image.url }}" alt="{{ img.alt|default:product.name }}" loading="lazy">
+                            {% responsive_image img.image 'product' alt=img.alt|default:product.name sizes='(max-width: 640px) 50vw, 240px' %}
                         {% else %}
                             <div class="product-card__noimg"><span>Нет фото</span></div>
                         {% endif %}

@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% load static %}
+{% load image_tags %}
 
 {% block title %}
 <title>EDVER Shop — сумки, чемоданы, кошельки</title>
@@ -19,8 +20,8 @@
     <section class="hero-slider" aria-label="Акционные предложения">
         <div class="slider" id="heroSlider">
             {% for slide in slides %}
-                <div class="slide {% if forloop.first %}is-active{% endif %}"
-                     style="{% if slide.image %}background: linear-gradient(rgba(0,0,0,.35), rgba(0,0,0,.35)), url('{{ slide.image.url }}') center / cover;{% else %}background: linear-gradient(135deg, {{ slide.bg }}, var(--color-accent-dark));{% endif %}">
+                <div class="slide {% if forloop.first %}is-active{% endif %}{% if slide.image %} slide--has-image{% endif %}"{% if not slide.image %} style="background: linear-gradient(135deg, {{ slide.bg }}, var(--color-accent-dark));"{% endif %}>
+                    {% if slide.image %}{% slide_background slide %}{% endif %}
                     <div class="slide-inner container">
                         <div class="slide-text">
                             <h2 class="slide-title">{{ slide.title }}</h2>

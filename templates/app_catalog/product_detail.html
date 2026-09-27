@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% load static %}
+{% load image_tags %}
 
 {% block title %}
 <title>{{ product.name }} {{ variant.color }} — купить в EDVER Shop</title>
@@ -13,7 +14,7 @@
 {% block og_title %}{{ product.name }}{% endblock %}
 {% block og_description %}{% firstof product.short_description product.description product.name %}{% endblock %}
 {% block og_image %}
-{% if images %}<meta property="og:image" content="{{ request.build_absolute_uri }}{{ images.0.image.url }}">{% endif %}
+{% if gallery_images %}<meta property="og:image" content="{{ request.build_absolute_uri }}{{ gallery_images.0.src }}">{% endif %}
 {% endblock %}
 
 {% block content %}
@@ -22,7 +23,7 @@
     "@context": "https://schema.org",
     "@type": "Product",
     "name": "{{ product.name|escapejs }} {{ variant.color|escapejs }}",
-    {% if images %}"image": "{{ request.build_absolute_uri }}{{ images.0.image.url }}",
+    {% if gallery_images %}"image": "{{ request.build_absolute_uri }}{{ gallery_images.0.src }}",
     {% endif %}{% if product.short_description %}"description": "{{ product.short_description|truncatechars:200|escapejs }}",
     {% elif product.description %}"description": "{{ product.description|truncatechars:200|escapejs }}",
     {% endif %}"offers": {
@@ -58,8 +59,7 @@
             <div class="product-gallery__main" id="galleryMain">
                 {% if images %}
                 {% with main=images.0 %}
-                <img src="{{ main.image.url }}" alt="{{ main.alt|default:product.name }}" id="mainImage"
-                    class="is-active">
+                {% responsive_image main.image 'product' alt=main.alt|default:product.name classes='is-active' image_id='mainImage' sizes='(max-width: 1080px) 100vw, 600px' loading='eager' fetchpriority='high' %}
                 {% endwith %}
                 {% else %}
                 <div class="product-gallery__empty">Нет изображений</div>
@@ -78,9 +78,8 @@
             <div class="product-gallery__thumbs" id="galleryThumbs" role="listbox">
                 {% for img in images %}
                 <button type="button" class="thumb {% if forloop.first %}is-active{% endif %}"
-                    data-image="{{ img.image.url }}" data-alt="{{ img.alt|default:product.name }}"
                     data-index="{{ forloop.counter0 }}" role="option" aria-label="Фото {{ forloop.counter }}">
-                    <img src="{{ img.image.url }}" alt="" loading="lazy">
+                    {% responsive_image img.image 'product' alt='' sizes='120px' %}
                 </button>
                 {% endfor %}
             </div>
@@ -236,5 +235,6 @@
 
 </div>
 
+{{ gallery_images|json_script:"gallery-images" }}
 {{ variants_data|json_script:"product-variants" }}
 {% endblock %}

@@ -200,3 +200,68 @@ class ImageTagTests(ImageTestCase):
         self.assertTrue(image["src"].endswith(f"thumbs/categories/{self.stem}_2000.jpg"))
         self.assertEqual(image["alt"], "Сумка красный")
 
+
+@override_settings(MEDIA_ROOT=MEDIA_ROOT)
+class PageRenderTests(ImageTestCase):
+    """Страницы с картинками должны отдавать srcset и не падать."""
+
+    def setUp(self):
+        self.category = Category.objects.create(name="Сумки", slug="sumki")
+        self.product = Product.objects.create(name="Сумка", slug="sumka", category=self.category)
+        self.variant = ProductVariant.objects.create(
+            product=self.product, color="красный", price="100.00"
+        )
+        for alt in ("", "Вторая фотография"):
+            self.variant.images.create(image=make_image(size=(900, 600)), alt=alt)
+        Slide.objects.create(title="Акция", bg="#123456").image.save(
+            f"{uuid4().hex}.jpg", make_image(size=(2400, 1200)), save=True
+        )
+
+    def test_catalog_page_uses_srcset(self):
+        html = self.client.get("/catalog/").content.decode()
+        self.assertIn("sizes=\"(max-width: 640px) 50vw, 240px\"", html)
+        self.assertIn("type=\"image/webp\"", html)
+
+    def test_product_page_uses_srcset_and_payload(self):
+        html = self.client.get(self.product.get_absolute_url()).content.decode()
+        self.assertIn("sizes=\"(max-width: 1080px) 100vw, 600px\"", html)
+        self.assertIn("fetchpriority=\"high\"", html)
+        self.assertIn('id="gallery-images"', html)
+        self.assertIn("gallery-images", html)
+
+    def test_home_slide_picture(self):
+        html = self.client.get("/").content.decode()
+        self.assertIn("slide-picture", html)
+        self.assertIn("sizes=\"100vw\"", html)
+
+class BalancedMarkupTests(ImageTestCase):
+    """Разметка с <picture> должна быть well-formed."""
+
+    def parse(self, html):
+        stack, errors = [], []
+        void = {"img", "source", "meta", "link", "br", "hr", "input"}
+
+        class Parser(HTMLParser):
+            def handle_starttag(self, tag, attrs):
+                if tag not in void:
+                    stack.append(tag)
+
+            def handle_endtag(self, tag):
+                if not stack or stack.pop() != tag:
+                    errors.append(tag)
+
+        Parser().feed(html)
+        return errors + ["unclosed:" + t for t in stack]
+
+    def test_pages_have_balanced_tags(self):
+        category = Category.objects.create(name="Сумки", slug="sumki")
+        product = Product.objects.create(name="Сумка", slug="sumka", category=category)
+        variant = ProductVariant.objects.create(product=product, color="красный", price="100.00")
+        for alt in ("", "Вторая"):
+            variant.images.create(image=make_image(size=(900, 600)), alt=alt)
+        slide = Slide.objects.create(title="Акция", bg="#123456")
+        slide.image.save(f"{uuid4().hex}.jpg", make_image(size=(2400, 1200)), save=True)
+
+        for url in ("/", "/catalog/", product.get_absolute_url(), "/cart/"):
+            html = self.client.get(url).content.decode()
+            self.assertEqual(self.parse(html), [], url)
