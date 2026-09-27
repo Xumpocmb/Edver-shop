@@ -1,6 +1,8 @@
 from django.shortcuts import render, get_object_or_404
 from django.core.paginator import Paginator
 from django.db.models import Q, Min, Max
+from django.utils.html import strip_tags
+from django.utils.text import Truncator
 
 from app_media.payload import image_payload, variant_payload
 
@@ -122,6 +124,37 @@ def catalog_list(request):
     return render(request, 'app_catalog/catalog.html', context)
 
 
+# Короткое описание (в т.ч. копия названия) в meta бесполезно — Google
+# покажет его вместо осмысленного текста. Тогда собираем описание сами.
+MIN_DESCRIPTION_LENGTH = 40
+META_DESCRIPTION_LIMIT = 158
+
+
+def _models_word(count):
+    if count % 10 == 1 and count % 100 != 11:
+        return 'модель'
+    if 2 <= count % 10 <= 4 and not 12 <= count % 100 <= 14:
+        return 'модели'
+    return 'моделей'
+
+
+def _category_meta(category, products_count):
+    """Текст для meta description страницы категории."""
+    description = strip_tags(category.description).strip()
+    from_admin = (
+        len(description) >= MIN_DESCRIPTION_LENGTH
+        and description.lower() != category.name.lower()
+    )
+    if from_admin:
+        return Truncator(description).chars(META_DESCRIPTION_LIMIT)
+
+    if products_count:
+        tail = f'{products_count} {_models_word(products_count)} с фото и ценами'
+    else:
+        tail = 'модели с фото и ценами'
+    return f'{category.name} в интернет-магазине EDVER Shop: {tail}, доставка по Беларуси.'
+
+
 def category_detail(request, slug):
     category = get_object_or_404(Category, slug=slug, is_active=True)
     qs = _prefetch_products(Product.objects.filter(is_active=True, category=category))
@@ -134,6 +167,7 @@ def category_detail(request, slug):
     page_obj = paginator.get_page(page_number)
 
     crumbs = [('Каталог', '/catalog/'), (category.name, None)]
+    products_count = Product.objects.filter(is_active=True, category=category).count()
 
     context = {
         'category': category,
@@ -144,6 +178,8 @@ def category_detail(request, slug):
         'page_title': category.name,
         'color_options': color_options,
         'material_options': material_options,
+        'meta_description': _category_meta(category, products_count),
+        'og_title': f'{category.name} — EDVER Shop',
     }
     context.update(ctx)
     return render(request, 'app_catalog/catalog.html', context)
