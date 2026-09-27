@@ -12,6 +12,8 @@
 {% block content %}
 <div class="home">
 
+    {% if slides or categories or new_products or popular_products or sale_products %}
+
     <!-- ===== СЛАЙДЕР ===== -->
     {% if slides %}
     <section class="hero-slider" aria-label="Акционные предложения">
@@ -45,16 +47,20 @@
             {% endfor %}
         </div>
     </section>
+    {% else %}
+    <section class="section container">
+        {% include '_empty.html' with icon='🧳' title='Акции ещё в дороге' text='Слайды грузятся медленно — загляните позже, а пока мы уже собрали кое-что интересное.' link='/catalog/' link_text='Открыть каталог' %}
+    </section>
     {% endif %}
 
 
     <!-- ===== КАТЕГОРИИ ===== -->
-    {% if categories %}
     <section class="section container">
         <div class="section-head">
             <h2 class="section-title">Категории каталога</h2>
             <a href="/catalog/" class="section-link">Смотреть все →</a>
         </div>
+        {% if categories %}
         <div class="categories-grid">
             {% for c in categories %}
                 <a href="{{ c.get_absolute_url }}" class="category-card"
@@ -73,57 +79,81 @@
                 </a>
             {% endfor %}
         </div>
+        {% else %}
+        {% include '_empty.html' with icon='🗂️' size='sm' title='Категории разбежались' text='Пока их ловят по полкам, загляните в каталог — там есть что присмотреть.' link='/catalog/' link_text='Открыть каталог' %}
+        {% endif %}
     </section>
-    {% endif %}
 
 
     <!-- ===== НОВИНКИ ===== -->
-    {% if new_products %}
     <section class="section container">
         <div class="section-head">
             <h2 class="section-title"><span class="badge badge--new">NEW</span> Новинки</h2>
             <a href="/catalog/" class="section-link">Все новинки →</a>
         </div>
+        {% if new_products %}
         <div class="products-grid">
             {% for p in new_products %}
                 {% include 'app_catalog/_product_card.html' with product=p %}
             {% endfor %}
         </div>
+        {% else %}
+        {% include '_empty.html' with icon='📦' size='sm' title='Новинок пока нет' text='Поставщики собирают их вручную, поэтому приходится подождать.' link='/catalog/' link_text='Смотреть каталог' %}
+        {% endif %}
     </section>
-    {% endif %}
 
 
     <!-- ===== ПОПУЛЯРНЫЕ ===== -->
-    {% if popular_products %}
     <section class="section container">
         <div class="section-head">
             <h2 class="section-title"><span class="badge badge--popular">HOT</span> Популярные товары</h2>
             <a href="/catalog/" class="section-link">Все популярные →</a>
         </div>
+        {% if popular_products %}
         <div class="products-grid">
             {% for p in popular_products %}
                 {% include 'app_catalog/_product_card.html' with product=p %}
             {% endfor %}
         </div>
+        {% else %}
+        {% include '_empty.html' with icon='🏖️' size='sm' title='Всё в отпуске' text='Популярные товары уехали на отдых и не сказали, когда вернутся.' link='/catalog/' link_text='Смотреть каталог' %}
+        {% endif %}
     </section>
-    {% endif %}
 
 
     <!-- ===== АКЦИИ ===== -->
-    {% if sale_products %}
     <section class="section container section--sale">
         <div class="section-head">
             <h2 class="section-title"><span class="badge badge--sale">%</span> Скидки и акции</h2>
             <a href="/catalog/?on_sale=1" class="section-link">Все акции →</a>
         </div>
+        {% if sale_products %}
         <div class="products-grid">
             {% for p in sale_products %}
                 {% include 'app_catalog/_product_card.html' with product=p %}
             {% endfor %}
         </div>
+        {% else %}
+        {% include '_empty.html' with icon='🕳️' size='sm' title='Скидки спрятались' text='Мы ищем их так же усердно, как кот — по шкафу в 3 часа ночи.' link='/catalog/?on_sale=1' link_text='Все акции' %}
+        {% endif %}
     </section>
-    {% endif %}
 
+    {% else %}
+
+    <!-- ===== ПУСТАЯ ВИТРИНА ===== -->
+    <section class="section container">
+        <div class="empty-state">
+            <div class="empty-state__icon" aria-hidden="true">🧳</div>
+            <h2 class="empty-state__title">Мы бы хотели Вам что-нибудь показать, но товары уехали в отпуск</h2>
+            <p class="empty-state__text">
+                Витрина пуста, чемоданы заперты, а курьеры разъехались по курортам.
+                Загляните в каталог или подпишитесь на новости — вернёмся с подарками.
+            </p>
+            <a href="/catalog/" class="btn btn--primary btn--lg">Заглянуть в каталог</a>
+        </div>
+    </section>
+
+    {% endif %}
 
     </div>
 {% endblock %}
