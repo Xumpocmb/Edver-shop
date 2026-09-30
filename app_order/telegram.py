@@ -111,4 +111,4 @@ def notify_paid_order(order):
 def _delivery_destination(order):
     if order.delivery_type == 'evropochta':
         return f'📍 Отделение: {_esc(order.evropochta_branch_name or "—")}'
-    return f'📍 Адрес: {_esc(order.address or "—")}'
+    return f'📍 Адрес: {_esc(order.full_address or "—")}'

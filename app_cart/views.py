@@ -179,6 +179,8 @@ def checkout(request):
     phone = request.POST.get('phone', '').strip()
     delivery_type = request.POST.get('delivery_type', 'belpochta')
     address = request.POST.get('address', '').strip()
+    region = request.POST.get('region', '').strip()
+    postal_code = request.POST.get('postal_code', '').strip()
     branch_id = request.POST.get('evropochta_branch_id', '').strip()
     branch_name = request.POST.get('evropochta_branch_name', '').strip()
     comment = request.POST.get('comment', '').strip()
@@ -202,6 +204,8 @@ def checkout(request):
         phone=phone,
         delivery_type=delivery_type,
         address=address,
+        region=region,
+        postal_code=postal_code,
         evropochta_branch_id=branch_id,
         evropochta_branch_name=branch_name,
         promo_code=cart.promo_code,

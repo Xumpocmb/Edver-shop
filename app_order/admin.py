@@ -83,7 +83,7 @@ class OrderAdmin(admin.ModelAdmin):
         }),
         ('Доставка', {
             'fields': (
-                'delivery_type', 'address',
+                'delivery_type', 'address', 'region', 'postal_code',
                 'branch_select',
                 'evropochta_branch_id', 'evropochta_branch_name',
             ),

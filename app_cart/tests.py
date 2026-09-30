@@ -41,6 +41,37 @@ class CheckoutTests(TestCase):
         self.assertFalse(order.paid)
         self.assertTrue(order.items.exists())
 
+    def test_checkout_saves_region_and_postal_code(self):
+        category = Category.objects.create(name='Куртки', slug='kurtki', has_gender=False)
+        product = Product.objects.create(name='Куртка', slug='kurtka', category=category, is_active=True)
+        variant = ProductVariant.objects.create(
+            product=product, color='Чёрный', price='100.00', stock=5, is_active=True,
+        )
+
+        session = self.client.session
+        session['cart_session'] = True
+        session.save()
+        cart = Cart.objects.create(session_key=session.session_key)
+        CartItem.objects.create(cart=cart, variant=variant, quantity=1)
+
+        resp = self.client.post(
+            reverse('app_cart:checkout'),
+            {
+                'full_name': 'Иван Иванов',
+                'phone': '+375296111111',
+                'delivery_type': 'belpochta',
+                'address': 'ул. Ленина, 1',
+                'region': 'Минская область',
+                'postal_code': '220030',
+            },
+        )
+
+        self.assertEqual(resp.status_code, 302)
+        order = Order.objects.get(session_key=cart.session_key)
+        self.assertEqual(order.region, 'Минская область')
+        self.assertEqual(order.postal_code, '220030')
+        self.assertEqual(order.full_address, 'Минская область, 220030, ул. Ленина, 1')
+
     def test_checkout_notification_error_does_not_break_order(self):
         category = Category.objects.create(name='Куртки', slug='kurtki', has_gender=False)
         product = Product.objects.create(name='Куртка', slug='kurtka', category=category, is_active=True)

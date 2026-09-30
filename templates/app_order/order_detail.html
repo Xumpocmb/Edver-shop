@@ -47,7 +47,7 @@
             {% if order.delivery_type == 'belpochta' %}
             <div class="spec-row">
                 <span class="spec-row__key">Адрес</span>
-                <span class="spec-row__val">{{ order.address }}</span>
+                <span class="spec-row__val">{{ order.full_address }}</span>
             </div>
             {% else %}
             <div class="spec-row">

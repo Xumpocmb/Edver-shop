@@ -131,6 +131,28 @@
 
             <div class="delivery-fields" id="deliveryFields">
                 <div class="form-row" id="belpochtaField">
+                    <div class="form-grid">
+                        <div class="form-row">
+                            <label for="region">Область</label>
+                            <select id="region" name="region">
+                                <option value="">Не выбрана</option>
+                                <option value="Минская область">Минская область</option>
+                                <option value="Брестская область">Брестская область</option>
+                                <option value="Витебская область">Витебская область</option>
+                                <option value="Гомельская область">Гомельская область</option>
+                                <option value="Гродненская область">Гродненская область</option>
+                                <option value="Могилёвская область">Могилёвская область</option>
+                                <option value="г. Минск">г. Минск</option>
+                            </select>
+                        </div>
+                        <div class="form-row">
+                            <label for="postalCode">Индекс</label>
+                            <input id="postalCode" name="postal_code" type="text"
+                                   inputmode="numeric" maxlength="6" pattern="\d{6}"
+                                   title="Почтовый индекс — 6 цифр"
+                                   placeholder="220030" autocomplete="postal-code">
+                        </div>
+                    </div>
                     <label for="address">Адрес доставки *</label>
                     <textarea id="address" name="address" rows="2"
                               placeholder="Город, улица, дом, квартира">{{ profile_data.address|default:'' }}</textarea>

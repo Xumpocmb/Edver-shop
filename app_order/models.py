@@ -30,6 +30,8 @@ class Order(models.Model):
     full_name = models.CharField(max_length=200, verbose_name='ФИО')
     phone = models.CharField(max_length=30, verbose_name='Телефон')
     address = models.TextField(blank=True, verbose_name='Адрес (Белпочта)')
+    region = models.CharField(max_length=100, blank=True, verbose_name='Область')
+    postal_code = models.CharField(max_length=10, blank=True, verbose_name='Почтовый индекс')
 
     delivery_type = models.CharField(
         max_length=20, choices=DELIVERY_CHOICES, default='belpochta',
@@ -83,6 +85,12 @@ class Order(models.Model):
 
     def __str__(self):
         return f'Заказ {self.number} — {self.full_name} ({self.get_status_display()})'
+
+    @property
+    def full_address(self):
+        """Полный адрес: область, индекс, улица (пустые части пропускаются)."""
+        parts = (self.region, self.postal_code, self.address)
+        return ', '.join(p for p in parts if p)
 
     class Meta:
         verbose_name = 'Заказ'
