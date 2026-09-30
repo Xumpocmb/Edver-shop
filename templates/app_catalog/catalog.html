@@ -166,10 +166,10 @@
                 </div>
             </div>
 
-            {% if products %}
+            {% if variants %}
                 <div class="products-grid" id="productsGrid">
-                    {% for p in products %}
-                        {% include 'app_catalog/_product_card.html' with product=p %}
+                    {% for v in variants %}
+                        {% include 'app_catalog/_product_card.html' with variant=v %}
                     {% endfor %}
                 </div>
 

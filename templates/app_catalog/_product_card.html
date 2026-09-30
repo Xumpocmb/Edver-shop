@@ -1,62 +1,55 @@
 {% load static %}
 {% load image_tags %}
+{% comment %}
+Карточка = один вариант (цвет). Обязательный параметр — variant;
+product берётся из него. Ссылка ведёт на страницу товара с выбранным цветом.
+{% endcomment %}
+{% with product=variant.product %}
 <article class="product-card">
-    <a href="{{ product.get_absolute_url }}" class="product-card__link" aria-label="{{ product.name }}">
+    <a href="{{ product.get_absolute_url }}?variant={{ variant.id }}" class="product-card__link" aria-label="{{ product.name }} {{ variant.color }}">
         <div class="product-card__media">
-            {% with v=product.main_variant %}
-                {% if v %}
-                    {% with img=v.main_image %}
-                        {% if img %}
-                            {% responsive_image img.image 'product' alt=img.alt|default:product.name sizes='(max-width: 640px) 50vw, 240px' %}
-                        {% else %}
-                            <div class="product-card__noimg"><span>Нет фото</span></div>
-                        {% endif %}
-                    {% endwith %}
+            {% with img=variant.main_image %}
+                {% if img %}
+                    {% responsive_image img.image 'product' alt=img.alt|default:product.name sizes='(max-width: 640px) 50vw, 240px' %}
                 {% else %}
                     <div class="product-card__noimg"><span>Нет фото</span></div>
                 {% endif %}
-
-                <div class="product-card__badges">
-                    {% if product.is_new %}<span class="badge badge--new">NEW</span>{% endif %}
-                    {% if product.is_sale and v.discount_percent_display > 0 %}<span class="badge badge--sale">-{{ v.discount_percent_display }}%</span>{% endif %}
-                    {% if product.is_popular %}<span class="badge badge--popular">HIT</span>{% endif %}
-                </div>
             {% endwith %}
+
+            <div class="product-card__badges">
+                {% if product.is_new %}<span class="badge badge--new">NEW</span>{% endif %}
+                {% if product.is_sale and variant.discount_percent_display > 0 %}<span class="badge badge--sale">-{{ variant.discount_percent_display }}%</span>{% endif %}
+                {% if product.is_popular %}<span class="badge badge--popular">HIT</span>{% endif %}
+            </div>
         </div>
     </a>
 
     <div class="product-card__body">
-        <a href="{{ product.get_absolute_url }}" class="product-card__name">{{ product.name }}</a>
+        <a href="{{ product.get_absolute_url }}?variant={{ variant.id }}" class="product-card__name">{{ product.name }}</a>
 
-        {% with v=product.main_variant %}
-        {% if v %}
-            {% if product.variants.all|length > 1 %}
-            <div class="product-card__variants">
-                {% for var in product.variants.all %}
-                    {% if var.is_active %}
-                    <span class="product-card__swatch" title="{{ var.color }}"
-                          style="background-color: {{ var.color_hex|default:'#cccccc' }};"></span>
-                    {% endif %}
-                {% endfor %}
-            </div>
-            {% endif %}
-
-            <div class="product-card__price-row">
-                {% if v.discount_percent_display > 0 %}
-                    <span class="product-card__price">{{ v.sale_price }} BYN</span>
-                    <span class="product-card__old-price">{{ v.price }} BYN</span>
-                {% else %}
-                    <span class="product-card__price">{{ v.price }} BYN</span>
-                {% endif %}
-            </div>
-
-            <button type="button"
-                    class="btn btn--primary btn--block btn--sm js-add-to-cart"
-                    data-variant-id="{{ v.id }}"
-                    data-product-name="{{ product.name }} {{ v.color }}">
-                В корзину
-            </button>
+        {% if variant.color %}
+        <div class="product-card__color">
+            <span class="product-card__swatch product-card__swatch--lg"
+                  style="background-color: {{ variant.color_hex|default:'#cccccc' }};"></span>
+            <span class="product-card__color-name">{{ variant.color }}</span>
+        </div>
         {% endif %}
-        {% endwith %}
+
+        <div class="product-card__price-row">
+            {% if variant.discount_percent_display > 0 %}
+                <span class="product-card__price">{{ variant.sale_price }} BYN</span>
+                <span class="product-card__old-price">{{ variant.price }} BYN</span>
+            {% else %}
+                <span class="product-card__price">{{ variant.price }} BYN</span>
+            {% endif %}
+        </div>
+
+        <button type="button"
+                class="btn btn--primary btn--block btn--sm js-add-to-cart"
+                data-variant-id="{{ variant.id }}"
+                data-product-name="{{ product.name }} {{ variant.color }}">
+            В корзину
+        </button>
     </div>
 </article>
+{% endwith %}

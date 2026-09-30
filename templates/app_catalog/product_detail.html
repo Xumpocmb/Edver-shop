@@ -227,7 +227,7 @@
             <div class="cross-sell__track" aria-label="С этим товаром покупают">
                 {% for p in cross_sell_products %}
                 <div class="cross-sell__item">
-                    {% include 'app_catalog/_product_card.html' with product=p %}
+                    {% include 'app_catalog/_product_card.html' with product=p variant=p.main_variant %}
                 </div>
                 {% endfor %}
             </div>

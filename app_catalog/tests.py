@@ -1,5 +1,8 @@
+import re
+
 from django.contrib.auth.models import User
 from django.test import TestCase
+from django.utils.formats import number_format
 import yaml
 
 from app_catalog import yml_feed
@@ -7,10 +10,140 @@ from app_catalog.views import _category_meta
 from .models import Category, Product, ProductImage, ProductVariant
 
 
+def price(variant):
+    """Цена так, как её выводит шаблон: с локальным разделителем дробной части."""
+    return number_format(variant.price)
+
+
 def make_product(category, name, slug):
     product = Product.objects.create(name=name, slug=slug, category=category)
     ProductVariant.objects.create(product=product, color='Чёрный', price='100.00')
     return product
+
+
+class CatalogCardsTests(TestCase):
+    """Карточка каталога — это вариант (цвет), а не модель."""
+
+    def setUp(self):
+        self.category = Category.objects.create(name='Сумки', slug='sumki')
+        self.product = Product.objects.create(
+            name='Сумка-шопер', slug='sumka-shopper', category=self.category,
+        )
+        self.bordovy = self.variant('Бордовый', '100.00')
+        self.siniy = self.variant('Синий', '300.00')
+        self.cherny = self.variant('Чёрный', '200.00')
+
+    def variant(self, color, price, **kwargs):
+        return ProductVariant.objects.create(
+            product=self.product, color=color, price=price, **kwargs
+        )
+
+    def cards(self, url='/catalog/'):
+        """Подписи цветов и id вариантов из отрендеренных карточек."""
+        html = self.client.get(url).content.decode()
+        return html
+
+    def variant_ids_in_order(self, html):
+        return re.findall(r'data-variant-id="(\d+)"', html)
+
+    def test_one_card_per_color(self):
+        html = self.cards()
+
+        self.assertEqual(html.count('class="product-card"'), 3)
+        self.assertEqual(
+            set(self.variant_ids_in_order(html)),
+            {str(self.bordovy.id), str(self.siniy.id), str(self.cherny.id)},
+        )
+
+    def test_each_card_shows_its_own_price(self):
+        html = self.cards()
+
+        for variant in (self.bordovy, self.siniy, self.cherny):
+            self.assertIn(f'{price(variant)} BYN', html)
+
+    def test_each_card_shows_its_own_color(self):
+        html = self.cards()
+
+        for color in ('Бордовый', 'Синий', 'Чёрный'):
+            self.assertIn(f'>{color}</span>', html)
+
+    def test_card_links_to_its_own_color(self):
+        html = self.cards()
+
+        for variant in (self.bordovy, self.siniy, self.cherny):
+            self.assertIn(f'{self.product.get_absolute_url()}?variant={variant.id}', html)
+
+    def test_variant_param_selects_color_on_product_page(self):
+        html = self.client.get(f'{self.product.get_absolute_url()}?variant={self.siniy.id}').content.decode()
+
+        self.assertIn(f'Сумка-шопер {self.siniy.color}', html)
+        self.assertIn(f'id="currentPrice">{price(self.siniy)} BYN', html)
+
+    def test_inactive_variant_is_hidden(self):
+        self.bordovy.is_active = False
+        self.bordovy.save()
+
+        html = self.cards()
+
+        self.assertEqual(html.count('class="product-card"'), 2)
+        self.assertNotIn(str(self.bordovy.id), self.variant_ids_in_order(html))
+
+    def test_inactive_product_hides_all_its_cards(self):
+        self.product.is_active = False
+        self.product.save()
+
+        html = self.cards()
+
+        self.assertEqual(html.count('class="product-card"'), 0)
+
+    def test_price_filter_applies_to_cards(self):
+        html = self.cards('/catalog/?price_from=150')
+
+        self.assertEqual(set(self.variant_ids_in_order(html)), {
+            str(self.siniy.id), str(self.cherny.id),
+        })
+
+    def test_color_filter_returns_only_that_color(self):
+        html = self.cards('/catalog/?color=Синий')
+
+        self.assertEqual(self.variant_ids_in_order(html), [str(self.siniy.id)])
+
+    def test_sort_by_price_orders_cards_by_own_price(self):
+        html = self.cards('/catalog/?sort=price_asc')
+
+        self.assertEqual(self.variant_ids_in_order(html), [
+            str(self.bordovy.id), str(self.cherny.id), str(self.siniy.id),
+        ])
+
+    def test_search_page_also_lists_one_card_per_color(self):
+        html = self.cards('/catalog/search/')
+
+        self.assertEqual(html.count('class="product-card"'), 3)
+
+    def test_pagination_counts_colorways(self):
+        # В setUp уже 3 варианта — до 12 не хватает 10 моделей по одному цвету.
+        for index in range(10):
+            make_product(self.category, f'Сумка {index}', f'sumka-{index}')
+
+        first = self.cards('/catalog/?sort=price_asc')
+        second = self.cards('/catalog/?sort=price_asc&page=2')
+
+        self.assertEqual(first.count('class="product-card"'), 12)
+        self.assertEqual(second.count('class="product-card"'), 1)
+
+    def test_category_page_lists_every_color(self):
+        html = self.cards(self.category.get_absolute_url())
+
+        self.assertEqual(html.count('class="product-card"'), 3)
+
+    def test_single_color_product_has_one_card(self):
+        only = Category.objects.create(name='Кошельки', slug='koshelki')
+        product = Product.objects.create(name='Кошелок', slug='koshelok', category=only)
+        ProductVariant.objects.create(product=product, color='Чёрный', price='90.00')
+
+        html = self.cards()
+
+        self.assertEqual(html.count('class="product-card"'), 4)
 
 
 class CategoryMetaTests(TestCase):

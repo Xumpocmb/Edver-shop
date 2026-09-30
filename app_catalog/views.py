@@ -6,63 +6,74 @@ from django.utils.text import Truncator
 
 from app_media.payload import image_payload, variant_payload
 
-from .models import Product, Category
+from .models import Product, ProductVariant, Category
+
+
+# Карточка каталога — это вариант (цвет), а не модель: у товара с тремя
+# цветами выводятся три карточки. Поэтому список строится на ProductVariant,
+# и ни один фильтр не джойнит многозначную связь — иначе строка размножалась бы
+# по числу вариантов и товар показывался бы несколько раз.
+def _variant_queryset():
+    return (
+        ProductVariant.objects
+        .filter(is_active=True, product__is_active=True, product__category__is_active=True)
+        .select_related('product', 'product__category')
+        .prefetch_related('images')
+    )
 
 
 def _apply_filters(queryset, request):
     get = request.GET
-    qs = queryset.filter(variants__is_active=True)
+    qs = queryset
 
     price_from = get.get('price_from')
     price_to = get.get('price_to')
     if price_from:
         try:
-            qs = qs.filter(variants__price__gte=float(price_from))
+            qs = qs.filter(price__gte=float(price_from))
         except (TypeError, ValueError):
             pass
     if price_to:
         try:
-            qs = qs.filter(variants__price__lte=float(price_to))
+            qs = qs.filter(price__lte=float(price_to))
         except (TypeError, ValueError):
             pass
-    if price_from or price_to:
-        qs = qs.distinct()
 
     gender = get.get('gender')
     if gender in ('M', 'F'):
         qs = qs.filter(
-            Q(gender=gender) | Q(gender__isnull=True)
+            Q(product__gender=gender) | Q(product__gender__isnull=True)
         )
 
     colors = get.getlist('color')
     if colors:
-        qs = qs.filter(variants__color__in=colors).distinct()
+        qs = qs.filter(color__in=colors)
 
     materials = get.getlist('material')
     if materials:
-        qs = qs.filter(material__in=materials)
+        qs = qs.filter(product__material__in=materials)
 
     in_stock = get.get('in_stock')
     if in_stock == '1':
-        qs = qs.filter(variants__status='in_stock', variants__stock__gt=0).distinct()
+        qs = qs.filter(status='in_stock', stock__gt=0)
 
     on_sale = get.get('on_sale')
     if on_sale == '1':
-        qs = qs.filter(is_sale=True)
+        qs = qs.filter(product__is_sale=True)
 
     sort = get.get('sort', 'newest')
     if sort == 'price_asc':
-        qs = qs.annotate(_display_price=Min('variants__price')).order_by('_display_price', 'id')
+        qs = qs.order_by('price', 'id')
     elif sort == 'price_desc':
-        qs = qs.annotate(_display_price=Min('variants__price')).order_by('-_display_price', 'id')
+        qs = qs.order_by('-price', 'id')
     else:
-        qs = qs.order_by('-created_at')
+        qs = qs.order_by('-product__created_at', 'id')
     return qs
 
 
 def _get_filter_context(request, base_qs, show_gender=True):
     categories = Category.objects.filter(is_active=True).order_by('order', 'name')
-    price_agg = base_qs.aggregate(min_price=Min('variants__price'), max_price=Max('variants__price'))
+    price_agg = base_qs.aggregate(min_price=Min('price'), max_price=Max('price'))
     return {
         'categories': categories,
         'price_min': price_agg.get('min_price') or 0,
@@ -82,16 +93,15 @@ def _get_filter_context(request, base_qs, show_gender=True):
 def _get_filter_options(qs):
     """Доступные для фильтрации цвета и материалы (в контексте набора товаров)."""
     colors = list(
-        qs.filter(variants__is_active=True)
-          .values_list('variants__color', flat=True)
+        qs.values_list('color', flat=True)
           .distinct()
-          .order_by('variants__color')
+          .order_by('color')
     )
     materials = list(
-        qs.exclude(material__isnull=True).exclude(material='')
-          .values_list('material', flat=True)
+        qs.exclude(product__material__isnull=True).exclude(product__material='')
+          .values_list('product__material', flat=True)
           .distinct()
-          .order_by('material')
+          .order_by('product__material')
     )
     return colors, materials
 
@@ -101,7 +111,7 @@ def _prefetch_products(qs):
 
 
 def catalog_list(request):
-    qs = _prefetch_products(Product.objects.filter(is_active=True))
+    qs = _variant_queryset()
     color_options, material_options = _get_filter_options(qs)
     qs = _apply_filters(qs, request)
     ctx = _get_filter_context(request, qs)
@@ -113,7 +123,7 @@ def catalog_list(request):
     breadcrumbs = [('Каталог', None)]
     context = {
         'page_obj': page_obj,
-        'products': page_obj.object_list,
+        'variants': page_obj.object_list,
         'paginator': paginator,
         'breadcrumbs': breadcrumbs,
         'page_title': 'Каталог',
@@ -157,7 +167,7 @@ def _category_meta(category, products_count):
 
 def category_detail(request, slug):
     category = get_object_or_404(Category, slug=slug, is_active=True)
-    qs = _prefetch_products(Product.objects.filter(is_active=True, category=category))
+    qs = _variant_queryset().filter(product__category=category)
     color_options, material_options = _get_filter_options(qs)
     qs = _apply_filters(qs, request)
     ctx = _get_filter_context(request, qs, show_gender=category.has_gender)
@@ -172,7 +182,7 @@ def category_detail(request, slug):
     context = {
         'category': category,
         'page_obj': page_obj,
-        'products': page_obj.object_list,
+        'variants': page_obj.object_list,
         'paginator': paginator,
         'breadcrumbs': crumbs,
         'page_title': category.name,
@@ -187,16 +197,16 @@ def category_detail(request, slug):
 
 def search_results(request):
     query = request.GET.get('q', '').strip()
-    qs = _prefetch_products(Product.objects.filter(is_active=True))
+    qs = _variant_queryset()
     if query:
         qs = qs.filter(
-            Q(name__icontains=query)
-            | Q(short_description__icontains=query)
-            | Q(description__icontains=query)
-            | Q(category__name__icontains=query)
-            | Q(variants__color__icontains=query)
-            | Q(material__icontains=query)
-        ).distinct()
+            Q(product__name__icontains=query)
+            | Q(product__short_description__icontains=query)
+            | Q(product__description__icontains=query)
+            | Q(product__category__name__icontains=query)
+            | Q(color__icontains=query)
+            | Q(product__material__icontains=query)
+        )
     color_options, material_options = _get_filter_options(qs)
     qs = _apply_filters(qs, request)
     ctx = _get_filter_context(request, qs)
@@ -211,7 +221,7 @@ def search_results(request):
     ]
     context = {
         'page_obj': page_obj,
-        'products': page_obj.object_list,
+        'variants': page_obj.object_list,
         'paginator': paginator,
         'search_query': query,
         'breadcrumbs': breadcrumbs,
