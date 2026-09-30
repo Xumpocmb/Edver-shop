@@ -81,9 +81,11 @@
                 {% else %}
                 <div class="promo-row">
                     <input type="text" name="promo_code_input" id="promoInput" placeholder="Промокод"
-                           class="promo-input" aria-label="Промокод" autocomplete="off">
+                           class="promo-input" aria-label="Промокод" autocomplete="off"
+                           aria-describedby="promoError">
                     <button type="button" class="btn btn--ghost promo-row__btn" id="applyPromoBtn">Применить</button>
                 </div>
+                <p class="alert alert--error" id="promoError" role="alert" hidden></p>
                 {% endif %}
 
                 <div class="cart-summary__row cart-summary__row--total">
@@ -189,11 +191,28 @@
     var applyBtn = document.getElementById('applyPromoBtn');
     var removeBtn = document.querySelector('.js-remove-promo');
     var promoInput = document.getElementById('promoInput');
+    var promoError = document.getElementById('promoError');
+
+    function showPromoError(message) {
+        if (!promoError) return;
+        promoError.textContent = message;
+        promoError.hidden = false;
+    }
+
+    function clearPromoError() {
+        if (!promoError) return;
+        promoError.textContent = '';
+        promoError.hidden = true;
+    }
 
     if (applyBtn) {
         applyBtn.addEventListener('click', function() {
             var code = promoInput ? promoInput.value.trim() : '';
-            if (!code) return;
+            if (!code) {
+                showPromoError('Введите промокод');
+                return;
+            }
+            clearPromoError();
             var fd = new FormData();
             fd.append('promo_code', code);
             fetch('{% url "app_cart:apply_promo" %}', {
@@ -202,9 +221,15 @@
                 body: fd
             }).then(function(r) { return r.json(); }).then(function(data) {
                 if (data.success) location.reload();
-                else alert(data.message || 'Ошибка');
+                else showPromoError(data.message || 'Не удалось применить промокод');
+            }).catch(function() {
+                showPromoError('Сервер временно недоступен. Попробуйте ещё раз.');
             });
         });
+    }
+
+    if (promoInput) {
+        promoInput.addEventListener('input', clearPromoError);
     }
 
     if (removeBtn) {
