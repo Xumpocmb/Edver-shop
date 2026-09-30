@@ -17,12 +17,22 @@
 
     var CSRF_TOKEN = getCookie('csrftoken') || '';
 
+    // Django рендерит Decimal в локали ru-ru как "1234,50": запятая, без разделителей
+    // тысяч. Повторяем этот формат, иначе AJAX-обновление меняет вид цены
+    // ("1234.50" из JSON превратилось бы в "1 234,5" через toLocaleString).
+    function formatPrice(value) {
+        var n = Number(value);
+        if (isNaN(n)) return String(value);
+        return n.toLocaleString('ru-RU', {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2,
+            useGrouping: false
+        });
+    }
+
     function setPrice(el, value) {
         if (!el) return;
-        el.textContent = value + ' ';
-        var icon = document.createElement('span');
-        icon.className = 'nbrb-icon nbrb-icon-byn';
-        el.appendChild(icon);
+        el.textContent = formatPrice(value) + ' BYN';
     }
 
     // ====== Toast ======
@@ -97,8 +107,7 @@
         // Итоговая сумма
         var grandTotalEl = document.getElementById('grandTotal');
         if (grandTotalEl) {
-            var price = Number(data.grand_total || 0);
-            grandTotalEl.innerHTML = price.toLocaleString('ru-RU') + ' <span class="nbrb-icon nbrb-icon-byn"></span>';
+            setPrice(grandTotalEl, data.grand_total);
         }
 
         // Промокод
@@ -109,7 +118,7 @@
         if (data.has_promo) {
             // Промокод есть — показываем строку скидки, скрываем инпут
             if (promoRow) {
-                promoRow.innerHTML = '<span class="cart-summary__label">Промокод (' + data.promo_code + '):</span><span>-' + Number(data.promo_discount || 0).toLocaleString('ru-RU') + ' <span class="nbrb-icon nbrb-icon-byn"></span></span>';
+                promoRow.innerHTML = '<span class="cart-summary__label">Промокод (' + data.promo_code + '):</span><span>-' + formatPrice(data.promo_discount) + ' BYN</span>';
                 promoRow.style.display = '';
             }
             if (promoInputRow) promoInputRow.style.display = 'none';
@@ -139,11 +148,7 @@
             var lineTotalEl = document.querySelector('[data-item-id="' + itemId + '"] .cart-item__total');
             var lineItem = data.items.find(function(i) { return i.id == itemId; });
             if (lineTotalEl && lineItem) {
-                var price = Number(lineItem.line_total);
-                lineTotalEl.textContent = price.toLocaleString('ru-RU') + ' ';
-                var nbrbIcon = document.createElement('span');
-                nbrbIcon.className = 'nbrb-icon nbrb-icon-byn';
-                lineTotalEl.appendChild(nbrbIcon);
+                setPrice(lineTotalEl, lineItem.line_total);
             }
         })
         .catch(function () { toast('Ошибка обновления корзины', 'error'); });
