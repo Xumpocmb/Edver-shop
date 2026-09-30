@@ -100,13 +100,30 @@ class GenerateDerivativesTests(ImageTestCase):
         self.assertFalse(processing.generate(self.file, "product"))
         self.assertTrue(processing.generate(self.file, "product", force=True))
 
-    def test_derivatives_removed_with_record(self):
+    def test_files_removed_with_record(self):
         storage = self.file.storage
         self.assertTrue(storage.exists(f"thumbs/categories/{self.stem}_320.webp"))
         self.category.delete()
         self.assertFalse(storage.exists(f"thumbs/categories/{self.stem}_320.webp"))
         self.assertFalse(storage.exists(f"thumbs/categories/{self.stem}_2000.webp"))
-        self.assertTrue(storage.exists(self.file.name))
+        self.assertFalse(storage.exists(self.file.name))
+
+    def test_original_kept_while_another_record_shares_it(self):
+        other = Category.objects.create(name="Кошельки", slug="koshelki")
+        other.image.name = self.file.name
+        other.save()
+
+        self.category.delete()
+
+        self.assertTrue(self.file.storage.exists(self.file.name))
+        self.assertTrue(self.file.storage.exists(f"thumbs/categories/{self.stem}_320.webp"))
+
+    def test_record_without_file_is_deleted(self):
+        empty = Category.objects.create(name="Ремни", slug="remni")
+
+        empty.delete()
+
+        self.assertFalse(Category.objects.filter(slug="remni").exists())
 
     def test_describe_reports_original_before_generation(self):
         fresh = Category.objects.create(name="Ремни", slug="remni")
@@ -145,6 +162,120 @@ class GenerateDerivativesTests(ImageTestCase):
 
         self.assertTrue(storage.exists(f"thumbs/slides/{stem}_768.webp"))
         self.assertTrue(storage.exists(f"thumbs/categories/{self.stem}_320.webp"))
+
+
+@override_settings(MEDIA_ROOT=MEDIA_ROOT)
+class DeleteRecordFilesTests(ImageTestCase):
+    """Удаление товара должно уносить с диска фото его вариантов."""
+
+    def setUp(self):
+        self.category = Category.objects.create(name="Сумки", slug="sumki")
+        self.product = Product.objects.create(
+            name="Сумка", slug="sumka", category=self.category
+        )
+        self.variant = ProductVariant.objects.create(
+            product=self.product, color="красный", price="100.00"
+        )
+        self.files = [
+            self.save_image(self.variant.images.create(alt=alt), size=(900, 600)).name
+            for alt in ("Красная", "Вид сбоку")
+        ]
+        # Проверки «файла нет» осмысленны, только если до удаления он был.
+        for name in self.files:
+            self.assert_present(self.category.image.storage, name)
+
+    def assert_present(self, storage, name):
+        """Оригинал и превью на диске есть.
+
+        Проверяем только 320: generate() не делает копии шире исходника, а 320
+        существует у любой загруженной фотографии.
+        """
+        self.assertTrue(storage.exists(name), name)
+        self.assertTrue(storage.exists(processing.thumb_name(name, 320, "jpg")), name)
+
+    def assert_missing(self, storage, name):
+        """Оригинала и всех его превью на диске нет."""
+        self.assertFalse(storage.exists(name), name)
+        for width in processing.PROFILES["product"]:
+            for fmt in (*processing.FALLBACK_FORMATS, processing.WEBP):
+                self.assertFalse(storage.exists(processing.thumb_name(name, width, fmt)), name)
+
+    def test_product_delete_removes_variant_photos(self):
+        storage = self.category.image.storage
+
+        self.product.delete()
+
+        for name in self.files:
+            self.assert_missing(storage, name)
+
+    def test_variant_delete_removes_only_its_photos(self):
+        other = ProductVariant.objects.create(
+            product=self.product, color="синий", price="110.00"
+        )
+        keep = self.save_image(other.images.create(alt="Синяя"))
+
+        self.variant.delete()
+
+        self.assert_missing(keep.storage, self.files[0])
+        self.assertTrue(keep.storage.exists(keep.name))
+
+    def test_photo_delete_removes_its_files(self):
+        image = self.variant.images.first()
+
+        image.delete()
+
+        self.assert_missing(image.image.storage, self.files[0])
+
+
+@override_settings(MEDIA_ROOT=MEDIA_ROOT)
+class ReplaceImageFilesTests(ImageTestCase):
+    """Замена фото должна уносить прежний файл, а нетронутое — не трогать."""
+
+    def setUp(self):
+        self.category = Category.objects.create(name="Сумки", slug="sumki")
+        self.product = Product.objects.create(
+            name="Сумка", slug="sumka", category=self.category
+        )
+        self.variant = ProductVariant.objects.create(
+            product=self.product, color="красный", price="100.00"
+        )
+        self.image = self.variant.images.create(alt="Красная")
+        self.old_name = self.save_image(self.image, size=(2400, 1600)).name
+
+    def thumb(self, name, width=320, fmt="jpg"):
+        return processing.thumb_name(name, width, fmt)
+
+    def test_replace_removes_previous_original_and_thumbs(self):
+        storage = self.category.image.storage
+        self.assertTrue(storage.exists(self.old_name))
+
+        fresh = self.save_image(self.image, size=(2400, 1600)).name
+
+        self.assertFalse(storage.exists(self.old_name))
+        for width in processing.PROFILES["product"]:
+            self.assertFalse(storage.exists(self.thumb(self.old_name, width)))
+        self.assertTrue(storage.exists(fresh))
+        self.assertTrue(storage.exists(self.thumb(fresh, 640)))
+
+    def test_save_without_replacing_keeps_file(self):
+        storage = self.category.image.storage
+
+        self.image.alt = "Другое описание"
+        self.image.save()
+
+        self.assertTrue(storage.exists(self.old_name))
+        self.assertTrue(storage.exists(self.thumb(self.old_name, 640)))
+
+    def test_previous_file_kept_while_another_record_shares_it(self):
+        twin = self.variant.images.create(alt="Дубль")
+        twin.image.name = self.old_name
+        twin.save()
+        storage = self.category.image.storage
+
+        self.save_image(self.image, size=(2400, 1600))
+
+        self.assertTrue(storage.exists(self.old_name))
+        self.assertTrue(storage.exists(self.thumb(self.old_name, 640)))
 
 
 @override_settings(MEDIA_ROOT=MEDIA_ROOT)

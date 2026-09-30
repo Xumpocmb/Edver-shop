@@ -120,6 +120,19 @@ def delete_derivatives(field_file, profile):
                 field_file.storage.delete(target)
 
 
+def delete_files(field_file, profile):
+    """Удаляет превью и сам оригинал.
+
+    Оригинал общий на несколько записей, если файл привязан к ним напрямую,
+    поэтому удалять его можно только когда ссылок не осталось — эту проверку
+    делает вызывающий (app_media.signals).
+    """
+    delete_derivatives(field_file, profile)
+    name = getattr(field_file, "name", "")
+    if name:
+        field_file.storage.delete(name)
+
+
 def describe(field_file, profile):
     """URL-ы для шаблона. Ничего не генерирует — только читает существующие файлы.
 
