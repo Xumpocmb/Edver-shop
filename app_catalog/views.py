@@ -272,5 +272,6 @@ def product_detail(request, slug):
         'breadcrumbs': crumbs,
         'page_title': product.name,
         'schema_price': f'{selected.sale_price:.2f}' if selected else None,
+        'has_discount': any(v.discount_percent > 0 for v in variants),
     }
     return render(request, 'app_catalog/product_detail.html', context)

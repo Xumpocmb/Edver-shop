@@ -206,6 +206,7 @@
                 <th>Цена</th>
                 <td id="specBasePrice">{{ variant.price }} BYN</td>
             </tr>
+            {% if has_discount %}
             <tr>
                 <th>Цена со скидкой</th>
                 <td id="specPrice">{{ variant.sale_price }} BYN</td>
@@ -214,6 +215,7 @@
                 <th>Скидка</th>
                 <td id="specDiscount">{{ variant.discount_percent_display }}%</td>
             </tr>
+            {% endif %}
         </table>
     </section>
 
