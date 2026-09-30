@@ -53,7 +53,9 @@
         </div>
 
         <div style="margin-top: 1.5rem;">
-            <button type="button" class="btn btn--primary" data-pay-url="{% url 'app_order:payment_create' order.pk %}">Оплатить</button>
+            <button type="button" class="btn btn--primary"
+                    data-pay-url="{% url 'app_order:payment_create' order.pk %}"
+                    data-pending-label="Создаём счёт…">Оплатить</button>
         </div>
         <p style="margin-top: .75rem; color: var(--color-text-muted); font-size: .9rem;">
             Нажмите «Оплатить» для получения ссылки на счёт в системе ЕРИП.

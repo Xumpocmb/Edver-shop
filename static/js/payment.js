@@ -50,19 +50,11 @@
             var btn = this;
             var url = btn.getAttribute('data-pay-url');
             if (!url) return;
-            btn.disabled = true;
-            post(url, function (data) {
-                var result = data.result || {};
-                if (result.payment_url) {
-                    window.location.href = result.payment_url;
-                } else {
-                    btn.disabled = false;
-                    showToast(data.message || 'Не удалось создать ссылку на оплату.', 'error');
-                }
-            }, function (data) {
-                btn.disabled = false;
-                showToast(data.message || 'Не удалось создать ссылку на оплату.', 'error');
-            });
+            // disabled не спасает от синхронных повторных кликов и вызовов
+            // .click() — держим собственный флаг занятости.
+            if (btn.hasAttribute('data-busy')) return;
+            lock(btn);
+            requestInvoice(btn, url, 0);
         });
     }
 
@@ -72,18 +64,60 @@
             var btn = this;
             var url = btn.getAttribute('data-check-url');
             if (!url) return;
-            btn.disabled = true;
+            if (btn.hasAttribute('data-busy')) return;
+            lock(btn);
             post(url, function (data) {
                 showToast(data.message || 'Оплата подтверждена.', 'success');
                 if (data.status === 'paid') {
                     setTimeout(function () { window.location.reload(); }, 1200);
                 } else {
-                    btn.disabled = false;
+                    unlock(btn);
                 }
             }, function (data) {
-                btn.disabled = false;
+                unlock(btn);
                 showToast(data.message || 'Заказ ещё не оплачен.', 'error');
             });
+        });
+    }
+
+    function lock(btn) {
+        var pending = btn.getAttribute('data-pending-label');
+        btn.setAttribute('data-idle-label', btn.textContent.trim());
+        btn.setAttribute('data-busy', '');
+        btn.setAttribute('aria-busy', 'true');
+        btn.disabled = true;
+        if (pending) btn.textContent = pending;
+    }
+
+    function unlock(btn) {
+        var idle = btn.getAttribute('data-idle-label');
+        btn.removeAttribute('data-busy');
+        btn.removeAttribute('aria-busy');
+        btn.disabled = false;
+        if (idle !== null) btn.textContent = idle;
+    }
+
+    var PAY_RETRY_DELAYS = [1500, 3000, 6000];
+
+    function requestInvoice(btn, url, attempt) {
+        post(url, function (data) {
+            var result = data.result || {};
+            if (result.payment_url) {
+                window.location.href = result.payment_url;
+                return;
+            }
+            // Счёт выставляет параллельный запрос — ждём и берём его ссылку.
+            if (result.in_progress && attempt < PAY_RETRY_DELAYS.length) {
+                setTimeout(function () {
+                    requestInvoice(btn, url, attempt + 1);
+                }, PAY_RETRY_DELAYS[attempt]);
+                return;
+            }
+            unlock(btn);
+            showToast(result.message || data.message || 'Не удалось создать ссылку на оплату.', 'error');
+        }, function (data) {
+            unlock(btn);
+            showToast(data.message || 'Не удалось создать ссылку на оплату.', 'error');
         });
     }
 })();

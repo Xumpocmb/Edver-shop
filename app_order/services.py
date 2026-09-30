@@ -22,19 +22,56 @@ from .utils import payment_idempotency_key
 
 logger = logging.getLogger(__name__)
 
+INVOICE_REQUEST_TIMEOUT = timedelta(seconds=30)
+"""Сколько ждём ответа агрегатора, прежде чем признать выставление счёта зависшим.
+
+Пока ответ не пришёл, повторные запросы (перезагрузка страницы, вторая вкладка)
+не должны создавать новый счёт — клиенту возвращается тот же, что выставляется.
+"""
+
 
 def get_latest_payment(order):
     """Последняя попытка оплаты заказа (или None)."""
     return order.payments.order_by('-created_at', '-pk').first()
 
 
+def _current_invoice(order):
+    """Последний счёт заказа, который ещё не выбыл.
+
+    Счёт считается текущим, если он pending и не просрочен по ``expires_at``.
+    Возвращает Payment или None.
+    """
+    payment = get_latest_payment(order)
+    if payment is None or payment.status != 'pending':
+        return None
+    if payment.expires_at and payment.expires_at <= timezone.now():
+        return None
+    return payment
+
+
+def _next_attempt(order):
+    """Следующий номер попытки оплаты: максимум уже занятых + 1.
+
+    Берём максимум по суффиксам ``idempotency_key``, а не ``count()``, чтобы
+    номер не переиспользовался после удаления платежа.
+    """
+    highest = 0
+    for key in order.payments.values_list('idempotency_key', flat=True):
+        suffix = key.rsplit('-', 1)[-1]
+        if suffix.isdigit():
+            highest = max(highest, int(suffix))
+    return highest + 1
+
+
 def create_payment_invoice(order):
     """Создать ЕРИП-счёт для заказа и вернуть ссылку на оплату.
 
-    Каждый вызов создаёт новый счёт у провайдера (предыдущие неоплаченные
-    счета того же заказа агрегатор сам отменяет). Возвращает dict:
-    {'payment_url': str|None, 'payment_id': int|None, 'status': str,
-     'message': str, 'error': str|None}.
+    На заказ держим не больше одного живого счёта: повторные клики по кнопке
+    «Оплатить» (перезагрузка страницы, вторая вкладка, ретрай после ошибки
+    сети) возвращают уже выставленный счёт, а не создают новый. Новый счёт
+    создаётся только когда предыдущий просрочен, отменён или не выставился.
+    Возвращает dict: ``{'payment_url': str|None, 'payment_id': int|None,
+    'status': str, 'message': str, 'error': str|None, 'in_progress': bool}``.
     """
     if order.paid:
         return {
@@ -43,22 +80,25 @@ def create_payment_invoice(order):
             'status': 'paid',
             'message': 'Заказ уже оплачен',
             'error': None,
+            'in_progress': False,
         }
 
-    attempt = order.payments.count() + 1
+    current = _current_invoice(order)
+    if current is not None:
+        if current.payment_url:
+            logger.info('ERIP: действующий счёт найден, новый не создаём, payment=%s', current.pk)
+            return _payment_result(current, created=False)
+        if timezone.now() - current.created_at <= INVOICE_REQUEST_TIMEOUT:
+            logger.info('ERIP: предыдущий запрос счёта ещё в обработке, payment=%s', current.pk)
+            return _payment_result(current, created=False, in_progress=True)
+        logger.warning('ERIP: предыдущий запрос счёта завис, создаём новый, payment=%s', current.pk)
+
+    attempt = _next_attempt(order)
     idempotency_key = payment_idempotency_key(order.number, attempt)
     logger.info(
         'ERIP: создание счёта, order=%s attempt=%s сумма=%s',
         order.number, attempt, order.grand_total,
     )
-
-    # Дубликат (повторный вызов с тем же ключом) — отдаём уже созданный счёт.
-    existing = Payment.objects.filter(
-        idempotency_key=idempotency_key,
-    ).first()
-    if existing is not None:
-        logger.info('ERIP: счёт уже создан (дубликат), payment=%s', existing.pk)
-        return _payment_result(existing, created=False)
 
     payment = Payment.objects.create(
         order=order,
@@ -93,14 +133,21 @@ def create_payment_invoice(order):
         return _payment_result(payment, error='Не удалось выставить счёт на оплату. Попробуйте ещё раз.')
 
 
-def _payment_result(payment, created=True, error=None):
+def _payment_result(payment, created=True, error=None, in_progress=False):
     """Собрать результат создания счёта."""
+    if in_progress:
+        message = 'Счёт ещё выставляется — это займёт пару секунд.'
+    elif payment.payment_url:
+        message = 'Ссылка на оплату создана' if created else 'Счёт уже создан'
+    else:
+        message = 'Счёт не создан'
     return {
         'payment_url': payment.payment_url or None,
         'payment_id': payment.pk,
         'status': payment.status,
-        'message': 'Ссылка на оплату создана' if payment.payment_url else ('Счёт уже создан' if not created else 'Счёт не создан'),
+        'message': message,
         'error': error,
+        'in_progress': in_progress,
     }
 
 

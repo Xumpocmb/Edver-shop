@@ -40,9 +40,11 @@
 
         <div style="margin-top: 2rem; display: flex; gap: .75rem; flex-wrap: wrap; justify-content: center;">
             <button type="button" class="btn btn--primary"
-                    data-pay-url="{% url 'app_order:payment_create' order.pk %}">Оплатить</button>
+                    data-pay-url="{% url 'app_order:payment_create' order.pk %}"
+                    data-pending-label="Создаём счёт…">Оплатить</button>
             <button type="button" class="btn btn--ghost"
-                    data-check-url="{% url 'app_order:payment_check_status' order.pk %}">Проверить статус оплаты</button>
+                    data-check-url="{% url 'app_order:payment_check_status' order.pk %}"
+                    data-pending-label="Проверяем…">Проверить статус оплаты</button>
         </div>
 
         {% if payment %}

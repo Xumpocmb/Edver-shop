@@ -1,10 +1,12 @@
 import re
+from datetime import timedelta
 from decimal import Decimal
 from unittest import mock
 
 import requests
 from django.contrib.auth.models import User
 from django.test import TestCase
+from django.utils import timezone
 
 from app_order import erip_api, services, telegram
 from app_order.models import Order, Payment, TelegramBotSettings, TelegramRecipient
@@ -64,6 +66,88 @@ class PaymentServicesTestCase(TestCase):
         self.assertIn('error', result)
         payment = Payment.objects.get(pk=result['payment_id'])
         self.assertEqual(payment.status, 'failed')
+
+    @mock.patch.object(erip_api, 'erip_create_payment_invoice')
+    def test_repeated_clicks_reuse_same_invoice(self, mock_create):
+        mock_create.return_value = {
+            'payment_id': '2026-000001',
+            'payment_url': 'https://pay.example/inv/1',
+        }
+        first = services.create_payment_invoice(self.order)
+        second = services.create_payment_invoice(self.order)
+        third = services.create_payment_invoice(self.order)
+
+        mock_create.assert_called_once()
+        self.assertEqual(Payment.objects.count(), 1)
+        self.assertEqual(second['payment_url'], first['payment_url'])
+        self.assertEqual(third['payment_id'], first['payment_id'])
+        self.assertFalse(second['in_progress'])
+
+    @mock.patch.object(erip_api, 'erip_create_payment_invoice')
+    def test_click_while_invoice_in_flight_does_not_create_second(self, mock_create):
+        mock_create.return_value = {
+            'payment_id': '2026-000001',
+            'payment_url': 'https://pay.example/inv/1',
+        }
+        services.create_payment_invoice(self.order)
+        # Счёт есть, но ссылка ещё не получена — предыдущий запрос «в полёте».
+        Payment.objects.update(payment_url='')
+
+        result = services.create_payment_invoice(self.order)
+
+        mock_create.assert_called_once()
+        self.assertEqual(Payment.objects.count(), 1)
+        self.assertTrue(result['in_progress'])
+        self.assertIsNone(result['payment_url'])
+
+    @mock.patch.object(erip_api, 'erip_create_payment_invoice')
+    def test_new_invoice_after_previous_failed(self, mock_create):
+        mock_create.side_effect = [Exception('boom'), {
+            'payment_id': '2026-000002',
+            'payment_url': 'https://pay.example/inv/2',
+        }]
+        services.create_payment_invoice(self.order)
+        result = services.create_payment_invoice(self.order)
+
+        self.assertEqual(mock_create.call_count, 2)
+        self.assertEqual(Payment.objects.count(), 2)
+        self.assertEqual(result['payment_url'], 'https://pay.example/inv/2')
+        self.assertEqual(result['payment_id'], 2)
+
+    @mock.patch.object(erip_api, 'erip_create_payment_invoice')
+    def test_new_invoice_after_previous_expired(self, mock_create):
+        mock_create.return_value = {
+            'payment_id': '2026-000001',
+            'payment_url': 'https://pay.example/inv/1',
+        }
+        services.create_payment_invoice(self.order)
+        Payment.objects.update(
+            expires_at=timezone.now() - timedelta(minutes=1),
+        )
+
+        services.create_payment_invoice(self.order)
+
+        self.assertEqual(mock_create.call_count, 2)
+        self.assertEqual(Payment.objects.count(), 2)
+        self.assertEqual(Payment.objects.order_by('pk').last().pk, 2)
+
+    @mock.patch.object(erip_api, 'erip_create_payment_invoice')
+    def test_attempt_number_not_reused_after_deletion(self, mock_create):
+        mock_create.side_effect = [
+            {'payment_id': '1', 'payment_url': 'https://pay.example/inv/1'},
+            {'payment_id': '2', 'payment_url': 'https://pay.example/inv/2'},
+        ]
+        services.create_payment_invoice(self.order)
+        Payment.objects.update(expires_at=timezone.now() - timedelta(minutes=1))
+        services.create_payment_invoice(self.order)
+        self.assertEqual(
+            sorted(Payment.objects.values_list('idempotency_key', flat=True)),
+            [f'{self.order.number}-1', f'{self.order.number}-2'],
+        )
+
+        Payment.objects.filter(pk=1).delete()
+        # count() вернул бы 1 и повторно занял бы уже использованный ключ.
+        self.assertEqual(services._next_attempt(self.order), 3)
 
     @mock.patch.object(erip_api, 'erip_create_payment_invoice')
     @mock.patch.object(erip_api, 'erip_check_invoice_status')

@@ -22,9 +22,11 @@
         </p>
         <div style="display: flex; gap: .75rem; flex-wrap: wrap; margin-top: 1rem;">
             <button type="button" class="btn btn--primary"
-                    data-pay-url="{% url 'app_order:payment_create' order.pk %}">Оплатить</button>
+                    data-pay-url="{% url 'app_order:payment_create' order.pk %}"
+                    data-pending-label="Создаём счёт…">Оплатить</button>
             <button type="button" class="btn btn--ghost"
-                    data-check-url="{% url 'app_order:payment_check_status' order.pk %}">Проверить статус оплаты</button>
+                    data-check-url="{% url 'app_order:payment_check_status' order.pk %}"
+                    data-pending-label="Проверяем…">Проверить статус оплаты</button>
         </div>
     {% endif %}
 
