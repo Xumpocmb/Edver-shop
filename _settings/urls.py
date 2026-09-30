@@ -10,6 +10,7 @@ urlpatterns = [
     path('cart/', include('app_cart.urls')),
     path('profile/', include('app_user.urls')),
     path('orders/', include('app_order.urls')),
+    path('summernote/', include('django_summernote.urls')),
 ]
 
 if settings.DEBUG:

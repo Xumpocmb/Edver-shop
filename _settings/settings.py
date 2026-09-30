@@ -45,7 +45,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
 
-    'ckeditor',
+    'django_summernote',
 
     "app_home.apps.AppHomeConfig",
     "app_catalog.apps.AppCatalogConfig",
@@ -163,12 +163,29 @@ MAILERS = {
     },
 }
 
-CKEDITOR_CONFIGS = {
-    'default': {
-        'toolbar': 'full',
-        'height': 600,
+# Summernote (редактор в StaticPage).
+# Тема lite: редактор живёт в iframe, поэтому Bootstrap из тем bs3/bs4/bs5 не нужен.
+SUMMERNOTE_THEME = 'lite'
+
+SUMMERNOTE_CONFIG = {
+    'summernote': {
+        # LANGUAGE_CODE = 'ru-ru' не совпадает с ключом в таблице локалей пакета,
+        # без явного lang интерфейс редактора был бы на английском.
+        'lang': 'ru-RU',
         'width': '100%',
+        'height': 600,
+        'placeholder': 'Текст страницы...',
+        'toolbar': [
+            ['style', ['style']],
+            ['font', ['bold', 'italic', 'underline', 'strikethrough']],
+            ['para', ['ul', 'ol', 'paragraph']],
+            ['insert', ['link', 'picture']],
+            ['view', ['fullscreen']],
+        ],
     },
+    'attachment_filesize_limit': 10 * 1024 * 1024,
+    # По умолчанию загружать файлы может любой посетитель сайта.
+    'attachment_require_authentication': True,
 }
 
 # Django MPTT

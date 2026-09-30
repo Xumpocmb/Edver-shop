@@ -2,7 +2,8 @@ from django.db import models
 from django.core.validators import MinValueValidator, MaxValueValidator
 from django.db.models.signals import post_delete
 from django.dispatch import receiver
-from ckeditor.fields import RichTextField
+
+from .fields import SummernoteContentField
 
 
 class SiteLogo(models.Model):
@@ -350,7 +351,7 @@ def delete_slide_image(sender, instance, **kwargs):
 class StaticPage(models.Model):
     title = models.CharField(max_length=200, verbose_name='Заголовок')
     slug = models.SlugField(max_length=120, unique=True, verbose_name='Адрес (slug)')
-    content = RichTextField(blank=True, verbose_name='Содержимое', config_name='default')
+    content = SummernoteContentField(blank=True, verbose_name='Содержимое')
     is_published = models.BooleanField(default=True, verbose_name='Опубликована')
     updated_at = models.DateTimeField(auto_now=True, verbose_name='Дата обновления')
 

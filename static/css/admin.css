@@ -1,28 +1,7 @@
-/* ====== CKEditor в админке: растягиваем редактор на всю ширину поля ====== */
-.cke_reset_all,
-.cke_reset_all *,
-.cke_reset_all a,
-.cke_reset_all a:hover,
-.cke_reset_all a:link,
-.cke_reset_all a:visited,
-.cke_reset_all iframe {
-    color: inherit !important;
-    font: inherit !important;
-    word-spacing: normal !important;
-}
-
-.cke_chrome {
+/* ====== Summernote в админке: iframe-редактор на всю ширину поля ====== */
+.summernote-div,
+.summernote-div iframe {
     width: 100% !important;
-}
-
-.cke_inner {
-    width: 100% !important;
-}
-
-.cke_contents {
-    width: 100% !important;
-}
-
-textarea.ckeditor-source-area {
-    width: 100% !important;
+    max-width: 100%;
+    box-sizing: border-box;
 }
