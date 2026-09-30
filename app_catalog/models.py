@@ -254,7 +254,7 @@ class ProductImage(models.Model):
         verbose_name="Вариант (цвет)"
     )
     image = models.ImageField(
-        upload_to='products/%Y/%m/',
+        upload_to='products/',
         verbose_name="Изображение"
     )
     alt = models.CharField(
