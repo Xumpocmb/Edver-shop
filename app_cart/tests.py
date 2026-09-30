@@ -1,10 +1,11 @@
 from unittest import mock
 
+from django.contrib.auth import get_user_model
 from django.test import TestCase
 from django.urls import reverse
 
 from app_catalog.models import Category, Product, ProductVariant
-from app_cart.models import Cart, CartItem
+from app_cart.models import Cart, CartItem, PromoCode
 from app_order.models import Order
 
 
@@ -68,3 +69,31 @@ class CheckoutTests(TestCase):
         self.assertEqual(CartItem.objects.count(), 0)
         order = Order.objects.get(session_key=cart.session_key)
         self.assertEqual(order.full_name, 'Иван Иванов')
+
+
+class PromoCodeAdminTests(TestCase):
+    url = '/admin/app_cart/promocode/'
+
+    def setUp(self):
+        self.admin = get_user_model().objects.create_superuser('admin', 'a@a.by', 'pass')
+        self.promo = PromoCode.objects.create(
+            code='SUMMER20', discount_type='percent', discount_value=20,
+        )
+
+    def test_promo_code_is_the_link_not_the_id(self):
+        self.client.force_login(self.admin)
+
+        html = self.client.get(self.url).content.decode()
+
+        self.assertIn(
+            f'<a href="/admin/app_cart/promocode/{self.promo.pk}/change/">SUMMER20</a>',
+            html,
+        )
+
+    def test_is_active_stays_editable_in_the_list(self):
+        self.client.force_login(self.admin)
+
+        html = self.client.get(self.url).content.decode()
+
+        self.assertIn(f'name="_selected_action" value="{self.promo.pk}"', html)
+        self.assertIn('name="form-0-is_active"', html)

@@ -19,7 +19,7 @@ class CartAdmin(admin.ModelAdmin):
 @admin.register(PromoCode)
 class PromoCodeAdmin(admin.ModelAdmin):
     list_display = (
-        'id', 'code', 'discount_type', 'discount_value',
+        'code', 'discount_type', 'discount_value',
         'used_count', 'max_uses', 'is_active', 'valid_to',
     )
     list_filter = ('is_active', 'discount_type')
