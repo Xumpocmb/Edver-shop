@@ -1,6 +1,6 @@
 from django.contrib import admin
 from django.http import HttpResponse
-from django.urls import path
+from django.urls import path, reverse
 from django.utils import timezone
 from django.utils.html import format_html
 
@@ -31,6 +31,8 @@ class CategoryAdmin(admin.ModelAdmin):
 class ProductVariantInline(admin.TabularInline):
     model = ProductVariant
     extra = 1
+    # Ссылка «Изменить» у каждой сохранённой строки — на страницу варианта.
+    show_change_link = True
     fields = [
         'color', 'color_hex', 'price',
         'discount_percent', 'stock', 'status', 'order', 'is_active',
@@ -110,9 +112,13 @@ class ProductVariantAdmin(admin.ModelAdmin):
     list_editable = ['price', 'discount_percent', 'stock', 'status', 'order', 'is_active']
     autocomplete_fields = ['product']
     inlines = [ProductImageInline]
+    readonly_fields = ['product_link']
     fieldsets = (
         (None, {
             'fields': (('product', 'color'), 'color_hex', 'status')
+        }),
+        ('Ссылки', {
+            'fields': ('product_link',),
         }),
         ('Цены', {
             'fields': ('price', 'discount_percent')
@@ -121,3 +127,11 @@ class ProductVariantAdmin(admin.ModelAdmin):
             'fields': (('stock', 'order'), 'is_active'),
         }),
     )
+
+    @admin.display(description='Карточка товара')
+    def product_link(self, obj):
+        """Ссылка на родительский товар (автокомплит открывает поиск, а не карточку)."""
+        if not obj.product_id:
+            return '-'
+        url = reverse('admin:app_catalog_product_change', args=[obj.product_id])
+        return format_html('<a href="{}">{}</a>', url, obj.product)

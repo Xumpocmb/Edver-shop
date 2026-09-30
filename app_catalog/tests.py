@@ -301,6 +301,37 @@ class YmlExportAdminTests(TestCase):
         self.assertIn(self.url, html)
 
 
+class AdminCrossLinksTests(TestCase):
+    def setUp(self):
+        self.client.force_login(User.objects.create_superuser('admin', 'a@a.by', 'pass'))
+        self.category = Category.objects.create(name='Сумки', slug='sumki')
+        self.product = Product.objects.create(
+            name='Сумка-шопер', slug='sumka-shopper', category=self.category,
+        )
+        self.variant = ProductVariant.objects.create(
+            product=self.product, color='Бордовый', price='200.00',
+        )
+
+    def test_variant_row_links_to_variant_page(self):
+        html = self.client.get(
+            f'/admin/app_catalog/product/{self.product.pk}/change/'
+        ).content.decode()
+
+        self.assertIn(f'/admin/app_catalog/productvariant/{self.variant.pk}/change/', html)
+
+    def test_variant_page_links_to_parent_product(self):
+        html = self.client.get(
+            f'/admin/app_catalog/productvariant/{self.variant.pk}/change/'
+        ).content.decode()
+
+        self.assertIn(f'/admin/app_catalog/product/{self.product.pk}/change/', html)
+
+    def test_variant_add_page_renders_without_product(self):
+        response = self.client.get('/admin/app_catalog/productvariant/add/')
+
+        self.assertEqual(response.status_code, 200)
+
+
 class ExportYmlCommandTests(TestCase):
     def test_command_writes_file(self):
         from django.core.management import call_command
