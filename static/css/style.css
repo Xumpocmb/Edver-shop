@@ -3083,6 +3083,8 @@ button {
 
     .promo-input {
         max-width: none;
+        /* В колонке flex-basis задаёт высоту: однострочному полю она не нужна. */
+        flex: 0 0 auto;
     }
 
     .promo-row__btn {
