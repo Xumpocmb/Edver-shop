@@ -16,8 +16,8 @@ from PIL import Image, ImageOps
 
 THUMBS_DIR = "thumbs"
 
-WEBP_QUALITY = 78
-JPEG_QUALITY = 82
+WEBP_QUALITY = 88
+JPEG_QUALITY = 90
 
 WEBP = "webp"
 JPEG = "jpg"
@@ -57,9 +57,8 @@ def _has_alpha(image):
 def _load_resized(field_file, width):
     """Открывает исходник, уменьшает до ``width`` по большей стороне."""
     with Image.open(field_file) as source:
-        if source.format == "JPEG":
-            # Быстрое масштабирование силами JPEG-декодера.
-            source.draft("RGB", (width, width))
+        # Полная декодировка без draft(): scaled-IDCT заметно размывает мелкие
+        # детали, а превью генерируются один раз и весят немного.
         image = ImageOps.exif_transpose(source)
         image.thumbnail((width, width), Image.Resampling.LANCZOS)
         return image
