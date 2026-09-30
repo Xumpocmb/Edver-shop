@@ -52,12 +52,12 @@
 
 
     <!-- ===== КАТЕГОРИИ ===== -->
+    {% if categories %}
     <section class="section container">
         <div class="section-head">
             <h2 class="section-title">Категории каталога</h2>
             <a href="/catalog/" class="section-link">Смотреть все →</a>
         </div>
-        {% if categories %}
         <div class="categories-grid">
             {% for c in categories %}
                 <a href="{{ c.get_absolute_url }}" class="category-card"
@@ -76,56 +76,56 @@
                 </a>
             {% endfor %}
         </div>
-        {% endif %}
     </section>
+    {% endif %}
 
 
     <!-- ===== НОВИНКИ ===== -->
+    {% if new_products %}
     <section class="section container">
         <div class="section-head">
             <h2 class="section-title"><span class="badge badge--new">NEW</span> Новинки</h2>
             <a href="/catalog/" class="section-link">Все новинки →</a>
         </div>
-        {% if new_products %}
         <div class="products-grid">
             {% for p in new_products %}
                 {% include 'app_catalog/_product_card.html' with product=p %}
             {% endfor %}
         </div>
-        {% endif %}
     </section>
+    {% endif %}
 
 
     <!-- ===== ПОПУЛЯРНЫЕ ===== -->
+    {% if popular_products %}
     <section class="section container">
         <div class="section-head">
             <h2 class="section-title"><span class="badge badge--popular">HOT</span> Популярные товары</h2>
             <a href="/catalog/" class="section-link">Все популярные →</a>
         </div>
-        {% if popular_products %}
         <div class="products-grid">
             {% for p in popular_products %}
                 {% include 'app_catalog/_product_card.html' with product=p %}
             {% endfor %}
         </div>
-        {% endif %}
     </section>
+    {% endif %}
 
 
     <!-- ===== АКЦИИ ===== -->
+    {% if sale_products %}
     <section class="section container section--sale">
         <div class="section-head">
             <h2 class="section-title"><span class="badge badge--sale">%</span> Скидки и акции</h2>
             <a href="/catalog/?on_sale=1" class="section-link">Все акции →</a>
         </div>
-        {% if sale_products %}
         <div class="products-grid">
             {% for p in sale_products %}
                 {% include 'app_catalog/_product_card.html' with product=p %}
             {% endfor %}
         </div>
-        {% endif %}
     </section>
+    {% endif %}
 
     {% else %}
 
