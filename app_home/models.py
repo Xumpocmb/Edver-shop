@@ -3,6 +3,8 @@ from django.core.validators import MinValueValidator, MaxValueValidator
 from django.db.models.signals import post_delete
 from django.dispatch import receiver
 
+from app_media.fields import WebPImageField
+
 from .fields import SummernoteContentField
 
 
@@ -303,7 +305,7 @@ class Slide(models.Model):
         default='var(--color-accent)',
         verbose_name='Цвет фона (CSS)',
     )
-    image = models.ImageField(
+    image = WebPImageField(
         upload_to='slides/',
         blank=True,
         null=True,

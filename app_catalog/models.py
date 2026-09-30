@@ -3,11 +3,13 @@ from decimal import Decimal, ROUND_HALF_UP
 from django.db import models
 from django.urls import reverse
 
+from app_media.fields import WebPImageField
+
 
 class Category(models.Model):
     name = models.CharField(max_length=255, verbose_name="Название")
     slug = models.SlugField(max_length=255, unique=True, db_index=True)
-    image = models.ImageField(
+    image = WebPImageField(
         upload_to='categories/',
         null=True,
         blank=True,
@@ -253,7 +255,7 @@ class ProductImage(models.Model):
         related_name='images',
         verbose_name="Вариант (цвет)"
     )
-    image = models.ImageField(
+    image = WebPImageField(
         upload_to='products/',
         verbose_name="Изображение"
     )

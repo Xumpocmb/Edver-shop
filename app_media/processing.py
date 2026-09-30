@@ -42,7 +42,7 @@ def is_processable(name):
 
 
 def thumb_name(name, width, fmt):
-    """Путь производной версии: ``thumbs/products/2026/09/photo_320.webp``."""
+    """Путь производной версии: ``thumbs/products/photo_320.webp``."""
     path = PurePosixPath(name)
     stem = f"{path.stem}_{width}.{fmt}"
     parent = str(path.parent)
@@ -50,7 +50,7 @@ def thumb_name(name, width, fmt):
     return f"{THUMBS_DIR}/{relative}"
 
 
-def _has_alpha(image):
+def has_alpha(image):
     return image.mode in ("RGBA", "LA") or (image.mode == "P" and "transparency" in image.info)
 
 
@@ -78,7 +78,7 @@ def _encode(image, fmt):
 
 
 def _fallback_format(image):
-    return PNG if _has_alpha(image) else JPEG
+    return PNG if has_alpha(image) else JPEG
 
 
 def generate(field_file, profile, force=False):

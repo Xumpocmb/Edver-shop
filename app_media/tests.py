@@ -11,7 +11,7 @@ from PIL import Image
 
 from app_catalog.models import Category, Product, ProductImage, ProductVariant
 from app_home.models import Slide
-from app_media import processing
+from app_media import fields, processing
 from app_media.payload import variant_payload
 
 MEDIA_ROOT = tempfile.mkdtemp(prefix="app-media-tests-")
@@ -33,15 +33,84 @@ class ImageTestCase(TestCase):
         super().tearDownClass()
 
     def save_image(self, instance, field_name="image", **kwargs):
-        extension = kwargs.get("fmt", "jpg").lower()
-        getattr(instance, field_name).save(
-            f"{uuid4().hex}.{extension}", make_image(**kwargs), save=True
-        )
+        name = kwargs.pop("name", None) or f"{uuid4().hex}.{kwargs.get('fmt', 'jpg').lower()}"
+        getattr(instance, field_name).save(name, make_image(**kwargs), save=True)
         return getattr(instance, field_name)
 
     @staticmethod
     def stem_of(field_file):
         return field_file.name.rsplit(".", 1)[0].rsplit("/", 1)[-1]
+
+
+@override_settings(MEDIA_ROOT=MEDIA_ROOT)
+class WebPFieldTests(ImageTestCase):
+    """Загруженная фотография ложится в хранилище сразу в WebP."""
+
+    def setUp(self):
+        self.category = Category.objects.create(name="Сумки", slug="sumki")
+        self.product = Product.objects.create(name="Сумка", slug="sumka", category=self.category)
+        self.variant = ProductVariant.objects.create(
+            product=self.product, color="красный", price="100.00"
+        )
+
+    def test_photo_is_stored_as_webp_with_readable_name(self):
+        file = self.save_image(
+            self.variant.images.create(alt="Красная"), name="Сумка красная (2).jpg"
+        )
+
+        self.assertEqual(file.name, "products/sumka-krasnaya-2.webp")
+        with Image.open(file.storage.open(file.name)) as image:
+            self.assertEqual(image.format, "WEBP")
+            self.assertEqual(image.size, (2400, 1600))
+
+    def test_photo_derivatives_are_named_after_it_with_width(self):
+        file = self.save_image(self.variant.images.create(alt="Красная"), name="sumka.jpg")
+        storage = file.storage
+
+        for width in (320, 640, 1200, 2000):
+            for fmt in ("jpg", "webp"):
+                self.assertTrue(
+                    storage.exists(f"thumbs/products/sumka_{width}.{fmt}"),
+                    f"sumka_{width}.{fmt}",
+                )
+
+    def test_transparency_survives_conversion(self):
+        file = self.save_image(
+            self.variant.images.create(alt="Прозрачная"), name="sumka.png", fmt="png", mode="RGBA"
+        )
+
+        with Image.open(file.storage.open(file.name)) as image:
+            self.assertEqual(image.mode, "RGBA")
+
+    def test_svg_is_stored_as_is(self):
+        svg = SimpleUploadedFile(
+            "logo.svg", b'<svg xmlns="http://www.w3.org/2000/svg"/>', "image/svg+xml"
+        )
+        self.variant.images.create(alt="Логотип").image.save("logo.svg", svg, save=True)
+        image = self.variant.images.first().image
+
+        self.assertEqual(image.name, "products/logo.svg")
+
+    def test_slide_photo_is_stored_as_webp(self):
+        slide = Slide.objects.create(title="Акция", bg="#123456")
+        file = self.save_image(
+            slide, name="Осенняя распродажа.jpg", size=(2400, 1200)
+        )
+
+        self.assertEqual(file.name, "slides/osennyaya-rasprodazha.webp")
+        for width in processing.PROFILES["slide"]:
+            self.assertTrue(
+                file.storage.exists(f"thumbs/slides/osennyaya-rasprodazha_{width}.webp"), width
+            )
+
+    def test_readable_stem_falls_back_to_uuid(self):
+        # Из этого имени после транслитерации ничего не остаётся.
+        stem = fields.readable_stem("日本語.jpg")
+        self.assertEqual(len(stem), 32)
+        self.assertNotEqual(stem, fields.readable_stem("日本語.jpg"))
+        self.assertEqual(
+            fields.readable_stem("a" * 80 + ".jpg"), "a" * fields.MAX_STEM_LENGTH
+        )
 
 
 @override_settings(MEDIA_ROOT=MEDIA_ROOT)

@@ -1,11 +1,11 @@
 from decimal import Decimal
 from django.core.management.base import BaseCommand
 from django.core.files.base import ContentFile
-from django.utils.text import slugify
 
 from app_catalog.models import Category, Product, ProductVariant, ProductImage
 from app_cart.models import PromoCode
 from app_home.models import SiteReview
+from app_media.naming import translit_slug
 
 
 SVG_PLACEHOLDER = """<svg xmlns="http://www.w3.org/2000/svg" width="{w}" height="{h}" viewBox="0 0 {w} {h}">
@@ -37,25 +37,6 @@ GRADIENTS = [
 def _svg(name, color_idx=0):
     c1, c2 = GRADIENTS[color_idx % len(GRADIENTS)]
     return SVG_PLACEHOLDER.format(w=800, h=800, c1=c1, c2=c2, label=name[:20])
-
-
-TRANSLIT_DICT = {
-    'а': 'a', 'б': 'b', 'в': 'v', 'г': 'g', 'д': 'd', 'е': 'e', 'ё': 'e',
-    'ж': 'zh', 'з': 'z', 'и': 'i', 'й': 'y', 'к': 'k', 'л': 'l', 'м': 'm',
-    'н': 'n', 'о': 'o', 'п': 'p', 'р': 'r', 'с': 's', 'т': 't', 'у': 'u',
-    'ф': 'f', 'х': 'h', 'ц': 'ts', 'ч': 'ch', 'ш': 'sh', 'щ': 'shch',
-    'ъ': '', 'ы': 'y', 'ь': '', 'э': 'e', 'ю': 'yu', 'я': 'ya',
-}
-
-_TRANSLIT_TABLE = str.maketrans(TRANSLIT_DICT)
-
-
-def _translit(text):
-    return text.lower().translate(_TRANSLIT_TABLE)
-
-
-def _slug(text):
-    return slugify(_translit(text))
 
 
 class Command(BaseCommand):
@@ -628,7 +609,7 @@ class Command(BaseCommand):
 
             gender_label = 'Унисекс' if gender is None else ('Мужской' if gender == 'M' else 'Женский')
 
-            slug = _slug(pname)
+            slug = translit_slug(pname)
             if Product.objects.filter(slug=slug).exists():
                 slug = f'{slug}-{cat_slug}'
 
@@ -747,13 +728,13 @@ class Command(BaseCommand):
         # Чинит товары/категории, созданные старой версией сида с кириллицей.
         changed = 0
         for obj in Category.objects.all():
-            new = _slug(obj.name)
+            new = translit_slug(obj.name)
             if obj.slug != new:
                 obj.slug = new
                 obj.save(update_fields=['slug'])
                 changed += 1
         for obj in Product.objects.all().select_related('category'):
-            new = _slug(obj.name)
+            new = translit_slug(obj.name)
             if Product.objects.filter(slug=new).exclude(pk=obj.pk).exists():
                 new = f'{new}-{obj.category.slug}'
             if obj.slug != new:
