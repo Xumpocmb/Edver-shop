@@ -8,7 +8,7 @@
     {% block meta_description %}
     <meta name="description" content="{% firstof meta_description 'EDVER Shop — интернет-магазин сумок, чемоданов, кошельков и аксессуаров. Широкий выбор, быстрая доставка по Беларуси.' %}">
     {% endblock %}
-    <meta name="robots" content="index, follow">
+    <meta name="robots" content="{% block robots %}index, follow{% endblock %}">
     <meta name="yandex-verification" content="4e5351db272011f0" />
     <meta name="google-site-verification" content="nfHLF1CcKhkN3wgb53onu3XibzHakuVlV7J4h85-D-g" />
     <link rel="canonical" href="{{ request.build_absolute_uri }}">
@@ -28,7 +28,7 @@
     {% else %}
         <link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2064%2064'%3E%3Crect%20width='64'%20height='64'%20rx='12'%20fill='%231b4332'/%3E%3Ctext%20x='32'%20y='44'%20font-family='Arial,sans-serif'%20font-size='36'%20font-weight='800'%20fill='%23fff'%20text-anchor='middle'%3EE%3C/text%3E%3C/svg%3E">
     {% endif %}
-    <link rel="stylesheet" href="{% static 'css/style.css' %}?v=4">
+    <link rel="stylesheet" href="{% static 'css/style.css' %}?v=5">
     {% block title %}
     <title>EDVER Shop</title>
     {% endblock %}

@@ -1,6 +1,12 @@
-from django.test import TestCase
+from django.contrib.auth import get_user_model
+from django.contrib.auth.models import AnonymousUser
+from django.core.exceptions import PermissionDenied
+from django.test import RequestFactory, TestCase, override_settings
+from django.urls import path
 
+from _settings import urls as site_urls
 from app_catalog.models import Category, Product, ProductVariant
+from app_home import error_views
 
 
 def make_product(slug, **flags):
@@ -67,3 +73,84 @@ class HomeSectionsTests(TestCase):
             {'new': False, 'popular': False, 'sale': False, 'categories': False},
         )
         self.assertIn('empty-state', html)
+
+
+def _boom(request):
+    raise RuntimeError('Шлюз оплаты вернул 502')
+
+
+def _forbidden(request):
+    raise PermissionDenied('Нужен доступ администратора')
+
+
+handler403 = 'app_home.error_views.permission_denied'
+handler404 = 'app_home.error_views.page_not_found'
+handler500 = 'app_home.error_views.server_error'
+
+urlpatterns = [
+    *site_urls.urlpatterns,
+    path('boom/', _boom),
+    path('forbidden/', _forbidden),
+]
+
+
+@override_settings(ROOT_URLCONF=__name__, DEBUG=False, SECURE_SSL_REDIRECT=False)
+class ErrorPagesTests(TestCase):
+    """403/404/500 отдают собственные страницы, детали ошибки — только суперпользователю."""
+
+    def get(self, path):
+        self.client.raise_request_exception = False
+        response = self.client.get(path)
+        self.assertIn(response.status_code, [403, 404, 500])
+        return response.content.decode()
+
+    def login(self, **kwargs):
+        user = get_user_model().objects.create_user(**kwargs)
+        self.client.login(username=kwargs['username'], password=kwargs['password'])
+        return user
+
+    def test_404_page(self):
+        html = self.get('/net-takoy-stranicy/')
+        self.assertIn('Страница не найдена', html)
+        self.assertIn('error-page', html)
+
+    def test_403_page(self):
+        html = self.get('/forbidden/')
+        self.assertIn('Доступ закрыт', html)
+
+    def test_500_page(self):
+        self.assertIn('Что-то пошло не так', self.get('/boom/'))
+
+    def test_error_pages_are_not_indexed(self):
+        for path_ in ['/net-takoy-stranicy/', '/forbidden/', '/boom/']:
+            with self.subTest(path=path_):
+                self.assertIn('noindex, nofollow', self.get(path_))
+
+    def test_500_hides_details_from_anonymous(self):
+        html = self.get('/boom/')
+        self.assertNotIn('Технические детали', html)
+        self.assertNotIn('Шлюз оплаты вернул 502', html)
+
+    def test_500_hides_details_from_regular_user(self):
+        self.login(username='klient', password='test-password-1')
+        self.assertNotIn('Технические детали', self.get('/boom/'))
+
+    def test_500_shows_details_to_superuser(self):
+        get_user_model().objects.create_superuser(
+            username='boss', email='boss@example.com', password='test-password-1',
+        )
+        self.client.login(username='boss', password='test-password-1')
+
+        html = self.get('/boom/')
+        self.assertIn('Технические детали', html)
+        self.assertIn('builtins.RuntimeError', html)
+        self.assertIn('Шлюз оплаты вернул 502', html)
+        self.assertIn('GET /boom/', html)
+
+    def test_500_falls_back_if_page_cannot_be_rendered(self):
+        request = RequestFactory().get('/boom/')
+        request.user = AnonymousUser()
+
+        response = error_views.server_error(request, template_name='app_home/net-takogo.html')
+        self.assertEqual(response.status_code, 500)
+        self.assertIn('серверная ошибка', response.content.decode())

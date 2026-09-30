@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+
+{% block title %}
+<title>404 — страница не найдена — EDVER Shop</title>
+{% endblock %}
+
+{% block robots %}noindex, nofollow{% endblock %}
+
+{% block content %}
+{% include "app_home/_error_page.html" %}
+{% endblock %}

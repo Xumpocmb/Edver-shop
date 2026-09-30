@@ -1,0 +1,43 @@
+<section class="container error-page">
+    <div class="error-page__code" aria-hidden="true">{{ code }}</div>
+    <div class="error-page__icon" aria-hidden="true">{{ icon }}</div>
+
+    <h1 class="error-page__title">{{ title }}</h1>
+    <p class="error-page__text">{{ text }}</p>
+
+    <div class="error-page__actions">
+        <a href="/" class="btn btn--primary btn--lg">На главную</a>
+        <a href="/catalog/" class="btn btn--ghost btn--lg">В каталог</a>
+        {% if show_login %}
+        <a href="{% url 'app_user:login' %}?next={{ request.get_full_path|urlencode }}" class="btn btn--ghost btn--lg">Войти</a>
+        {% endif %}
+    </div>
+
+    {% if error %}
+    <details class="error-details">
+        <summary class="error-details__summary">Технические детали ошибки — только для администратора</summary>
+
+        <dl class="error-details__grid">
+            <dt class="error-details__key">Тип</dt>
+            <dd class="error-details__value">{{ error.type }}</dd>
+
+            <dt class="error-details__key">Сообщение</dt>
+            <dd class="error-details__value">{{ error.message }}</dd>
+
+            <dt class="error-details__key">Запрос</dt>
+            <dd class="error-details__value">{{ error.method }} {{ error.path }}</dd>
+
+            <dt class="error-details__key">Пользователь</dt>
+            <dd class="error-details__value">{{ error.actor }}</dd>
+
+            <dt class="error-details__key">IP</dt>
+            <dd class="error-details__value">{{ error.remote_addr }}</dd>
+
+            <dt class="error-details__key">Откуда переход</dt>
+            <dd class="error-details__value">{{ error.referer }}</dd>
+        </dl>
+
+        <pre class="error-details__trace">{{ error.traceback }}</pre>
+    </details>
+    {% endif %}
+</section>
