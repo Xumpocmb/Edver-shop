@@ -109,7 +109,7 @@
         if (data.has_promo) {
             // Промокод есть — показываем строку скидки, скрываем инпут
             if (promoRow) {
-                promoRow.innerHTML = '<span>Промокод (' + data.promo_code + '):</span><span>-' + Number(data.promo_discount || 0).toLocaleString('ru-RU') + ' <span class="nbrb-icon nbrb-icon-byn"></span></span>';
+                promoRow.innerHTML = '<span class="cart-summary__label">Промокод (' + data.promo_code + '):</span><span>-' + Number(data.promo_discount || 0).toLocaleString('ru-RU') + ' <span class="nbrb-icon nbrb-icon-byn"></span></span>';
                 promoRow.style.display = '';
             }
             if (promoInputRow) promoInputRow.style.display = 'none';

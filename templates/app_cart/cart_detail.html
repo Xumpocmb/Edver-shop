@@ -74,16 +74,15 @@
 
                 {% if cart.promo_code %}
                 <div class="cart-summary__row cart-summary__row--discount">
-                    <span>Промокод ({{ cart.promo_code.code }}):</span>
+                    <span class="cart-summary__label">Промокод ({{ cart.promo_code.code }}):</span>
                     <span>-{{ cart.promo_discount }} BYN</span>
                 </div>
-                <button type="button" class="btn btn--text btn--sm js-remove-promo"
-                        style="align-self: flex-start;">Удалить промокод</button>
+                <button type="button" class="cart-summary__promo-remove js-remove-promo">Удалить промокод</button>
                 {% else %}
                 <div class="promo-row">
-                    <input type="text" name="promo_code_input" id="promoInput"
-                           placeholder="Промокод" class="promo-input">
-                    <button type="button" class="btn btn--ghost btn--sm" id="applyPromoBtn">Применить</button>
+                    <input type="text" name="promo_code_input" id="promoInput" placeholder="Промокод"
+                           class="promo-input" aria-label="Промокод" autocomplete="off">
+                    <button type="button" class="btn btn--ghost promo-row__btn" id="applyPromoBtn">Применить</button>
                 </div>
                 {% endif %}
 
