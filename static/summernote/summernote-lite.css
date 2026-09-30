@@ -1,0 +1,5 @@
+/* django-summernote 0.8.20.0 в теме 'lite' подключает summernote-lite.css,
+   хотя пакет поставляет только summernote-lite.min.css — из-за этого стили
+   редактора отдавали 404. Этот файл перекрывает путь из пакета и импортирует
+   реальную таблицу стилей. */
+@import url("summernote-lite.min.css");
