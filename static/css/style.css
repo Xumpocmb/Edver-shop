@@ -1243,14 +1243,20 @@ button {
     padding: 3rem 20px;
     display: grid;
     gap: 2rem;
-    grid-template-columns: 1.5fr 1fr 1fr;
+    grid-template-columns: 1fr 1fr;
+}
+
+.footer-info {
+    grid-column: 1 / -1;
+    justify-self: center;
+    max-width: 42rem;
+    text-align: center;
 }
 
 .footer-info p {
     font-size: .92rem;
     line-height: 1.7;
     opacity: .85;
-    max-width: 42rem;
 }
 
 .footer-info p+p {
@@ -1269,7 +1275,8 @@ button {
 .footer-col {
     display: flex;
     flex-direction: column;
-    align-items: flex-start;
+    align-items: center;
+    text-align: center;
     gap: .6rem;
 }
 
@@ -1325,7 +1332,7 @@ button {
     color: #fff;
     opacity: .9;
     cursor: pointer;
-    text-align: left;
+    text-align: center;
     transition: opacity .2s;
 }
 
