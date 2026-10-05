@@ -89,7 +89,7 @@
         </div>
         <div class="products-grid">
             {% for p in new_products %}
-                {% include 'app_catalog/_product_card.html' with product=p %}
+                {% include 'app_catalog/_product_card.html' with variant=p.main_variant %}
             {% endfor %}
         </div>
     </section>
@@ -105,7 +105,7 @@
         </div>
         <div class="products-grid">
             {% for p in popular_products %}
-                {% include 'app_catalog/_product_card.html' with product=p %}
+                {% include 'app_catalog/_product_card.html' with variant=p.main_variant %}
             {% endfor %}
         </div>
     </section>
@@ -121,7 +121,7 @@
         </div>
         <div class="products-grid">
             {% for p in sale_products %}
-                {% include 'app_catalog/_product_card.html' with product=p %}
+                {% include 'app_catalog/_product_card.html' with variant=p.main_variant %}
             {% endfor %}
         </div>
     </section>

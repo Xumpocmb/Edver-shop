@@ -74,6 +74,31 @@ class HomeSectionsTests(TestCase):
         )
         self.assertIn('empty-state', html)
 
+    def test_card_shows_name_price_and_variant_id(self):
+        make_product('tovar-1', is_new=True)
+        html = self.get_home()
+        variant = ProductVariant.objects.get(product__slug='tovar-1')
+        self.assertIn('>tovar-1</a>', html)
+        self.assertIn('100,00 BYN', html)
+        self.assertIn(f'data-variant-id="{variant.id}"', html)
+        self.assertIn(f'?variant={variant.id}"', html)
+
+    def test_products_without_active_variants_are_hidden(self):
+        product = make_product('tovar-1', is_new=True)
+        ProductVariant.objects.filter(product=product).update(is_active=False)
+        self.assertFalse(
+            self.headings(self.get_home())['new'],
+            'товар без активного варианта попал в секцию — карточка будет пустой',
+        )
+
+    def test_product_with_several_variants_is_shown_once(self):
+        product = make_product('tovar-1', is_new=True)
+        ProductVariant.objects.create(
+            product=product, color='Белый', price='120.00', stock=1, is_active=True,
+        )
+        html = self.get_home()
+        self.assertEqual(html.count('data-product-name="tovar-1'), 1)
+
 
 def _boom(request):
     raise RuntimeError('Шлюз оплаты вернул 502')

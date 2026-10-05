@@ -6,7 +6,15 @@ from .models import Advantage, SiteReview, Slide, StaticPage
 
 
 def home(request):
-    products = Product.objects.filter(is_active=True).select_related('category').prefetch_related('variants__images')
+    # Карточка строится по варианту (цвету), поэтому товар без активного
+    # варианта показывать нельзя: в сетке появится пустая карточка без фото и цены.
+    # distinct() — иначе товар повторится в сетке по разу на каждый вариант.
+    products = (
+        Product.objects.filter(is_active=True, variants__is_active=True)
+        .select_related('category')
+        .prefetch_related('variants__images')
+        .distinct()
+    )
 
     popular = products.filter(is_popular=True)[:8]
     new_products = products.filter(is_new=True)[:8]
