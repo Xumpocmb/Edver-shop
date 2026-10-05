@@ -31,7 +31,6 @@ class CheckoutTests(TestCase):
                     'phone': '+375296111111',
                     'delivery_type': 'belpochta',
                     'address': 'ул. Ленина, 1',
-                    'privacy_consent': '1',
                 },
             )
 
@@ -64,7 +63,6 @@ class CheckoutTests(TestCase):
                 'address': 'ул. Ленина, 1',
 'region': 'Минская область',
                     'postal_code': '220030',
-                    'privacy_consent': '1',
             },
         )
 
@@ -95,7 +93,6 @@ class CheckoutTests(TestCase):
                     'phone': '+375296111111',
                     'delivery_type': 'belpochta',
                     'address': 'ул. Ленина, 1',
-                    'privacy_consent': '1',
                 },
             )
 
@@ -128,36 +125,24 @@ class ConsentCheckboxTests(TestCase):
             'address': 'ул. Ленина, 1',
         }
 
-    def test_cart_page_has_checkbox_and_policy_link(self):
+    def test_cart_page_has_note_with_policy_link(self):
         html = self.client.get(reverse('app_cart:cart_detail')).content.decode()
 
-        self.assertIn('name="privacy_consent"', html)
-        self.assertIn('required', html)
         self.assertIn(reverse('app_home:privacy'), html)
-        self.assertIn('согласен на обработку персональных данных', html)
+        self.assertIn('Сведения из формы используются', html)
+        self.assertNotIn('name="privacy_consent"', html)
 
-    def test_checkbox_stands_before_order_button(self):
+    def test_note_stands_before_order_button(self):
         html = self.client.get(reverse('app_cart:cart_detail')).content.decode()
 
         self.assertLess(
-            html.index('name="privacy_consent"'),
+            html.index('Сведения из формы используются'),
             html.index('Оформить заказ'),
         )
 
-    def test_checkout_is_rejected_without_consent(self):
-        with mock.patch('app_cart.views.notify_new_order') as notify:
-            response = self.client.post(reverse('app_cart:checkout'), self.data)
-
-        self.assertRedirects(response, reverse('app_cart:cart_detail'))
-        self.assertFalse(Order.objects.exists())
-        notify.assert_not_called()
-        self.assertTrue(CartItem.objects.filter(cart=self.cart).exists())
-
-    def test_checkout_passes_with_consent(self):
+    def test_checkout_passes_without_consent_field(self):
         with mock.patch('app_cart.views.notify_new_order'):
-            response = self.client.post(
-                reverse('app_cart:checkout'), {**self.data, 'privacy_consent': '1'},
-            )
+            response = self.client.post(reverse('app_cart:checkout'), self.data)
 
         self.assertEqual(Order.objects.count(), 1)
         self.assertEqual(response.status_code, 302)

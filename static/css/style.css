@@ -3105,22 +3105,11 @@ button {
     margin-bottom: 1.25rem;
 }
 
-.consent-row {
+.checkout-note {
     margin-top: 1.5rem;
-    font-size: .92rem;
-}
-
-.consent-row__label {
-    display: inline-flex;
-    align-items: baseline;
-    padding: 0;
-}
-
-.consent-row__link {
-    display: block;
-    margin-top: .35rem;
-    /* отступ под текст, а не под галочку: 16px чекбокс + .5rem зазор */
-    margin-left: 1.5rem;
+    font-size: .82rem;
+    line-height: 1.5;
+    color: var(--color-text-muted);
 }
 
 .form-grid {
