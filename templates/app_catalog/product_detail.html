@@ -160,63 +160,65 @@
                     </button>
                 </div>
             </div>
-        </div>
-    </section>
 
-    <!-- ОПИСАНИЕ -->
-    {% if product.description or product.short_description %}
-    <section class="container product-section">
-        <h2 class="product-section__title">Описание</h2>
-        <div class="product-description">
-            {% if product.short_description %}
-            <p class="product-description__lead">{{ product.short_description }}</p>
+            <!-- ОПИСАНИЕ -->
+            {% if product.description or product.short_description %}
+            <div class="product-info__block">
+                <h2 class="product-info__block-title">Описание</h2>
+                <div class="product-description">
+                    {% if product.short_description %}
+                    <p class="product-description__lead">{{ product.short_description }}</p>
+                    {% endif %}
+                    {% if product.description %}
+                    <div class="product-description__body">{{ product.description|linebreaks }}</div>
+                    {% endif %}
+                </div>
+            </div>
             {% endif %}
-            {% if product.description %}
-            <div class="product-description__body">{{ product.description|linebreaks }}</div>
-            {% endif %}
-        </div>
-    </section>
-    {% endif %}
 
-    <!-- ХАРАКТЕРИСТИКИ ПОЛНЫЕ -->
-    <section class="container product-section">
-        <h2 class="product-section__title">Характеристики</h2>
-        <table class="specs-table">
-            <tr>
-                <th>Цвет</th>
-                <td id="specColor">{{ variant.color }}</td>
-            </tr>
-            {% if product.material %}<tr>
-                <th>Материал</th>
-                <td>{{ product.material }}</td>
-            </tr>{% endif %}
-            {% if product.gender %}<tr>
-                <th>Пол</th>
-                <td>{{ product.get_gender_display }}</td>
-            </tr>{% endif %}
-            {% if product.dimensions %}<tr>
-                <th>Размеры</th>
-                <td>{{ product.dimensions }}</td>
-            </tr>{% endif %}
-            {% if product.weight %}<tr>
-                <th>Вес</th>
-                <td>{{ product.weight }} кг</td>
-            </tr>{% endif %}
-            <tr>
-                <th>Цена</th>
-                <td id="specBasePrice">{{ variant.price }} BYN</td>
-            </tr>
-            {% if has_discount %}
-            <tr>
-                <th>Цена со скидкой</th>
-                <td id="specPrice">{{ variant.sale_price }} BYN</td>
-            </tr>
-            <tr>
-                <th>Скидка</th>
-                <td id="specDiscount">{{ variant.discount_percent_display }}%</td>
-            </tr>
-            {% endif %}
-        </table>
+            <!-- ХАРАКТЕРИСТИКИ ПОЛНЫЕ -->
+            <div class="product-info__block">
+                <h2 class="product-info__block-title">Характеристики</h2>
+                <div class="specs-block">
+                    <table class="specs-table">
+                        <tr>
+                            <th>Цвет</th>
+                            <td id="specColor">{{ variant.color }}</td>
+                        </tr>
+                        {% if product.material %}<tr>
+                            <th>Материал</th>
+                            <td>{{ product.material }}</td>
+                        </tr>{% endif %}
+                        {% if product.gender %}<tr>
+                            <th>Пол</th>
+                            <td>{{ product.get_gender_display }}</td>
+                        </tr>{% endif %}
+                        {% if product.dimensions %}<tr>
+                            <th>Размеры</th>
+                            <td>{{ product.dimensions }}</td>
+                        </tr>{% endif %}
+                        {% if product.weight %}<tr>
+                            <th>Вес</th>
+                            <td>{{ product.weight }} кг</td>
+                        </tr>{% endif %}
+                        <tr>
+                            <th>Цена</th>
+                            <td id="specBasePrice">{{ variant.price }} BYN</td>
+                        </tr>
+                        {% if has_discount %}
+                        <tr>
+                            <th>Цена со скидкой</th>
+                            <td id="specPrice">{{ variant.sale_price }} BYN</td>
+                        </tr>
+                        <tr>
+                            <th>Скидка</th>
+                            <td id="specDiscount">{{ variant.discount_percent_display }}%</td>
+                        </tr>
+                        {% endif %}
+                    </table>
+                </div>
+            </div>
+        </div>
     </section>
 
     <!-- КРОСС-ПРОДАЖИ -->
