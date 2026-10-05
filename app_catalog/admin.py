@@ -1,3 +1,6 @@
+import re
+
+from django import forms
 from django.contrib import admin
 from django.http import HttpResponse
 from django.urls import path, reverse
@@ -8,6 +11,48 @@ from app_media.processing import preview_url
 
 from . import yml_feed
 from .models import Category, Product, ProductVariant, ProductImage
+
+
+class ColorHexWidget(forms.TextInput):
+    """Hex-поле с пипеткой: в БД остаётся обычный текст.
+
+    Нативный <input type="color"> подставляет значение в текстовое поле и
+    забирает его обратно, скрипт — static/admin/js/color_hex.js.
+    """
+
+    HEX = re.compile(r'^#?([0-9a-f]{3}|[0-9a-f]{6})$', re.IGNORECASE)
+
+    class Media:
+        js = ('admin/js/color_hex.js',)
+
+    def picker_color(self, value):
+        match = self.HEX.match((value or '').strip())
+        if not match:
+            return '#000000'
+        digits = match.group(1).lower()
+        if len(digits) == 3:
+            digits = ''.join(c * 2 for c in digits)
+        return f'#{digits}'
+
+    def render(self, name, value, attrs=None, renderer=None):
+        return super().render(name, value, attrs, renderer) + format_html(
+            '<span class="color-hex">'
+            '<input type="color" class="color-hex__picker" data-color-hex-picker'
+            ' value="{}" aria-label="Выбрать цвет">'
+            '<button type="button" class="color-hex__clear" data-color-hex-clear'
+            ' title="Убрать цвет" aria-label="Убрать цвет">✕</button>'
+            '</span>',
+            self.picker_color(value),
+        )
+
+
+class ColorHexFieldMixin:
+    """Включает пипетку только для color_hex, не задевая другие CharField."""
+
+    def formfield_for_dbfield(self, db_field, request, **kwargs):
+        if db_field.name == 'color_hex':
+            kwargs['widget'] = ColorHexWidget
+        return super().formfield_for_dbfield(db_field, request, **kwargs)
 
 
 class ProductImageInline(admin.TabularInline):
@@ -28,7 +73,7 @@ class CategoryAdmin(admin.ModelAdmin):
     list_editable = ['order', 'is_active', 'has_gender']
 
 
-class ProductVariantInline(admin.TabularInline):
+class ProductVariantInline(ColorHexFieldMixin, admin.TabularInline):
     model = ProductVariant
     extra = 1
     # Ссылка «Изменить» у каждой сохранённой строки — на страницу варианта.
@@ -102,7 +147,7 @@ class ProductAdmin(admin.ModelAdmin):
 
 
 @admin.register(ProductVariant)
-class ProductVariantAdmin(admin.ModelAdmin):
+class ProductVariantAdmin(ColorHexFieldMixin, admin.ModelAdmin):
     list_display = [
         'product', 'color', 'is_main', 'color_hex', 'price',
         'sale_price', 'discount_percent', 'stock', 'status', 'order', 'is_active'

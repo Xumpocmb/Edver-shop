@@ -53,3 +53,37 @@ html[data-theme="dark"] {
     --selected-bg: #2d6a4f;
     --selected-row: #1b4332;
 }
+
+/* Поле hex цвета с пипеткой */
+.color-hex {
+    display: inline-flex;
+    align-items: center;
+    gap: .35rem;
+}
+
+.color-hex__picker {
+    width: 2.4rem;
+    height: 2rem;
+    padding: 2px;
+    border: 1px solid var(--hairline-color, #ccc);
+    border-radius: 4px;
+    background: none;
+    cursor: pointer;
+}
+
+.color-hex__clear {
+    width: 1.6rem;
+    height: 1.6rem;
+    padding: 0;
+    border: 1px solid var(--hairline-color, #ccc);
+    border-radius: 4px;
+    background: none;
+    color: var(--body-fg, #333);
+    line-height: 1;
+    cursor: pointer;
+}
+
+.color-hex__clear:hover {
+    border-color: var(--primary, #2d6a4f);
+    color: var(--primary, #2d6a4f);
+}

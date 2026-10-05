@@ -577,6 +577,70 @@ class AdminCrossLinksTests(TestCase):
         self.assertTrue(self.variant.is_main)
 
 
+class ColorHexWidgetTests(TestCase):
+    """Поле hex цвета в админке: пипетка рядом с текстовым вводом."""
+
+    def setUp(self):
+        self.client.force_login(User.objects.create_superuser('admin', 'a@a.by', 'pass'))
+        self.category = Category.objects.create(name='Сумки', slug='sumki')
+        self.product = Product.objects.create(
+            name='Сумка', slug='sumka', category=self.category,
+        )
+        self.variant = ProductVariant.objects.create(
+            product=self.product, color='Бордовый', price='200.00', color_hex='#800000',
+        )
+
+    def variant_page(self):
+        return self.client.get(
+            f'/admin/app_catalog/productvariant/{self.variant.pk}/change/'
+        ).content.decode()
+
+    def test_variant_page_has_picker_next_to_text_field(self):
+        html = self.variant_page()
+
+        self.assertIn('name="color_hex"', html)
+        self.assertIn('data-color-hex-picker', html)
+        self.assertIn('data-color-hex-clear', html)
+        self.assertIn('admin/js/color_hex.js', html)
+
+    def test_variants_inline_on_product_page_has_picker(self):
+        html = self.client.get(
+            f'/admin/app_catalog/product/{self.product.pk}/change/'
+        ).content.decode()
+
+        self.assertIn('data-color-hex-picker', html)
+        self.assertIn('admin/js/color_hex.js', html)
+
+    def test_picker_is_prefilled_with_stored_hex(self):
+        self.assertIn('value="#800000"', self.variant_page())
+
+    def test_picker_falls_back_to_black_when_hex_is_empty(self):
+        self.variant.color_hex = ''
+        self.variant.save()
+
+        self.assertIn('value="#000000"', self.variant_page())
+
+    def test_three_digit_hex_is_expanded_in_picker(self):
+        self.variant.color_hex = '#abc'
+        self.variant.save()
+
+        self.assertIn('value="#aabbcc"', self.variant_page())
+
+    def test_nonsense_in_stored_value_does_not_break_picker(self):
+        self.variant.color_hex = 'бордовый'
+        self.variant.save()
+
+        self.assertIn('value="#000000"', self.variant_page())
+
+    def test_other_text_fields_keep_plain_input(self):
+        html = self.variant_page()
+
+        color_input = re.search(r'<input type="text" name="color"[^>]*>', html)
+
+        self.assertIsNotNone(color_input)
+        self.assertNotIn('color-hex', color_input.group(0))
+
+
 class ExportYmlCommandTests(TestCase):
     def test_command_writes_file(self):
         from django.core.management import call_command
