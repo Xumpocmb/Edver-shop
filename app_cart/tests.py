@@ -31,6 +31,7 @@ class CheckoutTests(TestCase):
                     'phone': '+375296111111',
                     'delivery_type': 'belpochta',
                     'address': 'ул. Ленина, 1',
+                    'privacy_consent': '1',
                 },
             )
 
@@ -61,8 +62,9 @@ class CheckoutTests(TestCase):
                 'phone': '+375296111111',
                 'delivery_type': 'belpochta',
                 'address': 'ул. Ленина, 1',
-                'region': 'Минская область',
-                'postal_code': '220030',
+'region': 'Минская область',
+                    'postal_code': '220030',
+                    'privacy_consent': '1',
             },
         )
 
@@ -93,6 +95,7 @@ class CheckoutTests(TestCase):
                     'phone': '+375296111111',
                     'delivery_type': 'belpochta',
                     'address': 'ул. Ленина, 1',
+                    'privacy_consent': '1',
                 },
             )
 
@@ -100,6 +103,64 @@ class CheckoutTests(TestCase):
         self.assertEqual(CartItem.objects.count(), 0)
         order = Order.objects.get(session_key=cart.session_key)
         self.assertEqual(order.full_name, 'Иван Иванов')
+
+
+class ConsentCheckboxTests(TestCase):
+    """Оформление заказа только после согласия на обработку персональных данных."""
+
+    def setUp(self):
+        category = Category.objects.create(name='Куртки', slug='kurtki', has_gender=False)
+        product = Product.objects.create(
+            name='Куртка', slug='kurtka', category=category, is_active=True,
+        )
+        self.variant = ProductVariant.objects.create(
+            product=product, color='Чёрный', price='100.00', stock=5, is_active=True,
+        )
+        session = self.client.session
+        session['cart_session'] = True
+        session.save()
+        self.cart = Cart.objects.create(session_key=session.session_key)
+        CartItem.objects.create(cart=self.cart, variant=self.variant, quantity=1)
+        self.data = {
+            'full_name': 'Иван Иванов',
+            'phone': '+375296111111',
+            'delivery_type': 'belpochta',
+            'address': 'ул. Ленина, 1',
+        }
+
+    def test_cart_page_has_checkbox_and_policy_link(self):
+        html = self.client.get(reverse('app_cart:cart_detail')).content.decode()
+
+        self.assertIn('name="privacy_consent"', html)
+        self.assertIn('required', html)
+        self.assertIn(reverse('app_home:privacy'), html)
+        self.assertIn('согласен на обработку персональных данных', html)
+
+    def test_checkbox_stands_before_order_button(self):
+        html = self.client.get(reverse('app_cart:cart_detail')).content.decode()
+
+        self.assertLess(
+            html.index('name="privacy_consent"'),
+            html.index('Оформить заказ'),
+        )
+
+    def test_checkout_is_rejected_without_consent(self):
+        with mock.patch('app_cart.views.notify_new_order') as notify:
+            response = self.client.post(reverse('app_cart:checkout'), self.data)
+
+        self.assertRedirects(response, reverse('app_cart:cart_detail'))
+        self.assertFalse(Order.objects.exists())
+        notify.assert_not_called()
+        self.assertTrue(CartItem.objects.filter(cart=self.cart).exists())
+
+    def test_checkout_passes_with_consent(self):
+        with mock.patch('app_cart.views.notify_new_order'):
+            response = self.client.post(
+                reverse('app_cart:checkout'), {**self.data, 'privacy_consent': '1'},
+            )
+
+        self.assertEqual(Order.objects.count(), 1)
+        self.assertEqual(response.status_code, 302)
 
 
 class PromoCodeAdminTests(TestCase):

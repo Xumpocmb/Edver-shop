@@ -197,6 +197,10 @@ def checkout(request):
         messages.error(request, 'Укажите адрес доставки.')
         return redirect('app_cart:cart_detail')
 
+    if not request.POST.get('privacy_consent'):
+        messages.error(request, 'Подтвердите согласие на обработку персональных данных.')
+        return redirect('app_cart:cart_detail')
+
     order = create_order_with_number(
         user=request.user if request.user.is_authenticated else None,
         session_key=cart.session_key,

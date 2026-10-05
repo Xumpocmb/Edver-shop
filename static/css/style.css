@@ -3105,6 +3105,20 @@ button {
     margin-bottom: 1.25rem;
 }
 
+.consent-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: .35rem .5rem;
+    margin-top: 1.5rem;
+    font-size: .92rem;
+}
+
+.consent-row__label {
+    padding: 0;
+    align-items: baseline;
+}
+
 .form-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;

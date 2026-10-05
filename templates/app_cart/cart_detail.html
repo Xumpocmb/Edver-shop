@@ -173,6 +173,14 @@
                           placeholder="Пожелания по доставке, время звонка и т.д."></textarea>
             </div>
 
+            <div class="consent-row">
+                <label class="checkbox-row consent-row__label" for="privacyConsent">
+                    <input type="checkbox" name="privacy_consent" id="privacyConsent" value="1" required>
+                    <span>Я согласен на обработку персональных данных</span>
+                </label>
+                <a href="{% url 'app_home:privacy' %}">Политика обработки данных</a>
+            </div>
+
             <div class="cart-summary__actions" style="margin-top: 1.5rem;">
                 <a href="/catalog/" class="btn btn--ghost">Продолжить покупки</a>
                 <button type="submit" class="btn btn--primary btn--lg">Оформить заказ</button>
