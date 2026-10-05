@@ -3106,17 +3106,21 @@ button {
 }
 
 .consent-row {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: baseline;
-    gap: .35rem .5rem;
     margin-top: 1.5rem;
     font-size: .92rem;
 }
 
 .consent-row__label {
-    padding: 0;
+    display: inline-flex;
     align-items: baseline;
+    padding: 0;
+}
+
+.consent-row__link {
+    display: block;
+    margin-top: .35rem;
+    /* отступ под текст, а не под галочку: 16px чекбокс + .5rem зазор */
+    margin-left: 1.5rem;
 }
 
 .form-grid {
