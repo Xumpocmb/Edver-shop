@@ -61,6 +61,11 @@ html[data-theme="dark"] {
     gap: .35rem;
 }
 
+.color-hex input[type="text"] {
+    flex: 1 1 auto;
+    min-width: 5rem;
+}
+
 .color-hex__picker {
     width: 2.4rem;
     height: 2rem;
@@ -86,4 +91,14 @@ html[data-theme="dark"] {
 .color-hex__clear:hover {
     border-color: var(--primary, #2d6a4f);
     color: var(--primary, #2d6a4f);
+}
+
+/* Свотч цвета в списке вариантов вместо hex-кода */
+.color-swatch {
+    display: inline-block;
+    width: 1.5rem;
+    height: 1.5rem;
+    border: 1px solid var(--hairline-color, #ccc);
+    border-radius: 4px;
+    vertical-align: middle;
 }
