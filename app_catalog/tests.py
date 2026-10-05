@@ -146,6 +146,75 @@ class CatalogCardsTests(TestCase):
         self.assertEqual(html.count('class="product-card"'), 4)
 
 
+class MainVariantTests(TestCase):
+    """Галочка «Главный вариант» выбирает, какой цвет показывается по умолчанию."""
+
+    def setUp(self):
+        self.category = Category.objects.create(name='Сумки', slug='sumki')
+        self.product = Product.objects.create(
+            name='Сумка-шопер', slug='sumka-shopper', category=self.category,
+            is_new=True,
+        )
+        self.bordovy = self.variant('Бордовый', '100.00')
+        self.siniy = self.variant('Синий', '300.00')
+
+    def variant(self, color, price, **kwargs):
+        return ProductVariant.objects.create(
+            product=self.product, color=color, price=price, **kwargs
+        )
+
+    def test_first_active_variant_is_main_by_default(self):
+        self.assertEqual(self.product.main_variant, self.bordovy)
+
+    def test_marked_variant_becomes_main(self):
+        self.siniy.is_main = True
+        self.siniy.save()
+
+        self.assertEqual(self.product.main_variant, self.siniy)
+
+    def test_marking_one_variant_clears_the_other(self):
+        self.bordovy.is_main = True
+        self.bordovy.save()
+        self.siniy.is_main = True
+        self.siniy.save()
+
+        self.bordovy.refresh_from_db()
+
+        self.assertFalse(self.bordovy.is_main)
+        self.assertTrue(self.siniy.is_main)
+
+    def test_marked_variant_of_another_product_is_untouched(self):
+        other = Product.objects.create(
+            name='Другая', slug='drugaya', category=self.category,
+        )
+        other_variant = ProductVariant.objects.create(
+            product=other, color='Чёрный', price='90.00', is_main=True,
+        )
+
+        self.siniy.is_main = True
+        self.siniy.save()
+        other_variant.refresh_from_db()
+
+        self.assertTrue(other_variant.is_main)
+
+    def test_inactive_marked_variant_is_skipped(self):
+        self.siniy.is_main = True
+        self.siniy.save()
+        self.siniy.is_active = False
+        self.siniy.save()
+
+        self.assertEqual(self.product.main_variant, self.bordovy)
+
+    def test_card_on_home_uses_marked_variant(self):
+        self.siniy.is_main = True
+        self.siniy.save()
+
+        html = self.client.get('/').content.decode()
+
+        self.assertIn(f'data-variant-id="{self.siniy.pk}"', html)
+        self.assertNotIn(f'data-variant-id="{self.bordovy.pk}"', html)
+
+
 class CategoryMetaTests(TestCase):
     def setUp(self):
         self.category = Category.objects.create(name='Сумки', slug='sumki')
@@ -463,6 +532,49 @@ class AdminCrossLinksTests(TestCase):
         response = self.client.get('/admin/app_catalog/productvariant/add/')
 
         self.assertEqual(response.status_code, 200)
+
+    def test_product_page_offers_main_variant_checkbox(self):
+        html = self.client.get(
+            f'/admin/app_catalog/product/{self.product.pk}/change/'
+        ).content.decode()
+
+        self.assertIn('Главный вариант', html)
+        self.assertIn('variants-0-is_main', html)
+
+    def test_variant_page_offers_main_variant_checkbox(self):
+        html = self.client.get(
+            f'/admin/app_catalog/productvariant/{self.variant.pk}/change/'
+        ).content.decode()
+
+        self.assertIn('Главный вариант', html)
+        self.assertIn('id_is_main', html)
+
+    def test_checking_main_variant_in_admin_saves_flag(self):
+        self.client.post(
+            f'/admin/app_catalog/productvariant/{self.variant.pk}/change/',
+            {
+                'product': self.product.pk,
+                'color': self.variant.color,
+                'color_hex': '',
+                'status': 'in_stock',
+                'price': '200.00',
+                'discount_percent': 0,
+                'stock': 0,
+                'order': 0,
+                'is_main': 'on',
+                'is_active': 'on',
+                'images-TOTAL_FORMS': 0,
+                'images-INITIAL_FORMS': 0,
+                'images-MIN_NUM_FORMS': 0,
+                'images-MAX_NUM_FORMS': 1000,
+                '_save': 'Сохранить',
+            },
+            follow=True,
+        )
+
+        self.variant.refresh_from_db()
+
+        self.assertTrue(self.variant.is_main)
 
 
 class ExportYmlCommandTests(TestCase):

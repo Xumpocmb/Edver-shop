@@ -658,6 +658,7 @@ class Command(BaseCommand):
                         'discount_percent': discount,
                         'stock': 15 + product_idx % 30,
                         'order': v_idx,
+                        'is_main': v_idx == 0,
                         'status': 'in_stock',
                     }
                 )

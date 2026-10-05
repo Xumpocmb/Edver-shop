@@ -35,7 +35,7 @@ class ProductVariantInline(admin.TabularInline):
     show_change_link = True
     fields = [
         'color', 'color_hex', 'price',
-        'discount_percent', 'stock', 'status', 'order', 'is_active',
+        'discount_percent', 'stock', 'status', 'order', 'is_main', 'is_active',
     ]
 
 
@@ -104,18 +104,18 @@ class ProductAdmin(admin.ModelAdmin):
 @admin.register(ProductVariant)
 class ProductVariantAdmin(admin.ModelAdmin):
     list_display = [
-        'product', 'color', 'color_hex', 'price',
+        'product', 'color', 'is_main', 'color_hex', 'price',
         'sale_price', 'discount_percent', 'stock', 'status', 'order', 'is_active'
     ]
-    list_filter = ['status', 'is_active', 'product__category']
+    list_filter = ['status', 'is_active', 'is_main', 'product__category']
     search_fields = ['product__name', 'color']
-    list_editable = ['price', 'discount_percent', 'stock', 'status', 'order', 'is_active']
+    list_editable = ['is_main', 'price', 'discount_percent', 'stock', 'status', 'order', 'is_active']
     autocomplete_fields = ['product']
     inlines = [ProductImageInline]
     readonly_fields = ['product_link']
     fieldsets = (
         (None, {
-            'fields': (('product', 'color'), 'color_hex', 'status')
+            'fields': (('product', 'color'), 'color_hex', 'status', 'is_main')
         }),
         ('Ссылки', {
             'fields': ('product_link',),

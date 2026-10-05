@@ -153,11 +153,9 @@ class Product(models.Model):
 
     @property
     def main_variant(self):
-        """Вариант для витрины (первый активный по порядку)."""
-        for v in self.variants.all():
-            if v.is_active:
-                return v
-        return None
+        """Вариант для витрины: отмеченный главный, иначе первый активный."""
+        variants = self.active_variants
+        return next((v for v in variants if v.is_main), None) or (variants[0] if variants else None)
 
     @property
     def price_min(self):
@@ -210,6 +208,15 @@ class ProductVariant(models.Model):
         verbose_name="Статус"
     )
     order = models.PositiveIntegerField(default=0, verbose_name="Порядок")
+    is_main = models.BooleanField(
+        default=False,
+        verbose_name="Главный вариант",
+        help_text=(
+            "Показывается по умолчанию: в карточках на главной и в блоке "
+            "«Похожие товары». Если отмечено несколько вариантов, "
+            "главным будет первый по порядку."
+        ),
+    )
     is_active = models.BooleanField(default=True, verbose_name="Активен")
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="Создан")
     updated_at = models.DateTimeField(auto_now=True, verbose_name="Обновлён")
@@ -226,6 +233,14 @@ class ProductVariant(models.Model):
 
     def __str__(self):
         return f"{self.product.name} — {self.color}"
+
+    def save(self, *args, **kwargs):
+        """Главный вариант на товар один: галочка снимается с остальных."""
+        if self.is_main and self.product_id:
+            ProductVariant.objects.filter(
+                product_id=self.product_id, is_main=True
+            ).exclude(pk=self.pk).update(is_main=False)
+        super().save(*args, **kwargs)
 
     @property
     def discount_percent_display(self):
