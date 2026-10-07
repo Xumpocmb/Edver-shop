@@ -6,6 +6,7 @@ from django.urls import reverse
 
 from app_catalog.models import Category, Product, ProductVariant
 from app_cart.models import Cart, CartItem, PromoCode
+from app_home.models import OrderAvailability
 from app_order.models import Order
 
 
@@ -174,3 +175,55 @@ class PromoCodeAdminTests(TestCase):
 
         self.assertIn(f'name="_selected_action" value="{self.promo.pk}"', html)
         self.assertIn('name="form-0-is_active"', html)
+
+
+class OrderAvailabilityTests(TestCase):
+    """Опция «Доступность заказов» — защита от ботов."""
+
+    def setUp(self):
+        category = Category.objects.create(name='Куртки', slug='kurtki', has_gender=False)
+        product = Product.objects.create(
+            name='Куртка', slug='kurtka', category=category, is_active=True,
+        )
+        self.variant = ProductVariant.objects.create(
+            product=product, color='Чёрный', price='100.00', stock=5, is_active=True,
+        )
+        session = self.client.session
+        session['cart_session'] = True
+        session.save()
+        self.cart = Cart.objects.create(session_key=session.session_key)
+        CartItem.objects.create(cart=self.cart, variant=self.variant, quantity=1)
+        self.data = {
+            'full_name': 'Иван Иванов',
+            'phone': '+375296111111',
+            'delivery_type': 'belpochta',
+            'address': 'ул. Ленина, 1',
+        }
+
+    def test_orders_available_by_default(self):
+        self.assertTrue(OrderAvailability.orders_available())
+
+        html = self.client.get(reverse('app_cart:cart_detail')).content.decode()
+
+        self.assertIn('Оформить заказ', html)
+        self.assertNotIn('Оформление заказов временно недоступно', html)
+
+    def test_cart_shows_notice_and_hides_button_when_disabled(self):
+        OrderAvailability.objects.create(is_enabled=False)
+
+        html = self.client.get(reverse('app_cart:cart_detail')).content.decode()
+
+        self.assertIn('Оформление заказов временно недоступно', html)
+        self.assertNotIn('Оформить заказ', html)
+
+    def test_checkout_is_blocked_when_disabled(self):
+        OrderAvailability.objects.create(is_enabled=False)
+
+        with mock.patch('app_cart.views.notify_new_order') as notify:
+            resp = self.client.post(reverse('app_cart:checkout'), self.data)
+
+        self.assertEqual(resp.status_code, 302)
+        self.assertEqual(resp.url, reverse('app_cart:cart_detail'))
+        self.assertEqual(Order.objects.count(), 0)
+        self.assertEqual(CartItem.objects.count(), 1)
+        notify.assert_not_called()

@@ -234,6 +234,31 @@ class FooterInfo(models.Model):
         verbose_name_plural = 'Информация в футере'
 
 
+class OrderAvailability(models.Model):
+    is_singleton = models.BooleanField(default=True, unique=True, editable=False)
+    is_enabled = models.BooleanField(
+        default=True,
+        verbose_name='Оформление заказов доступно',
+        help_text='Выключите, чтобы скрыть форму и заблокировать оформление заказов (защита от ботов).',
+    )
+
+    def save(self, *args, **kwargs):
+        self.is_singleton = True
+        super().save(*args, **kwargs)
+
+    @classmethod
+    def orders_available(cls):
+        obj = cls.objects.first()
+        return True if obj is None else obj.is_enabled
+
+    def __str__(self):
+        return 'Доступность заказов'
+
+    class Meta:
+        verbose_name = 'Доступность заказов'
+        verbose_name_plural = 'Доступность заказов'
+
+
 class Advantage(models.Model):
     icon = models.CharField(max_length=10, verbose_name='Иконка (эмодзи)')
     title = models.CharField(max_length=100, verbose_name='Заголовок')

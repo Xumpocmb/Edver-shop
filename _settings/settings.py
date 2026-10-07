@@ -92,6 +92,7 @@ TEMPLATES = [
                 'app_home.context_processors.payment_page',
                 'app_home.context_processors.cart_count',
                 'app_home.context_processors.gender_categories',
+                'app_home.context_processors.order_availability',
             ],
         },
     },

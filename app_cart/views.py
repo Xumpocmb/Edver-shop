@@ -7,6 +7,7 @@ from django.views.decorators.http import require_POST
 from django.contrib import messages
 
 from app_catalog.models import ProductVariant
+from app_home.models import OrderAvailability
 from app_order.models import Order, OrderItem
 from app_order.telegram import notify_new_order
 from app_order.utils import create_order_with_number
@@ -169,6 +170,10 @@ def cart_detail(request):
 
 @require_POST
 def checkout(request):
+    if not OrderAvailability.orders_available():
+        messages.error(request, 'Оформление заказов временно недоступно.')
+        return redirect('app_cart:cart_detail')
+
     cart = Cart.get_or_create(request)
     items = cart.items.select_related('variant__product')
     if not items.exists():

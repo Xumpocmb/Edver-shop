@@ -178,9 +178,15 @@
                 Подробнее — в <a href="{% url 'app_home:privacy' %}">Политике в отношении обработки персональных данных</a>
             </p>
 
+            {% if not orders_available %}
+            <p class="alert alert--warning" role="alert" style="margin-top: 1.5rem;">Оформление заказов временно недоступно</p>
+            {% endif %}
+
             <div class="cart-summary__actions" style="margin-top: 1.5rem;">
                 <a href="/catalog/" class="btn btn--ghost">Продолжить покупки</a>
+                {% if orders_available %}
                 <button type="submit" class="btn btn--primary btn--lg">Оформить заказ</button>
+                {% endif %}
             </div>
         </div>
         </form>
