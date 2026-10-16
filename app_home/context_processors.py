@@ -72,6 +72,15 @@ def gender_categories(request):
     }
 
 
+def general_categories(request):
+    from app_catalog.models import Category
+    return {
+        'categories_general': Category.objects.filter(
+            is_active=True, has_gender=False
+        ).order_by('order', 'name'),
+    }
+
+
 def cart_count(request):
     try:
         from app_cart.models import Cart

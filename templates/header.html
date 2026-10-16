@@ -98,20 +98,26 @@
             <button class="header-menu-close" id="menu-close" type="button" aria-label="Закрыть меню">✕</button>
         </div>
         <div class="header-menu-body">
-            <a href="/catalog/">Каталог</a>
-            <button class="header-menu-toggle" type="button" data-target="menu-men">Мужчинам</button>
-            <div class="header-menu-dropdown" id="menu-men">
-                {% for cat in categories_men %}
-                    <a href="/catalog/{{ cat.slug }}/?gender=M">{{ cat.name }}</a>
+            <button class="header-menu-toggle" type="button" data-target="menu-catalog">Каталог</button>
+            <div class="header-menu-dropdown" id="menu-catalog">
+                <button class="header-menu-toggle" type="button" data-target="menu-men">Мужчинам</button>
+                <div class="header-menu-dropdown" id="menu-men">
+                    {% for cat in categories_men %}
+                        <a href="/catalog/{{ cat.slug }}/?gender=M">{{ cat.name }}</a>
+                    {% endfor %}
+                    <a href="/catalog/?gender=M" class="header-menu-more">Все мужское →</a>
+                </div>
+                <button class="header-menu-toggle" type="button" data-target="menu-women">Женщинам</button>
+                <div class="header-menu-dropdown" id="menu-women">
+                    {% for cat in categories_women %}
+                        <a href="/catalog/{{ cat.slug }}/?gender=F">{{ cat.name }}</a>
+                    {% endfor %}
+                    <a href="/catalog/?gender=F" class="header-menu-more">Все женское →</a>
+                </div>
+                {% for cat in categories_general %}
+                    <a href="/catalog/{{ cat.slug }}/">{{ cat.name }}</a>
                 {% endfor %}
-                <a href="/catalog/?gender=M" class="header-menu-more">Все мужское →</a>
-            </div>
-            <button class="header-menu-toggle" type="button" data-target="menu-women">Женщинам</button>
-            <div class="header-menu-dropdown" id="menu-women">
-                {% for cat in categories_women %}
-                    <a href="/catalog/{{ cat.slug }}/?gender=F">{{ cat.name }}</a>
-                {% endfor %}
-                <a href="/catalog/?gender=F" class="header-menu-more">Все женское →</a>
+                <a href="/catalog/" class="header-menu-more">Все товары →</a>
             </div>
             <a href="/about/">О нас</a>
             <a href="/contacts/">Контакты</a>
