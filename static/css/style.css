@@ -3144,6 +3144,13 @@ button {
     color: var(--color-text-muted);
 }
 
+.delivery-option__hint {
+    font-size: .75rem;
+    line-height: 1.3;
+    text-align: center;
+    color: var(--color-accent);
+}
+
 .delivery-fields {
     margin-top: 1rem;
 }

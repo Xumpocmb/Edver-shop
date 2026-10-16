@@ -284,6 +284,37 @@ class PickupAddress(models.Model):
         verbose_name_plural = 'Адрес самовывоза'
 
 
+DEFAULT_BELPOCHTA_DELIVERY_NOTE = 'Стоимость доставки от 6 до 15 руб по тарифам Белпочты'
+DEFAULT_EVROPOCHTA_DELIVERY_NOTE = 'Стоимость доставки от 6 до 10 руб по тарифам Европочты'
+
+
+class DeliveryInfo(models.Model):
+    is_singleton = models.BooleanField(default=True, unique=True, editable=False)
+    belpochta_note = models.TextField(
+        blank=True,
+        default=DEFAULT_BELPOCHTA_DELIVERY_NOTE,
+        verbose_name='Подсказка для Белпочты',
+        help_text='Показывается под вариантом доставки «Белпочта». Оставьте пустым, чтобы скрыть.',
+    )
+    evropochta_note = models.TextField(
+        blank=True,
+        default=DEFAULT_EVROPOCHTA_DELIVERY_NOTE,
+        verbose_name='Подсказка для Европочты',
+        help_text='Показывается под вариантом доставки «Европочта». Оставьте пустым, чтобы скрыть.',
+    )
+
+    def save(self, *args, **kwargs):
+        self.is_singleton = True
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return 'Подсказки по доставке'
+
+    class Meta:
+        verbose_name = 'Подсказки по доставке'
+        verbose_name_plural = 'Подсказки по доставке'
+
+
 class Advantage(models.Model):
     icon = models.CharField(max_length=10, verbose_name='Иконка (эмодзи)')
     title = models.CharField(max_length=100, verbose_name='Заголовок')

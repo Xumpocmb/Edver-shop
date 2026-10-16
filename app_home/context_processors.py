@@ -1,4 +1,20 @@
-from .models import CartIcon, FooterInfo, Instagram, OrderAvailability, PhoneNumber, PickupAddress, ProfileIcon, SiteEmail, SiteFavicon, SiteLogo, StaticPage, TikTok
+from .models import (
+    DEFAULT_BELPOCHTA_DELIVERY_NOTE,
+    DEFAULT_EVROPOCHTA_DELIVERY_NOTE,
+    CartIcon,
+    DeliveryInfo,
+    FooterInfo,
+    Instagram,
+    OrderAvailability,
+    PhoneNumber,
+    PickupAddress,
+    ProfileIcon,
+    SiteEmail,
+    SiteFavicon,
+    SiteLogo,
+    StaticPage,
+    TikTok,
+)
 
 
 def site_logo(request):
@@ -52,6 +68,15 @@ def order_availability(request):
 
 def pickup_address(request):
     return {'pickup_address': PickupAddress.objects.first()}
+
+
+def delivery_info(request):
+    info = DeliveryInfo.objects.first()
+    return {
+        'delivery_info': info,
+        'belpochta_note': info.belpochta_note if info else DEFAULT_BELPOCHTA_DELIVERY_NOTE,
+        'evropochta_note': info.evropochta_note if info else DEFAULT_EVROPOCHTA_DELIVERY_NOTE,
+    }
 
 
 def footer_pages(request):

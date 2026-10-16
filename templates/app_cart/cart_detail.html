@@ -120,11 +120,13 @@
                         <input type="radio" name="delivery_type" value="belpochta" checked>
                         <span class="delivery-option__label">Белпочта</span>
                         <span class="delivery-option__desc">Доставка по адресу</span>
+                        {% if belpochta_note %}<span class="delivery-option__hint">{{ belpochta_note }}</span>{% endif %}
                     </label>
                     <label class="delivery-option">
                         <input type="radio" name="delivery_type" value="evropochta">
                         <span class="delivery-option__label">Европочта</span>
                         <span class="delivery-option__desc">Отделение / ПВЗ</span>
+                        {% if evropochta_note %}<span class="delivery-option__hint">{{ evropochta_note }}</span>{% endif %}
                     </label>
                     <label class="delivery-option">
                         <input type="radio" name="delivery_type" value="pickup">
