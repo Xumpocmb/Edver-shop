@@ -66,6 +66,17 @@
                 <span class="spec-row__val">{{ order.comment }}</span>
             </div>
             {% endif %}
+            <div class="spec-row">
+                <span class="spec-row__key">Оплата</span>
+                <span class="spec-row__val">
+                    {{ order.get_payment_type_display }}
+                    {% if order.payment_type == 'cod' and order.cod_commission_rate %}
+                    <span style="color: var(--color-text-muted); font-size: .85rem; display: block;">
+                        Комиссия оператора: {{ order.cod_commission_rate }}% (около {{ order.cod_commission_amount }} BYN) — оплачивается при получении
+                    </span>
+                    {% endif %}
+                </span>
+            </div>
         </div>
 
         {% if order.shipped_at or order.tracking_number or order.received_at %}

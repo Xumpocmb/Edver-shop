@@ -1,3 +1,4 @@
+from decimal import Decimal
 from unittest import mock
 
 from django.contrib.auth import get_user_model
@@ -227,3 +228,95 @@ class OrderAvailabilityTests(TestCase):
         self.assertEqual(Order.objects.count(), 0)
         self.assertEqual(CartItem.objects.count(), 1)
         notify.assert_not_called()
+
+
+class PaymentTypeTests(TestCase):
+    """Способ оплаты: ЕРИП (по умолчанию) и наложенный платеж с комиссией."""
+
+    def setUp(self):
+        category = Category.objects.create(name='Куртки', slug='kurtki', has_gender=False)
+        product = Product.objects.create(
+            name='Куртка', slug='kurtka', category=category, is_active=True,
+        )
+        self.variant = ProductVariant.objects.create(
+            product=product, color='Чёрный', price='100.00', stock=5, is_active=True,
+        )
+        session = self.client.session
+        session['cart_session'] = True
+        session.save()
+        self.cart = Cart.objects.create(session_key=session.session_key)
+        CartItem.objects.create(cart=self.cart, variant=self.variant, quantity=2)
+        self.data = {
+            'full_name': 'Иван Иванов',
+            'phone': '+375296111111',
+            'delivery_type': 'belpochta',
+            'address': 'ул. Ленина, 1',
+        }
+
+    def _checkout(self, extra=None):
+        payload = dict(self.data, **(extra or {}))
+        with mock.patch('app_cart.views.notify_new_order'):
+            return self.client.post(reverse('app_cart:checkout'), payload)
+
+    def test_cart_page_shows_payment_options(self):
+        html = self.client.get(reverse('app_cart:cart_detail')).content.decode()
+
+        self.assertIn('name="payment_type"', html)
+        self.assertIn('Наложенный платеж', html)
+        self.assertIn('Без комиссии', html)
+        self.assertIn('Комиссия Белпочты: 3%', html)
+
+    def test_payment_type_defaults_to_erip(self):
+        resp = self._checkout()
+
+        self.assertEqual(resp.status_code, 302)
+        order = Order.objects.get(session_key=self.cart.session_key)
+        self.assertEqual(order.payment_type, 'erip')
+
+    def test_cod_saved_with_belpochta_and_commission(self):
+        resp = self._checkout({'payment_type': 'cod'})
+
+        self.assertEqual(resp.status_code, 302)
+        order = Order.objects.get(session_key=self.cart.session_key)
+        self.assertEqual(order.payment_type, 'cod')
+        self.assertEqual(order.cod_commission_rate, Decimal('3'))
+        self.assertEqual(order.cod_commission_amount, Decimal('6.00'))
+        # сумма заказа комиссию не включает
+        self.assertEqual(order.grand_total, Decimal('200.00'))
+
+    def test_cod_saved_with_evropochta_lower_commission(self):
+        resp = self._checkout({
+            'payment_type': 'cod',
+            'delivery_type': 'evropochta',
+            'evropochta_branch_id': '123',
+            'evropochta_branch_name': 'ПВЗ Минск',
+        })
+
+        self.assertEqual(resp.status_code, 302)
+        order = Order.objects.get(session_key=self.cart.session_key)
+        self.assertEqual(order.payment_type, 'cod')
+        self.assertEqual(order.cod_commission_rate, Decimal('1.5'))
+        self.assertEqual(order.cod_commission_amount, Decimal('3.00'))
+        self.assertEqual(order.grand_total, Decimal('200.00'))
+
+    def test_cod_rejected_with_pickup(self):
+        resp = self._checkout({'payment_type': 'cod', 'delivery_type': 'pickup'})
+
+        self.assertEqual(resp.status_code, 302)
+        self.assertEqual(resp.url, reverse('app_cart:cart_detail'))
+        self.assertEqual(Order.objects.count(), 0)
+
+    def test_unknown_payment_type_falls_back_to_erip(self):
+        resp = self._checkout({'payment_type': 'cash'})
+
+        self.assertEqual(resp.status_code, 302)
+        order = Order.objects.get(session_key=self.cart.session_key)
+        self.assertEqual(order.payment_type, 'erip')
+
+    def test_erip_has_no_commission(self):
+        resp = self._checkout({'payment_type': 'erip'})
+
+        self.assertEqual(resp.status_code, 302)
+        order = Order.objects.get(session_key=self.cart.session_key)
+        self.assertEqual(order.cod_commission_rate, Decimal('0'))
+        self.assertEqual(order.cod_commission_amount, Decimal('0.00'))

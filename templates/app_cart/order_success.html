@@ -53,10 +53,19 @@
             {% endif %}
             <div class="spec-row">
                 <span class="spec-row__key">Оплата</span>
-                <span class="spec-row__val">{{ order.grand_total }} BYN</span>
+                <span class="spec-row__val">{{ order.get_payment_type_display }} — {{ order.grand_total }} BYN</span>
             </div>
         </div>
 
+        {% if order.payment_type == 'cod' %}
+        <p style="margin-top: 1.5rem; color: var(--color-text-muted); font-size: .95rem;">
+            Вы выбрали наложенный платеж — сумму {{ order.grand_total }} BYN
+            вы оплачиваете при получении заказа в отделении.
+            Комиссия оператора за перевод{% if order.cod_commission_rate %}
+            ({{ order.cod_commission_rate }}% — около {{ order.cod_commission_amount }} BYN){% endif %}
+            удерживается при получении и в сумму заказа не входит.
+        </p>
+        {% else %}
         <div style="margin-top: 1.5rem;">
             <button type="button" class="btn btn--primary"
                     data-pay-url="{% url 'app_order:payment_create' order.pk %}"
@@ -67,6 +76,7 @@
             После оплаты проверьте статус на
             <a href="{% url 'app_order:payment_status_page' order.pk %}" style="color: var(--color-accent);">странице заказа</a>.
         </p>
+        {% endif %}
 
         <div style="margin-top: 1rem;">
             <a href="/catalog/" class="btn btn--ghost">Продолжить покупки</a>

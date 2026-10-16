@@ -26,6 +26,18 @@
         <p style="margin-top: 1rem; color: var(--color-text-muted); font-size: 1.05rem;">
             Спасибо! Мы уже начали обрабатывать ваш заказ.
         </p>
+        {% elif order.payment_type == 'cod' %}
+        <div style="font-size: 3rem; margin-bottom: 1rem;">📦</div>
+        <h1 class="catalog-head__title">Заказ {{ order.number }}</h1>
+        <p style="margin-top: 1rem; color: var(--color-text-muted); font-size: 1.05rem;">
+            Наложенный платеж: сумма <strong>{{ order.grand_total }} BYN</strong> оплачивается
+            при получении заказа в отделении.
+        </p>
+        <p style="margin-top: 1rem; color: var(--color-text-muted); font-size: .95rem;">
+            Комиссия оператора за перевод{% if order.cod_commission_rate %}
+            ({{ order.cod_commission_rate }}% — около {{ order.cod_commission_amount }} BYN){% endif %}
+            удерживается при получении и в сумму заказа не входит.
+        </p>
         {% else %}
         <div style="font-size: 3rem; margin-bottom: 1rem;">💳</div>
         <h1 class="catalog-head__title">Оплата заказа {{ order.number }}</h1>

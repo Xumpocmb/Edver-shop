@@ -55,6 +55,14 @@ def payment_create(request, order_id):
     Клиент получает JSON: ok, result.payment_url, result.message, result.error.
     """
     order = _get_order_for_request(request, order_id)
+    if order.payment_type == 'cod':
+        return JsonResponse({
+            'ok': False,
+            'order_id': order_id,
+            'status': 'cod',
+            'result': {},
+            'message': 'Заказ оформлен с оплатой при получении — счёт ЕРИП не требуется.',
+        })
     logger.info('ERIP: запрос на создание счёта, order=%s', order.number)
     result = services.create_payment_invoice(order)
     if order.paid:

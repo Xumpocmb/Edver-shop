@@ -3134,6 +3134,16 @@ button {
 
 .delivery-option input { display: none; }
 
+.delivery-option--disabled {
+    opacity: .5;
+    cursor: not-allowed;
+}
+
+.delivery-option--disabled:has(input:checked) {
+    border-color: var(--color-border);
+    background: transparent;
+}
+
 .delivery-option__label {
     font-weight: 600;
     font-size: .95rem;

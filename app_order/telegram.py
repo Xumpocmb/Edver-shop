@@ -66,12 +66,19 @@ def _order_items_summary(order, limit=8):
 
 def notify_new_order(order):
     """Уведомление о новом заказе (приходит сразу, даже без оплаты)."""
+    payment_line = _esc(order.get_payment_type_display())
+    if order.payment_type == 'cod' and order.cod_commission_rate:
+        payment_line += (
+            f' (комиссия {order.cod_commission_rate}% — около'
+            f' {_esc(order.cod_commission_amount)} BYN)'
+        )
     text = (
         '🛒 <b>Новый заказ {number}</b>\n'
         '\n'
         '👤 {full_name} ({phone})\n'
         '🚚 {delivery}\n'
         '{destination}\n'
+        '💳 Оплата: {payment}\n'
         '💰 Сумма: <b>{total} BYN</b>\n'
         '{paid_line}'
         '\n'
@@ -83,6 +90,7 @@ def notify_new_order(order):
         phone=_esc(order.phone),
         delivery=_esc(order.get_delivery_type_display()),
         destination=_delivery_destination(order),
+        payment=payment_line,
         total=_esc(order.grand_total),
         paid_line='💳 Оплачен\n' if order.paid else '',
         items=_order_items_summary(order),

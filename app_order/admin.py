@@ -61,10 +61,10 @@ class OrderAdminForm(forms.ModelForm):
 class OrderAdmin(admin.ModelAdmin):
     form = OrderAdminForm
     list_display = (
-        'number', 'full_name', 'phone', 'delivery_type',
+        'number', 'full_name', 'phone', 'delivery_type', 'payment_type',
         'grand_total', 'status', 'paid', 'created_at',
     )
-    list_filter = ('status', 'delivery_type', 'created_at')
+    list_filter = ('status', 'delivery_type', 'payment_type', 'created_at')
     search_fields = ('number', 'full_name', 'phone')
     list_editable = ('status',)
     readonly_fields = (
@@ -92,7 +92,7 @@ class OrderAdmin(admin.ModelAdmin):
             'fields': ('shipped_at', 'tracking_number', 'received_at'),
         }),
         ('Оплата', {
-            'fields': ('total_price', 'promo_discount', 'grand_total', 'promo_code'),
+            'fields': ('payment_type', 'total_price', 'promo_discount', 'grand_total', 'promo_code'),
         }),
         ('Система', {
             'fields': ('user', 'session_key', 'created_at', 'updated_at'),

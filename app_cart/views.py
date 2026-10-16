@@ -8,7 +8,12 @@ from django.contrib import messages
 
 from app_catalog.models import ProductVariant
 from app_home.models import OrderAvailability
-from app_order.models import Order, OrderItem
+from app_order.models import (
+    Order,
+    OrderItem,
+    PAYMENT_CHOICES,
+    COD_DELIVERY_TYPES,
+)
 from app_order.telegram import notify_new_order
 from app_order.utils import create_order_with_number
 from .models import Cart, CartItem, PromoCode, EvropochtaBranch
@@ -183,6 +188,7 @@ def checkout(request):
     full_name = request.POST.get('full_name', '').strip()
     phone = request.POST.get('phone', '').strip()
     delivery_type = request.POST.get('delivery_type', 'belpochta')
+    payment_type = request.POST.get('payment_type', 'erip')
     address = request.POST.get('address', '').strip()
     region = request.POST.get('region', '').strip()
     postal_code = request.POST.get('postal_code', '').strip()
@@ -194,6 +200,9 @@ def checkout(request):
         messages.error(request, 'Заполните ФИО и телефон.')
         return redirect('app_cart:cart_detail')
 
+    if payment_type not in dict(PAYMENT_CHOICES):
+        payment_type = 'erip'
+
     if delivery_type == 'evropochta' and not branch_id:
         messages.error(request, 'Выберите отделение Европочты.')
         return redirect('app_cart:cart_detail')
@@ -202,12 +211,20 @@ def checkout(request):
         messages.error(request, 'Укажите адрес доставки.')
         return redirect('app_cart:cart_detail')
 
+    if payment_type == 'cod' and delivery_type not in COD_DELIVERY_TYPES:
+        messages.error(
+            request,
+            'Наложенный платеж доступен только при доставке Белпочтой или Европочтой.',
+        )
+        return redirect('app_cart:cart_detail')
+
     order = create_order_with_number(
         user=request.user if request.user.is_authenticated else None,
         session_key=cart.session_key,
         full_name=full_name,
         phone=phone,
         delivery_type=delivery_type,
+        payment_type=payment_type,
         address=address,
         region=region,
         postal_code=postal_code,

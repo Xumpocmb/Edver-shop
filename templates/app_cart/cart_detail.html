@@ -136,6 +136,24 @@
                 </div>
             </div>
 
+            <div class="form-row" style="margin-top: 1.5rem;">
+                <label>Способ оплаты *</label>
+                <div class="delivery-picker" id="paymentPicker">
+                    <label class="delivery-option">
+                        <input type="radio" name="payment_type" value="erip" checked>
+                        <span class="delivery-option__label">ЕРИП</span>
+                        <span class="delivery-option__desc">Онлайн-оплата</span>
+                        <span class="delivery-option__hint">Без комиссии</span>
+                    </label>
+                    <label class="delivery-option" id="codOption">
+                        <input type="radio" name="payment_type" value="cod">
+                        <span class="delivery-option__label">Наложенный платеж</span>
+                        <span class="delivery-option__desc">Оплата при получении</span>
+                        <span class="delivery-option__hint" id="codHint">Комиссия Белпочты: 3%</span>
+                    </label>
+                </div>
+            </div>
+
             <div class="delivery-fields" id="deliveryFields">
                 <div class="form-row" id="belpochtaField">
                     <div class="form-grid">
@@ -300,6 +318,34 @@
         pickup: document.getElementById('pickupField')
     };
 
+    // Payment method
+    var paymentPicker = document.getElementById('paymentPicker');
+    var codOption = document.getElementById('codOption');
+    var codHint = document.getElementById('codHint');
+    var codInput = codOption ? codOption.querySelector('input') : null;
+    var eripInput = paymentPicker ? paymentPicker.querySelector('input[value="erip"]') : null;
+    var COD_HINTS = {
+        belpochta: 'Комиссия Белпочты: 3%',
+        evropochta: 'Комиссия Европочты: 1,5%'
+    };
+
+    function syncPaymentWithDelivery() {
+        if (!codInput || !eripInput || !deliveryPicker) return;
+        var delivery = deliveryPicker.querySelector('input:checked').value;
+        var hint = COD_HINTS[delivery];
+        if (hint) {
+            codInput.disabled = false;
+            codOption.classList.remove('delivery-option--disabled');
+            if (codHint) codHint.textContent = hint;
+        } else {
+            codInput.disabled = true;
+            codInput.checked = false;
+            eripInput.checked = true;
+            codOption.classList.add('delivery-option--disabled');
+            if (codHint) codHint.textContent = 'Недоступно для самовывоза';
+        }
+    }
+
     if (deliveryPicker) {
         deliveryPicker.addEventListener('change', function() {
             var val = deliveryPicker.querySelector('input:checked').value;
@@ -307,7 +353,9 @@
                 var field = deliveryFields[key];
                 if (field) field.style.display = (key === val) ? '' : 'none';
             });
+            syncPaymentWithDelivery();
         });
+        syncPaymentWithDelivery();
     }
 
     // Evropochta branch search

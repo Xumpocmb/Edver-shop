@@ -1,7 +1,27 @@
+from decimal import Decimal
+
 from django.conf import settings
 from django.db import models
 
 from app_catalog.models import ProductVariant
+
+PAYMENT_CHOICES = [
+    ('erip', 'ЕРИП (онлайн-оплата)'),
+    ('cod', 'Наложенный платеж'),
+]
+
+COD_COMMISSION_RATES = {
+    'belpochta': Decimal('3'),
+    'evropochta': Decimal('1.5'),
+}
+"""Комиссия почтового оператора за наложенный платеж, % (справочно).
+
+Сумма заказа комиссию не включает — она показывается покупателю как справка
+и удерживается оператором при получении.
+"""
+
+COD_DELIVERY_TYPES = tuple(COD_COMMISSION_RATES)
+"""Способы доставки, для которых доступен наложенный платеж."""
 
 
 class Order(models.Model):
@@ -45,6 +65,11 @@ class Order(models.Model):
     evropochta_branch_name = models.CharField(
         max_length=300, blank=True,
         verbose_name='Название отделения Европочты',
+    )
+
+    payment_type = models.CharField(
+        max_length=20, choices=PAYMENT_CHOICES, default='erip',
+        verbose_name='Способ оплаты',
     )
 
     promo_code = models.ForeignKey(
@@ -92,6 +117,19 @@ class Order(models.Model):
         """Полный адрес: область, индекс, улица (пустые части пропускаются)."""
         parts = (self.region, self.postal_code, self.address)
         return ', '.join(p for p in parts if p)
+
+    @property
+    def cod_commission_rate(self):
+        """Ставка комиссии за наложенный платеж, % (0 если оплата не наложенным платежом)."""
+        if self.payment_type != 'cod':
+            return Decimal('0')
+        return COD_COMMISSION_RATES.get(self.delivery_type, Decimal('0'))
+
+    @property
+    def cod_commission_amount(self):
+        """Справочная сумма комиссии оператора за наложенный платеж (в итог не входит)."""
+        amount = self.grand_total * self.cod_commission_rate / Decimal('100')
+        return amount.quantize(Decimal('0.01'))
 
     class Meta:
         verbose_name = 'Заказ'
