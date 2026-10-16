@@ -263,8 +263,8 @@ def product_detail(request, slug):
     ).exclude(id=product.id).prefetch_related('variants__images')[:8]
 
     cross_sell = Product.objects.filter(
-        is_active=True, is_popular=True
-    ).exclude(id=product.id).prefetch_related('variants__images')[:4]
+        is_active=True, variants__is_popular=True
+    ).exclude(id=product.id).prefetch_related('variants__images').distinct()[:4]
 
     crumbs = [('Каталог', '/catalog/')]
     crumbs.append((product.category.name, product.category.get_absolute_url()))

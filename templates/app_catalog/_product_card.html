@@ -19,7 +19,7 @@ product берётся из него. Ссылка ведёт на страни�
             <div class="product-card__badges">
                 {% if product.is_new %}<span class="badge badge--new">NEW</span>{% endif %}
                 {% if product.is_sale and variant.discount_percent_display > 0 %}<span class="badge badge--sale">-{{ variant.discount_percent_display }}%</span>{% endif %}
-                {% if product.is_popular %}<span class="badge badge--popular">HIT</span>{% endif %}
+                {% if product.is_popular or variant.is_popular %}<span class="badge badge--popular">HIT</span>{% endif %}
             </div>
         </div>
     </a>

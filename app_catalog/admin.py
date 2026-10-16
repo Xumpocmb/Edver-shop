@@ -86,7 +86,7 @@ class ProductVariantInline(ColorHexFieldMixin, admin.TabularInline):
     show_change_link = True
     fields = [
         'color', 'color_hex', 'price',
-        'discount_percent', 'stock', 'status', 'order', 'is_main', 'is_active',
+        'discount_percent', 'stock', 'status', 'order', 'is_main', 'is_popular', 'is_active',
     ]
 
 

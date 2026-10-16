@@ -217,6 +217,7 @@ class ProductVariant(models.Model):
             "главным будет первый по порядку."
         ),
     )
+    is_popular = models.BooleanField(default=False, verbose_name="Популярный")
     is_active = models.BooleanField(default=True, verbose_name="Активен")
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="Создан")
     updated_at = models.DateTimeField(auto_now=True, verbose_name="Обновлён")

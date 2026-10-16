@@ -16,7 +16,11 @@ def home(request):
         .distinct()
     )
 
-    popular = products.filter(is_popular=True)[:8]
+    popular = (
+        products.filter(variants__is_popular=True)
+        .prefetch_related('variants__images')
+        .distinct()[:8]
+    )
     new_products = products.filter(is_new=True)[:8]
     sale = products.filter(is_sale=True)[:8]
 

@@ -70,7 +70,7 @@
                     {% if variant and variant.discount_percent_display > 0 %}
                     <span class="badge badge--sale" id="galleryBadgeDiscount">-{{ variant.discount_percent_display }}%</span>
                     {% endif %}
-                    {% if product.is_popular %}<span class="badge badge--popular">HIT</span>{% endif %}
+                    {% if product.is_popular or variant.is_popular %}<span class="badge badge--popular">HIT</span>{% endif %}
                 </div>
             </div>
 
