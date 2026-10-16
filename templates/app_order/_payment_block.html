@@ -22,6 +22,12 @@
             {{ order.cod_commission_amount }} BYN){% endif %} удерживается при получении
             и в сумму заказа не входит.
         </p>
+    {% elif order.payment_type == 'onsite' %}
+        <div style="font-weight: 600; margin-bottom: .25rem;">Оплата на месте</div>
+        <p style="margin-top: 0; font-size: .95rem; color: var(--color-text-muted);">
+            Сумму <strong>{{ order.grand_total }} BYN</strong> вы оплачиваете при получении
+            заказа в пункте самовывоза — наличными или картой.
+        </p>
     {% else %}
         <div style="font-weight: 600; margin-bottom: .25rem;">Оплата</div>
         <p style="margin-top: 0; font-size: .95rem; color: var(--color-text-muted);">

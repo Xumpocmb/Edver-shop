@@ -320,3 +320,39 @@ class PaymentTypeTests(TestCase):
         order = Order.objects.get(session_key=self.cart.session_key)
         self.assertEqual(order.cod_commission_rate, Decimal('0'))
         self.assertEqual(order.cod_commission_amount, Decimal('0.00'))
+
+    def test_cart_page_shows_onsite_option(self):
+        html = self.client.get(reverse('app_cart:cart_detail')).content.decode()
+
+        self.assertIn('name="payment_type" value="onsite"', html)
+        self.assertIn('Оплата на месте', html)
+
+    def test_onsite_saved_with_pickup_and_no_commission(self):
+        resp = self._checkout({
+            'payment_type': 'onsite',
+            'delivery_type': 'pickup',
+        })
+
+        self.assertEqual(resp.status_code, 302)
+        order = Order.objects.get(session_key=self.cart.session_key)
+        self.assertEqual(order.payment_type, 'onsite')
+        self.assertEqual(order.cod_commission_rate, Decimal('0'))
+        self.assertEqual(order.cod_commission_amount, Decimal('0.00'))
+        self.assertEqual(order.grand_total, Decimal('200.00'))
+
+    def test_erip_allowed_with_pickup(self):
+        resp = self._checkout({
+            'payment_type': 'erip',
+            'delivery_type': 'pickup',
+        })
+
+        self.assertEqual(resp.status_code, 302)
+        order = Order.objects.get(session_key=self.cart.session_key)
+        self.assertEqual(order.payment_type, 'erip')
+
+    def test_onsite_rejected_without_pickup(self):
+        resp = self._checkout({'payment_type': 'onsite'})
+
+        self.assertEqual(resp.status_code, 302)
+        self.assertEqual(resp.url, reverse('app_cart:cart_detail'))
+        self.assertEqual(Order.objects.count(), 0)

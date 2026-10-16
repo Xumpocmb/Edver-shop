@@ -8,6 +8,7 @@ from app_catalog.models import ProductVariant
 PAYMENT_CHOICES = [
     ('erip', 'ЕРИП (онлайн-оплата)'),
     ('cod', 'Наложенный платеж'),
+    ('onsite', 'Оплата на месте'),
 ]
 
 COD_COMMISSION_RATES = {
@@ -22,6 +23,12 @@ COD_COMMISSION_RATES = {
 
 COD_DELIVERY_TYPES = tuple(COD_COMMISSION_RATES)
 """Способы доставки, для которых доступен наложенный платеж."""
+
+ONSITE_DELIVERY_TYPES = ('pickup',)
+"""Способы доставки, для которых доступна оплата на месте (самовывоз)."""
+
+OFFLINE_PAYMENT_TYPES = ('cod', 'onsite')
+"""Способы оплаты без онлайн-счёта ЕРИП (оплата при получении)."""
 
 
 class Order(models.Model):

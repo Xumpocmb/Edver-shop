@@ -13,6 +13,7 @@ from app_order.models import (
     OrderItem,
     PAYMENT_CHOICES,
     COD_DELIVERY_TYPES,
+    ONSITE_DELIVERY_TYPES,
 )
 from app_order.telegram import notify_new_order
 from app_order.utils import create_order_with_number
@@ -215,6 +216,13 @@ def checkout(request):
         messages.error(
             request,
             'Наложенный платеж доступен только при доставке Белпочтой или Европочтой.',
+        )
+        return redirect('app_cart:cart_detail')
+
+    if payment_type == 'onsite' and delivery_type not in ONSITE_DELIVERY_TYPES:
+        messages.error(
+            request,
+            'Оплата на месте доступна только при самовывозе.',
         )
         return redirect('app_cart:cart_detail')
 

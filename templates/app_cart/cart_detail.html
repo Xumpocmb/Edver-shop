@@ -151,6 +151,12 @@
                         <span class="delivery-option__desc">Оплата при получении</span>
                         <span class="delivery-option__hint" id="codHint">Комиссия Белпочты: 3%</span>
                     </label>
+                    <label class="delivery-option" id="onsiteOption">
+                        <input type="radio" name="payment_type" value="onsite">
+                        <span class="delivery-option__label">Оплата на месте</span>
+                        <span class="delivery-option__desc">Наличные или карта при получении</span>
+                        <span class="delivery-option__hint">Только для самовывоза</span>
+                    </label>
                 </div>
             </div>
 
@@ -323,27 +329,31 @@
     var codOption = document.getElementById('codOption');
     var codHint = document.getElementById('codHint');
     var codInput = codOption ? codOption.querySelector('input') : null;
+    var onsiteOption = document.getElementById('onsiteOption');
+    var onsiteInput = onsiteOption ? onsiteOption.querySelector('input') : null;
     var eripInput = paymentPicker ? paymentPicker.querySelector('input[value="erip"]') : null;
     var COD_HINTS = {
         belpochta: 'Комиссия Белпочты: 3%',
         evropochta: 'Комиссия Европочты: 1,5%'
     };
 
-    function syncPaymentWithDelivery() {
-        if (!codInput || !eripInput || !deliveryPicker) return;
-        var delivery = deliveryPicker.querySelector('input:checked').value;
-        var hint = COD_HINTS[delivery];
-        if (hint) {
-            codInput.disabled = false;
-            codOption.classList.remove('delivery-option--disabled');
-            if (codHint) codHint.textContent = hint;
-        } else {
-            codInput.disabled = true;
-            codInput.checked = false;
-            eripInput.checked = true;
-            codOption.classList.add('delivery-option--disabled');
-            if (codHint) codHint.textContent = 'Недоступно для самовывоза';
+    function setPaymentOptionEnabled(option, input, enabled) {
+        if (!input) return;
+        input.disabled = !enabled;
+        if (option) option.classList.toggle('delivery-option--disabled', !enabled);
+        if (!enabled && input.checked) {
+            input.checked = false;
+            if (eripInput) eripInput.checked = true;
         }
+    }
+
+    function syncPaymentWithDelivery() {
+        if (!deliveryPicker) return;
+        var delivery = deliveryPicker.querySelector('input:checked').value;
+        var codHintText = COD_HINTS[delivery];
+        if (codHint) codHint.textContent = codHintText || 'Недоступно для самовывоза';
+        setPaymentOptionEnabled(codOption, codInput, !!codHintText);
+        setPaymentOptionEnabled(onsiteOption, onsiteInput, delivery === 'pickup');
     }
 
     if (deliveryPicker) {

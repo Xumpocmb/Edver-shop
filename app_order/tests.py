@@ -292,6 +292,32 @@ class PaymentViewsTests(TestCase):
         self.assertContains(resp, 'Наложенный платеж')
         self.assertNotContains(resp, 'data-pay-url')
 
+    @mock.patch.object(erip_api, 'erip_create_payment_invoice')
+    def test_payment_create_blocked_for_onsite_order(self, mock_create):
+        self.order.payment_type = 'onsite'
+        self.order.save(update_fields=['payment_type'])
+
+        resp = self.client.post(
+            f'/orders/{self.order.pk}/pay/',
+            headers={'Accept': 'application/json'},
+        )
+
+        self.assertEqual(resp.status_code, 200)
+        data = resp.json()
+        self.assertFalse(data['ok'])
+        self.assertEqual(data['status'], 'onsite')
+        mock_create.assert_not_called()
+
+    def test_order_detail_shows_onsite_without_pay_button(self):
+        self.order.payment_type = 'onsite'
+        self.order.save(update_fields=['payment_type'])
+
+        resp = self.client.get(f'/orders/{self.order.pk}/')
+
+        self.assertEqual(resp.status_code, 200)
+        self.assertContains(resp, 'Оплата на месте')
+        self.assertNotContains(resp, 'data-pay-url')
+
     def test_order_detail_renders(self):
         resp = self.client.get(f'/orders/{self.order.pk}/')
         self.assertEqual(resp.status_code, 200)

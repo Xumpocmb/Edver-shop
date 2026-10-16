@@ -5,7 +5,7 @@ from django.shortcuts import render, get_object_or_404
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 
-from .models import Order
+from .models import Order, OFFLINE_PAYMENT_TYPES
 
 from . import services
 
@@ -55,11 +55,11 @@ def payment_create(request, order_id):
     Клиент получает JSON: ok, result.payment_url, result.message, result.error.
     """
     order = _get_order_for_request(request, order_id)
-    if order.payment_type == 'cod':
+    if order.payment_type in OFFLINE_PAYMENT_TYPES:
         return JsonResponse({
             'ok': False,
             'order_id': order_id,
-            'status': 'cod',
+            'status': order.payment_type,
             'result': {},
             'message': 'Заказ оформлен с оплатой при получении — счёт ЕРИП не требуется.',
         })
