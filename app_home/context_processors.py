@@ -64,11 +64,23 @@ def gender_categories(request):
     from django.db.models import Q
 
     from app_catalog.models import Category
-    cats = Category.objects.filter(is_active=True, has_gender=True).order_by('order', 'name')
+
     unisex = Q(products__gender__isnull=True)
+
+    def menu(gender_q):
+        # Категория попадает в меню, только если у неё есть активный товар
+        # нужного пола (или унисекс) — пустые и неактивные не показываем.
+        return (
+            Category.objects
+            .filter(is_active=True, has_gender=True)
+            .filter(Q(products__is_active=True) & gender_q)
+            .distinct()
+            .order_by('order', 'name')
+        )
+
     return {
-        'categories_men': cats.filter(Q(products__gender='M') | unisex).distinct(),
-        'categories_women': cats.filter(Q(products__gender='F') | unisex).distinct(),
+        'categories_men': menu(Q(products__gender='M') | unisex),
+        'categories_women': menu(Q(products__gender='F') | unisex),
     }
 
 
