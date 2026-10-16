@@ -97,7 +97,7 @@ class ProductAdmin(admin.ModelAdmin):
 
     list_display = ['main_image', 'name', 'category']
     list_display_links = ['name']
-    list_filter = ['is_active', 'gender', 'is_popular', 'is_new', 'is_sale', 'category']
+    list_filter = ['is_active', 'gender', 'variants__is_popular', 'is_new', 'is_sale', 'category']
     search_fields = ['name', 'slug', 'description', 'short_description', 'variants__color']
     prepopulated_fields = {'slug': ('name',)}
     inlines = [ProductVariantInline]

@@ -10,14 +10,18 @@ from app_home import error_views
 
 
 def make_product(slug, **flags):
+    product_flag_names = {'is_new', 'is_sale'}
+    variant_flag_names = {'is_popular'}
+    product_flags = {k: v for k, v in flags.items() if k in product_flag_names}
+    variant_flags = {k: v for k, v in flags.items() if k in variant_flag_names}
     category, _ = Category.objects.get_or_create(
         slug='sumki', defaults={'name': 'Сумки'},
     )
     product = Product.objects.create(
-        name=slug, slug=slug, category=category, is_active=True, **flags
+        name=slug, slug=slug, category=category, is_active=True, **product_flags
     )
-    ProductVariant.objects.create(
-        product=product, color='Чёрный', price='100.00', stock=3, is_active=True,
+    variant = ProductVariant.objects.create(
+        product=product, color='Чёрный', price='100.00', stock=3, is_active=True, **variant_flags
     )
     return product
 

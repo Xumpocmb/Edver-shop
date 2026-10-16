@@ -660,6 +660,7 @@ class Command(BaseCommand):
                         'order': v_idx,
                         'is_main': v_idx == 0,
                         'status': 'in_stock',
+                        **v_flags,
                     }
                 )
                 if not v_created:
