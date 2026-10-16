@@ -16,6 +16,7 @@ class Order(models.Model):
     DELIVERY_CHOICES = [
         ('belpochta', 'Белпочта'),
         ('evropochta', 'Европочта'),
+        ('pickup', 'Самовывоз'),
     ]
 
     user = models.ForeignKey(

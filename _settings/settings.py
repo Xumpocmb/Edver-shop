@@ -94,6 +94,7 @@ TEMPLATES = [
                 'app_home.context_processors.gender_categories',
                 'app_home.context_processors.general_categories',
                 'app_home.context_processors.order_availability',
+                'app_home.context_processors.pickup_address',
             ],
         },
     },

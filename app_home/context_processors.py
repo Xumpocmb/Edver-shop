@@ -1,4 +1,4 @@
-from .models import CartIcon, FooterInfo, Instagram, OrderAvailability, PhoneNumber, ProfileIcon, SiteEmail, SiteFavicon, SiteLogo, StaticPage, TikTok
+from .models import CartIcon, FooterInfo, Instagram, OrderAvailability, PhoneNumber, PickupAddress, ProfileIcon, SiteEmail, SiteFavicon, SiteLogo, StaticPage, TikTok
 
 
 def site_logo(request):
@@ -48,6 +48,10 @@ def footer_info(request):
 
 def order_availability(request):
     return {'orders_available': OrderAvailability.orders_available()}
+
+
+def pickup_address(request):
+    return {'pickup_address': PickupAddress.objects.first()}
 
 
 def footer_pages(request):

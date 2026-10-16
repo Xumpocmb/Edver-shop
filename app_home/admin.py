@@ -4,7 +4,7 @@ from django.utils.html import format_html
 
 from app_media.processing import preview_url
 
-from .models import Advantage, CartIcon, FooterInfo, Instagram, OrderAvailability, PhoneNumber, ProfileIcon, SiteEmail, SiteFavicon, SiteLogo, SiteReview, Slide, StaticPage, TikTok
+from .models import Advantage, CartIcon, FooterInfo, Instagram, OrderAvailability, PhoneNumber, PickupAddress, ProfileIcon, SiteEmail, SiteFavicon, SiteLogo, SiteReview, Slide, StaticPage, TikTok
 
 
 @admin.register(SiteLogo)
@@ -94,6 +94,11 @@ class FooterInfoAdmin(admin.ModelAdmin):
 @admin.register(OrderAvailability)
 class OrderAvailabilityAdmin(admin.ModelAdmin):
     list_display = ('id', 'is_enabled')
+
+
+@admin.register(PickupAddress)
+class PickupAddressAdmin(admin.ModelAdmin):
+    list_display = ('id', 'address')
 
 
 @admin.register(Advantage)

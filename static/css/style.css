@@ -3148,6 +3148,14 @@ button {
     margin-top: 1rem;
 }
 
+.pickup-address {
+    padding: .75rem 1rem;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    background: var(--color-bg);
+    font-size: .95rem;
+}
+
 .branch-list {
     max-height: 260px;
     overflow-y: auto;

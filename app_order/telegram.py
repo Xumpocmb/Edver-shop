@@ -111,4 +111,9 @@ def notify_paid_order(order):
 def _delivery_destination(order):
     if order.delivery_type == 'evropochta':
         return f'📍 Отделение: {_esc(order.evropochta_branch_name or "—")}'
+    if order.delivery_type == 'pickup':
+        from app_home.models import PickupAddress
+        pickup = PickupAddress.objects.first()
+        address = pickup.address if pickup and pickup.address else '—'
+        return f'📍 Самовывоз: {_esc(address)}'
     return f'📍 Адрес: {_esc(order.full_address or "—")}'

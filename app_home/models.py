@@ -259,6 +259,31 @@ class OrderAvailability(models.Model):
         verbose_name_plural = 'Доступность заказов'
 
 
+class PickupAddress(models.Model):
+    is_singleton = models.BooleanField(default=True, unique=True, editable=False)
+    address = models.TextField(
+        blank=True,
+        verbose_name='Адрес пункта самовывоза',
+        help_text='Показывается покупателю при выборе самовывоза.',
+    )
+    note = models.TextField(
+        blank=True,
+        verbose_name='Примечание',
+        help_text='Например, часы работы или как добраться.',
+    )
+
+    def save(self, *args, **kwargs):
+        self.is_singleton = True
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return 'Адрес самовывоза'
+
+    class Meta:
+        verbose_name = 'Адрес самовывоза'
+        verbose_name_plural = 'Адрес самовывоза'
+
+
 class Advantage(models.Model):
     icon = models.CharField(max_length=10, verbose_name='Иконка (эмодзи)')
     title = models.CharField(max_length=100, verbose_name='Заголовок')

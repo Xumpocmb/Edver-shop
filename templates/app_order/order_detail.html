@@ -49,10 +49,15 @@
                 <span class="spec-row__key">Адрес</span>
                 <span class="spec-row__val">{{ order.full_address }}</span>
             </div>
-            {% else %}
+            {% elif order.delivery_type == 'evropochta' %}
             <div class="spec-row">
                 <span class="spec-row__key">Отделение</span>
                 <span class="spec-row__val">{{ order.evropochta_branch_name }}</span>
+            </div>
+            {% elif order.delivery_type == 'pickup' and pickup_address and pickup_address.address %}
+            <div class="spec-row">
+                <span class="spec-row__key">Пункт самовывоза</span>
+                <span class="spec-row__val">{{ pickup_address.address }}</span>
             </div>
             {% endif %}
             {% if order.comment %}

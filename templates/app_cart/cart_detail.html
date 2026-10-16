@@ -126,6 +126,11 @@
                         <span class="delivery-option__label">Европочта</span>
                         <span class="delivery-option__desc">Отделение / ПВЗ</span>
                     </label>
+                    <label class="delivery-option">
+                        <input type="radio" name="delivery_type" value="pickup">
+                        <span class="delivery-option__label">Самовывоз</span>
+                        <span class="delivery-option__desc">Из пункта выдачи</span>
+                    </label>
                 </div>
             </div>
 
@@ -164,6 +169,15 @@
                     <input type="hidden" name="evropochta_branch_id" id="branchId">
                     <input type="hidden" name="evropochta_branch_name" id="branchName">
                     <div class="branch-list" id="branchList" style="display: none;"></div>
+                </div>
+                <div class="form-row" id="pickupField" style="display: none;">
+                    <label>Пункт самовывоза</label>
+                    {% if pickup_address and pickup_address.address %}
+                        <div class="pickup-address">{{ pickup_address.address|linebreaksbr }}</div>
+                        {% if pickup_address.note %}<p class="form-note">{{ pickup_address.note|linebreaksbr }}</p>{% endif %}
+                    {% else %}
+                        <p class="form-note">Адрес пункта самовывоза уточнит менеджер.</p>
+                    {% endif %}
                 </div>
             </div>
 
@@ -278,19 +292,19 @@
 
     // Delivery type toggle
     var deliveryPicker = document.getElementById('deliveryPicker');
-    var belpochtaField = document.getElementById('belpochtaField');
-    var evropochtaField = document.getElementById('evropochtaField');
+    var deliveryFields = {
+        belpochta: document.getElementById('belpochtaField'),
+        evropochta: document.getElementById('evropochtaField'),
+        pickup: document.getElementById('pickupField')
+    };
 
     if (deliveryPicker) {
         deliveryPicker.addEventListener('change', function() {
             var val = deliveryPicker.querySelector('input:checked').value;
-            if (val === 'evropochta') {
-                belpochtaField.style.display = 'none';
-                evropochtaField.style.display = '';
-            } else {
-                belpochtaField.style.display = '';
-                evropochtaField.style.display = 'none';
-            }
+            Object.keys(deliveryFields).forEach(function(key) {
+                var field = deliveryFields[key];
+                if (field) field.style.display = (key === val) ? '' : 'none';
+            });
         });
     }
 
