@@ -663,16 +663,15 @@ button {
     align-items: center;
     justify-content: space-between;
     width: 100%;
-    padding: .65rem .75rem;
+    padding: .6rem .75rem;
     border: none;
     background: none;
     font: inherit;
-    font-weight: 700;
-    font-size: .95rem;
-    color: var(--color-accent);
+    font-weight: 500;
+    color: inherit;
     cursor: pointer;
     border-radius: 8px;
-    transition: background .15s;
+    transition: background .15s, color .15s;
 }
 
 .header-menu-toggle::after {
@@ -688,6 +687,7 @@ button {
 
 .header-menu-toggle:hover {
     background: var(--color-bg-soft);
+    color: var(--color-accent);
 }
 
 .header-menu-dropdown {
@@ -702,22 +702,15 @@ button {
 }
 
 .header-menu-dropdown a {
-    padding: .5rem .75rem;
+    padding: .6rem .75rem;
     border-radius: 8px;
     font-weight: 500;
-    font-size: .9rem;
     transition: background .15s, color .15s;
 }
 
 .header-menu-dropdown a:hover {
     background: var(--color-bg-soft);
     color: var(--color-accent);
-}
-
-.header-menu-more {
-    font-size: .85rem !important;
-    color: var(--color-accent) !important;
-    font-weight: 600 !important;
 }
 
 .header-menu a:focus-visible,
