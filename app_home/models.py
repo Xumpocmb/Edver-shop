@@ -405,6 +405,6 @@ class SiteReview(models.Model):
         return f'{self.name} — {self.rating}/5'
 
     class Meta:
-        verbose_name = 'Отзыв о сайте'
-        verbose_name_plural = 'Отзывы о сайте'
+        verbose_name = 'Отзыв'
+        verbose_name_plural = 'Отзывы'
         ordering = ['-created_at']
