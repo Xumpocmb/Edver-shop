@@ -3093,6 +3093,11 @@ button {
     color: var(--color-text-muted);
 }
 
+.checkout-note a {
+    color: var(--color-accent);
+    text-decoration: underline;
+}
+
 .form-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
