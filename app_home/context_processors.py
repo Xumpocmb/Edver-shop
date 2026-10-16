@@ -1,11 +1,17 @@
 from .models import (
     DEFAULT_BELPOCHTA_DELIVERY_NOTE,
+    DEFAULT_COD_BELPOCHTA_NOTE,
+    DEFAULT_COD_EVROPOCHTA_NOTE,
+    DEFAULT_COD_PICKUP_NOTE,
+    DEFAULT_ERIP_PAYMENT_NOTE,
     DEFAULT_EVROPOCHTA_DELIVERY_NOTE,
+    DEFAULT_ONSITE_PAYMENT_NOTE,
     CartIcon,
     DeliveryInfo,
     FooterInfo,
     Instagram,
     OrderAvailability,
+    PaymentInfo,
     PhoneNumber,
     PickupAddress,
     ProfileIcon,
@@ -76,6 +82,22 @@ def delivery_info(request):
         'delivery_info': info,
         'belpochta_note': info.belpochta_note if info else DEFAULT_BELPOCHTA_DELIVERY_NOTE,
         'evropochta_note': info.evropochta_note if info else DEFAULT_EVROPOCHTA_DELIVERY_NOTE,
+    }
+
+
+def payment_info(request):
+    info = PaymentInfo.objects.first()
+
+    def value(field, default):
+        return getattr(info, field) if info else default
+
+    return {
+        'payment_info': info,
+        'erip_note': value('erip_note', DEFAULT_ERIP_PAYMENT_NOTE),
+        'cod_belpochta_note': value('cod_belpochta_note', DEFAULT_COD_BELPOCHTA_NOTE),
+        'cod_evropochta_note': value('cod_evropochta_note', DEFAULT_COD_EVROPOCHTA_NOTE),
+        'cod_pickup_note': value('cod_pickup_note', DEFAULT_COD_PICKUP_NOTE),
+        'onsite_note': value('onsite_note', DEFAULT_ONSITE_PAYMENT_NOTE),
     }
 
 

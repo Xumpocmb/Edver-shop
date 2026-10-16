@@ -143,19 +143,19 @@
                         <input type="radio" name="payment_type" value="erip" checked>
                         <span class="delivery-option__label">ЕРИП</span>
                         <span class="delivery-option__desc">Онлайн-оплата</span>
-                        <span class="delivery-option__hint">Без комиссии</span>
+                        {% if erip_note %}<span class="delivery-option__hint">{{ erip_note }}</span>{% endif %}
                     </label>
                     <label class="delivery-option" id="codOption">
                         <input type="radio" name="payment_type" value="cod">
                         <span class="delivery-option__label">Наложенный платеж</span>
                         <span class="delivery-option__desc">Оплата при получении</span>
-                        <span class="delivery-option__hint" id="codHint">Комиссия Белпочты: 3%</span>
+                        <span class="delivery-option__hint" id="codHint">{{ cod_belpochta_note }}</span>
                     </label>
                     <label class="delivery-option" id="onsiteOption">
                         <input type="radio" name="payment_type" value="onsite">
                         <span class="delivery-option__label">Оплата на месте</span>
                         <span class="delivery-option__desc">Наличные или карта при получении</span>
-                        <span class="delivery-option__hint">Только для самовывоза</span>
+                        {% if onsite_note %}<span class="delivery-option__hint">{{ onsite_note }}</span>{% endif %}
                     </label>
                 </div>
             </div>
@@ -333,9 +333,10 @@
     var onsiteInput = onsiteOption ? onsiteOption.querySelector('input') : null;
     var eripInput = paymentPicker ? paymentPicker.querySelector('input[value="erip"]') : null;
     var COD_HINTS = {
-        belpochta: 'Комиссия Белпочты: 3%',
-        evropochta: 'Комиссия Европочты: 1,5%'
+        belpochta: '{{ cod_belpochta_note|escapejs }}',
+        evropochta: '{{ cod_evropochta_note|escapejs }}'
     };
+    var COD_PICKUP_HINT = '{{ cod_pickup_note|escapejs }}';
 
     function setPaymentOptionEnabled(option, input, enabled) {
         if (!input) return;
@@ -350,9 +351,9 @@
     function syncPaymentWithDelivery() {
         if (!deliveryPicker) return;
         var delivery = deliveryPicker.querySelector('input:checked').value;
-        var codHintText = COD_HINTS[delivery];
-        if (codHint) codHint.textContent = codHintText || 'Недоступно для самовывоза';
-        setPaymentOptionEnabled(codOption, codInput, !!codHintText);
+        var codHintText = (delivery in COD_HINTS) ? COD_HINTS[delivery] : COD_PICKUP_HINT;
+        if (codHint) codHint.textContent = codHintText;
+        setPaymentOptionEnabled(codOption, codInput, delivery in COD_HINTS);
         setPaymentOptionEnabled(onsiteOption, onsiteInput, delivery === 'pickup');
     }
 

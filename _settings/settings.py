@@ -96,6 +96,7 @@ TEMPLATES = [
                 'app_home.context_processors.order_availability',
                 'app_home.context_processors.pickup_address',
                 'app_home.context_processors.delivery_info',
+                'app_home.context_processors.payment_info',
             ],
         },
     },

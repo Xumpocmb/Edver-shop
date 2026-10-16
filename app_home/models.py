@@ -315,6 +315,58 @@ class DeliveryInfo(models.Model):
         verbose_name_plural = 'Подсказки по доставке'
 
 
+DEFAULT_ERIP_PAYMENT_NOTE = 'Без комиссии'
+DEFAULT_COD_BELPOCHTA_NOTE = 'Комиссия Белпочты: 3%'
+DEFAULT_COD_EVROPOCHTA_NOTE = 'Комиссия Европочты: 1,5%'
+DEFAULT_COD_PICKUP_NOTE = 'Недоступно для самовывоза'
+DEFAULT_ONSITE_PAYMENT_NOTE = 'Только для самовывоза'
+
+
+class PaymentInfo(models.Model):
+    is_singleton = models.BooleanField(default=True, unique=True, editable=False)
+    erip_note = models.TextField(
+        blank=True,
+        default=DEFAULT_ERIP_PAYMENT_NOTE,
+        verbose_name='Подсказка для ЕРИП',
+        help_text='Показывается под вариантом оплаты «ЕРИП». Оставьте пустым, чтобы скрыть.',
+    )
+    cod_belpochta_note = models.TextField(
+        blank=True,
+        default=DEFAULT_COD_BELPOCHTA_NOTE,
+        verbose_name='Подсказка «Наложенный платеж» при Белпочте',
+        help_text='Показывается под «Наложенным платежом», если выбрана доставка Белпочтой.',
+    )
+    cod_evropochta_note = models.TextField(
+        blank=True,
+        default=DEFAULT_COD_EVROPOCHTA_NOTE,
+        verbose_name='Подсказка «Наложенный платеж» при Европочте',
+        help_text='Показывается под «Наложенным платежом», если выбрана доставка Европочтой.',
+    )
+    cod_pickup_note = models.TextField(
+        blank=True,
+        default=DEFAULT_COD_PICKUP_NOTE,
+        verbose_name='Подсказка «Наложенный платеж» при самовывозе',
+        help_text='Показывается, когда «Наложенный платеж» недоступен (самовывоз). Оставьте пустым, чтобы скрыть.',
+    )
+    onsite_note = models.TextField(
+        blank=True,
+        default=DEFAULT_ONSITE_PAYMENT_NOTE,
+        verbose_name='Подсказка для оплаты на месте',
+        help_text='Показывается под вариантом оплаты «Оплата на месте». Оставьте пустым, чтобы скрыть.',
+    )
+
+    def save(self, *args, **kwargs):
+        self.is_singleton = True
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return 'Подсказки по оплате'
+
+    class Meta:
+        verbose_name = 'Подсказки по оплате'
+        verbose_name_plural = 'Подсказки по оплате'
+
+
 class Advantage(models.Model):
     icon = models.CharField(max_length=10, verbose_name='Иконка (эмодзи)')
     title = models.CharField(max_length=100, verbose_name='Заголовок')
