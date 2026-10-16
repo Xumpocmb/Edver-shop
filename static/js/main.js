@@ -585,6 +585,7 @@
     // ====== Автоскрытие сообщений ======
     function initAlerts() {
         $$('.alert').forEach(function (el) {
+            if (el.hidden) return;
             setTimeout(function () {
                 el.style.transition = 'opacity .4s';
                 el.style.opacity = '0';
