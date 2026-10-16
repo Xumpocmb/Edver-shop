@@ -38,8 +38,6 @@
             {% endfor %}
         </div>
 
-        <button class="slider-nav slider-nav--prev" id="heroPrev" aria-label="Предыдущий слайд">‹</button>
-        <button class="slider-nav slider-nav--next" id="heroNext" aria-label="Следующий слайд">›</button>
         <div class="slider-dots" id="heroDots" role="tablist">
             {% for slide in slides %}
                 <button class="slider-dot {% if forloop.first %}is-active{% endif %}"

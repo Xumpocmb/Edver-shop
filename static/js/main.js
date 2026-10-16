@@ -236,8 +236,6 @@
         var slides = $$('.slide', slider);
         if (!slides.length) return;
         var dots = $$('.slider-dot', $('#heroDots') || document.body);
-        var prev = $('#heroPrev');
-        var next = $('#heroNext');
         var current = 0;
         var timer = null;
 
@@ -249,8 +247,6 @@
         function start() { stop(); timer = setInterval(function () { show(current + 1); }, 6500); }
         function stop() { if (timer) { clearInterval(timer); timer = null; } }
 
-        prev && prev.addEventListener('click', function () { show(current - 1); start(); });
-        next && next.addEventListener('click', function () { show(current + 1); start(); });
         dots.forEach(function (d, i) {
             d.addEventListener('click', function () { show(i); start(); });
         });
