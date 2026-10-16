@@ -59,7 +59,11 @@
         <div class="categories-grid">
             {% for c in categories %}
                 <a href="{{ c.get_absolute_url }}" class="category-card"
-                   style="background: linear-gradient(135deg, var(--color-accent-light), var(--color-accent-dark));">
+                   {% if c.image %}style="background-image: url('{{ c.image.url }}'); background-size: cover; background-position: center; position: relative;"{% else %}style="background: linear-gradient(135deg, var(--color-accent-light), var(--color-accent-dark));"{% endif %}>
+                    {% if c.image %}
+                    <div style="position: absolute; inset: 0; background: rgba(0,0,0,0.4); z-index: 1;"></div>
+                    {% endif %}
+                    {% if not c.image %}
                     <span class="category-card__emoji" aria-hidden="true">
                         {% if 'сум' in c.name|lower %}👜
                         {% elif 'чемод' in c.name|lower %}🧳
@@ -70,7 +74,8 @@
                         {% else %}🛍️
                         {% endif %}
                     </span>
-                    <div class="category-card__name">{{ c.name }}</div>
+                    {% endif %}
+                    <div class="category-card__name"{% if c.image %} style="position: relative; z-index: 2; background: rgba(0,0,0,0.5); padding: 0.5rem 1rem; border-radius: 8px;"{% endif %}>{{ c.name }}</div>
                 </a>
             {% endfor %}
         </div>
