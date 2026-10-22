@@ -1,3 +1,5 @@
+import json
+
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import AnonymousUser
 from django.core.exceptions import PermissionDenied
@@ -102,6 +104,76 @@ class HomeSectionsTests(TestCase):
         )
         html = self.get_home()
         self.assertEqual(html.count('data-product-name="tovar-1'), 1)
+
+
+class StoreSchemaTests(TestCase):
+    """JSON-LD магазина: адрес, зона доставки, соцсети."""
+
+    def store_data(self, path='/'):
+        html = self.client.get(path).content.decode()
+        marker = '"@type": "Store"'
+        start = html.index(marker)
+        start = html.rindex('{', 0, start)
+        raw = html[start:html.index('</script>', start)]
+        return json.loads(raw)
+
+    def test_store_schema_on_home(self):
+        data = self.store_data()
+
+        self.assertEqual(data['name'], 'EDVER Shop')
+        self.assertEqual(data['address']['addressLocality'], 'Барановичи')
+        self.assertEqual(data['address']['streetAddress'], 'пр-кт Советский, 35')
+        self.assertEqual(data['address']['addressCountry'], 'BY')
+
+    def test_store_schema_on_any_page(self):
+        data = self.store_data('/contacts/')
+
+        self.assertEqual(data['@type'], 'Store')
+
+    def test_area_served_is_belarus_not_just_city(self):
+        data = self.store_data()
+
+        self.assertEqual(data['areaServed']['identifier'], 'BY')
+
+    def test_phone_and_socials_included_when_set(self):
+        from app_home.models import PhoneNumber, Instagram
+
+        PhoneNumber.objects.create(number='+375 29 123-45-67')
+        Instagram.objects.create(url='https://instagram.com/edvershop')
+
+        data = self.store_data()
+
+        self.assertEqual(data['telephone'], '+375 29 123-45-67')
+        self.assertIn('https://instagram.com/edvershop', data['sameAs'])
+
+
+class ContactsPageTests(TestCase):
+    """Контакты содержат адрес и доставку — локальное SEO."""
+
+    def test_address_is_visible(self):
+        html = self.client.get('/contacts/').content.decode()
+
+        self.assertIn('Барановичи', html)
+        self.assertIn('пр-кт Советский, 35', html)
+        self.assertIn('Светиловский', html)
+
+    def test_page_mentions_countrywide_delivery(self):
+        html = self.client.get('/contacts/').content.decode()
+
+        self.assertIn('по всей Беларуси', html)
+
+
+class HomeSeoTests(TestCase):
+    def test_home_has_single_h1(self):
+        html = self.client.get('/').content.decode()
+
+        self.assertEqual(html.count('<h1'), 1)
+        self.assertIn('EDVER Shop', html)
+
+    def test_home_title_contains_brand(self):
+        html = self.client.get('/').content.decode()
+
+        self.assertIn('<title>EDVER Shop', html)
 
 
 def _boom(request):

@@ -5,6 +5,10 @@
 <title>{% if page_title %}{{ page_title }} — {% endif %}EDVER Shop каталог</title>
 {% endblock %}
 
+{% block structured_data %}
+{% if breadcrumbs_schema %}<script type="application/ld+json">{{ breadcrumbs_schema }}</script>{% endif %}
+{% endblock %}
+
 {% block content %}
 <div class="catalog-page">
 

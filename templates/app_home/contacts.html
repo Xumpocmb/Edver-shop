@@ -1,7 +1,11 @@
 {% extends "base.html" %}
 
 {% block title %}
-<title>Контакты — EDVER Shop</title>
+<title>Контакты — EDVER Shop, г. Барановичи</title>
+{% endblock %}
+
+{% block meta_description %}
+<meta name="description" content="Контакты EDVER Shop: магазин в Барановичах, пр-кт Советский, 35, ТВК «Светиловский», 1-й этаж. Доставка Белпочтой и Европочтой по всей Беларуси.">
 {% endblock %}
 
 {% block content %}
@@ -16,16 +20,30 @@
     </div>
 
     <section class="container" style="padding: 2rem 20px 1rem;">
-        <h1 class="catalog-head__title">Контакты</h1>
+        <h1 class="catalog-head__title">Контакты EDVER Shop в Барановичах</h1>
     </section>
 
     <section class="section section--gray container">
         <div class="section-head section-head--center">
-            <h2 class="section-title">Свяжитесь с нами</h2>
-            <p class="section-subtitle">Мы на связи и с радостью ответим на ваши вопросы.</p>
+            <h2 class="section-title">Как нас найти и как заказать</h2>
+            <p class="section-subtitle">Приезжайте в магазин или заказывайте с доставкой по всей Беларуси.</p>
         </div>
 
         <ul class="contacts-list">
+            <li class="contacts-list__item contacts-list__item--address">
+                <span class="contacts-list__icon">📍</span>
+                <div class="contacts-list__body">
+                    <span class="contacts-list__label">Адрес магазина</span>
+                    <address class="contacts-list__value">
+                        г. {{ site_address.city }}, {{ site_address.street }}<br>
+                        {{ site_address.place }}
+                    </address>
+                    <p class="contacts-list__hint">
+                        Здесь можно посмотреть и забрать товар. А ещё мы доставляем
+                        по всей Беларуси — Белпочтой и Европочтой.
+                    </p>
+                </div>
+            </li>
             {% if phone and phone.number %}
             <li class="contacts-list__item">
                 <span class="contacts-list__icon">{% if phone.icon_image %}<img src="{{ phone.icon_image.url }}" alt="" style="width: 1.3em; height: 1.3em;">{% else %}{{ phone.icon|default:"📞" }}{% endif %}</span>

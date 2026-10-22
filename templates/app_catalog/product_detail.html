@@ -17,6 +17,10 @@
 {% if gallery_images %}<meta property="og:image" content="{{ request.build_absolute_uri }}{{ gallery_images.0.src }}">{% endif %}
 {% endblock %}
 
+{% block structured_data %}
+{% if breadcrumbs_schema %}<script type="application/ld+json">{{ breadcrumbs_schema }}</script>{% endif %}
+{% endblock %}
+
 {% block content %}
 <script type="application/ld+json">
 {% if product_schema %}{{ product_schema }}{% else %}{

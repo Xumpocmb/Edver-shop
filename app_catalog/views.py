@@ -123,6 +123,11 @@ def _prefetch_products(qs):
     return qs.select_related('category').prefetch_related('variants__images')
 
 
+def _breadcrumbs_schema(request, breadcrumbs):
+    from app_home.structured_data import breadcrumbs_schema
+    return breadcrumbs_schema(request, breadcrumbs)
+
+
 def catalog_list(request):
     qs = _variant_queryset()
     color_options, material_options = _get_filter_options(qs)
@@ -139,6 +144,7 @@ def catalog_list(request):
         'variants': page_obj.object_list,
         'paginator': paginator,
         'breadcrumbs': breadcrumbs,
+        'breadcrumbs_schema': _breadcrumbs_schema(request, breadcrumbs),
         'page_title': 'Каталог',
         'color_options': color_options,
         'material_options': material_options,
@@ -198,6 +204,7 @@ def category_detail(request, slug):
         'variants': page_obj.object_list,
         'paginator': paginator,
         'breadcrumbs': crumbs,
+        'breadcrumbs_schema': _breadcrumbs_schema(request, crumbs),
         'page_title': category.name,
         'color_options': color_options,
         'material_options': material_options,
@@ -238,6 +245,7 @@ def search_results(request):
         'paginator': paginator,
         'search_query': query,
         'breadcrumbs': breadcrumbs,
+        'breadcrumbs_schema': _breadcrumbs_schema(request, breadcrumbs),
         'page_title': f'Поиск: {query}' if query else 'Поиск',
         'color_options': color_options,
         'material_options': material_options,
@@ -404,6 +412,7 @@ def product_detail(request, slug):
         'related_products': related,
         'cross_sell_products': cross_sell,
         'breadcrumbs': crumbs,
+        'breadcrumbs_schema': _breadcrumbs_schema(request, crumbs),
         'page_title': product.name,
         'product_schema': product_schema,
         'has_discount': any(v.discount_percent > 0 for v in variants),

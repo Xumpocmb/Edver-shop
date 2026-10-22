@@ -709,7 +709,11 @@ class ProductSchemaTests(TestCase):
 
     def schema(self):
         html = self.client.get(self.product.get_absolute_url()).content.decode()
-        start = html.index('"@context": "https://schema.org"')
+        return self._find_schema(html, '"@type": "Product"')
+
+    @staticmethod
+    def _find_schema(html, marker):
+        start = html.index(marker)
         start = html.rindex('{', 0, start)
         raw = html[start:html.index('</script>', start)]
         return json.loads(raw)
@@ -781,6 +785,45 @@ class ProductSchemaTests(TestCase):
         )
 
         self.assertEqual(self.offer()['hasMerchantReturnPolicy']['merchantReturnDays'], 30)
+
+
+class BreadcrumbSchemaTests(TestCase):
+    """BreadcrumbList в разметке каталога и карточки товара."""
+
+    def setUp(self):
+        self.category = Category.objects.create(name='Сумки', slug='sumki')
+        self.product = Product.objects.create(
+            name='Сумка-шопер', slug='sumka-shopper', category=self.category,
+        )
+        ProductVariant.objects.create(
+            product=self.product, color='Чёрный', price='100.00', stock=1,
+        )
+
+    def breadcrumbs(self, path):
+        html = self.client.get(path).content.decode()
+        marker = '"@type": "BreadcrumbList"'
+        start = html.index(marker)
+        start = html.rindex('{', 0, start)
+        raw = html[start:html.index('</script>', start)]
+        return json.loads(raw)['itemListElement']
+
+    def test_category_page_breadcrumbs(self):
+        items = self.breadcrumbs(self.category.get_absolute_url())
+
+        self.assertEqual([i['name'] for i in items], ['Каталог', 'Сумки'])
+        self.assertEqual(items[0]['item'], 'http://testserver/catalog/')
+
+    def test_product_page_breadcrumbs(self):
+        items = self.breadcrumbs(self.product.get_absolute_url())
+
+        self.assertEqual(
+            [i['name'] for i in items], ['Каталог', 'Сумки', 'Сумка-шопер']
+        )
+
+    def test_positions_are_sequential(self):
+        items = self.breadcrumbs(self.product.get_absolute_url())
+
+        self.assertEqual([i['position'] for i in items], [1, 2, 3])
 
 
 class ExportYmlCommandTests(TestCase):

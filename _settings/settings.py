@@ -97,6 +97,8 @@ TEMPLATES = [
                 'app_home.context_processors.pickup_address',
                 'app_home.context_processors.delivery_info',
                 'app_home.context_processors.payment_info',
+                'app_home.context_processors.store_schema',
+                'app_home.context_processors.site_address',
             ],
         },
     },
@@ -221,6 +223,24 @@ MERCHANT = {
     'transit_days_min': 1,
     'transit_days_max': 10,
     'return_days': 14,
+}
+
+# Реквизиты магазина для локального SEO и разметки Organization/Store.
+# Магазин работает офлайн в Барановичах и параллельно доставляет по всей Беларуси.
+SITE = {
+    'name': 'EDVER Shop',
+    'url': os.getenv('SITE_URL', 'https://edvershop.by'),
+    'city': 'Барановичи',
+    'region': 'Брестская область',
+    'country': 'BY',
+    'postal_code': '225411',
+    'street': 'пр-кт Советский, 35',
+    'place': 'ТВК «Светиловский», 1-й этаж',
+    'latitude': 53.1327,
+    'longitude': 26.0139,
+    # Регион продаж: доставляем по всей Беларуси.
+    'area_served': 'BY',
+    'price_range': '$$',
 }
 
 

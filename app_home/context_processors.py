@@ -154,3 +154,16 @@ def cart_count(request):
     except Exception:
         pass
     return {'cart_total_items': 0}
+
+
+def store_schema(request):
+    """JSON-LD магазина — на всех страницах, чтобы поисковики видели адрес и зону доставки."""
+    from .structured_data import store_schema as build_schema
+    return {'store_schema': build_schema(request)}
+
+
+def site_address(request):
+    """Адрес магазина из настроек — для NAP-блока в футере и контактах."""
+    from django.conf import settings
+    return {'site_address': settings.SITE}
+
