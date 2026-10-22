@@ -210,6 +210,19 @@ FEED = {
     'picture_extensions': {'.jpg', '.jpeg', '.png'},
 }
 
+# Данные для структурированной разметки товаров (Google Merchant listings).
+MERCHANT = {
+    'brand': 'EDVER Shop',
+    'country': 'BY',
+    'currency': 'BYN',
+    'shipping_rate': '6.00',
+    'handling_days_min': 0,
+    'handling_days_max': 1,
+    'transit_days_min': 1,
+    'transit_days_max': 10,
+    'return_days': 14,
+}
+
 
 # Celery
 CELERY_BROKER_URL = 'redis://127.0.0.1:6379/0'

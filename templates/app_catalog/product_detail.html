@@ -19,20 +19,11 @@
 
 {% block content %}
 <script type="application/ld+json">
-{
+{% if product_schema %}{{ product_schema }}{% else %}{
     "@context": "https://schema.org",
     "@type": "Product",
-    "name": "{{ product.name|escapejs }} {{ variant.color|escapejs }}",
-    {% if gallery_images %}"image": "{{ request.build_absolute_uri }}{{ gallery_images.0.src }}",
-    {% endif %}{% if product.short_description %}"description": "{{ product.short_description|truncatechars:200|escapejs }}",
-    {% elif product.description %}"description": "{{ product.description|truncatechars:200|escapejs }}",
-    {% endif %}"offers": {
-        "@type": "Offer",
-        "price": "{{ schema_price }}",
-        "priceCurrency": "BYN",
-        "availability": "{% if variant.stock > 0 %}https://schema.org/InStock{% elif variant.status == 'preorder' %}https://schema.org/PreOrder{% else %}https://schema.org/OutOfStock{% endif %}"
-    }
-}
+    "name": "{{ product.name|escapejs }}"
+}{% endif %}
 </script>
 <div class="product-page">
 

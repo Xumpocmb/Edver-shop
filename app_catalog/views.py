@@ -1,9 +1,20 @@
+import json
+import re
+
+from django.conf import settings
 from django.shortcuts import render, get_object_or_404
 from django.core.paginator import Paginator
 from django.db.models import Q, Min, Max
 from django.utils.html import strip_tags
+from django.utils.safestring import mark_safe
 from django.utils.text import Truncator
 
+from app_home.models import (
+    DEFAULT_BELPOCHTA_DELIVERY_NOTE,
+    DEFAULT_EVROPOCHTA_DELIVERY_NOTE,
+    DeliveryInfo,
+    StaticPage,
+)
 from app_media.payload import image_payload, variant_payload
 
 from .models import Product, ProductVariant, Category
@@ -235,6 +246,111 @@ def search_results(request):
     return render(request, 'app_catalog/catalog.html', context)
 
 
+def _schema_availability(variant):
+    if variant.stock > 0:
+        return 'https://schema.org/InStock'
+    if variant.status == 'preorder':
+        return 'https://schema.org/PreOrder'
+    return 'https://schema.org/OutOfStock'
+
+
+def _first_amount(note, default):
+    """Первое число из подсказки доставки/оплаты — стоимость в рублях."""
+    match = re.search(r'\d+(?:[.,]\d+)?', note or '')
+    return match.group(0).replace(',', '.') if match else default
+
+
+def _shipping_details(currency):
+    """Условия доставки для JSON-LD из настроек «Подсказок по доставке»."""
+    merchant = settings.MERCHANT
+    info = DeliveryInfo.objects.first()
+    notes = [
+        info.belpochta_note if info else DEFAULT_BELPOCHTA_DELIVERY_NOTE,
+        info.evropochta_note if info else DEFAULT_EVROPOCHTA_DELIVERY_NOTE,
+    ]
+    rates = [_first_amount(note, None) for note in notes]
+    rates = [rate for rate in rates if rate]
+    rate = min(rates) if rates else merchant['shipping_rate']
+
+    return {
+        '@type': 'OfferShippingDetails',
+        'shippingRate': {
+            '@type': 'MonetaryAmount',
+            'value': rate,
+            'currency': currency,
+        },
+        'shippingDestination': {
+            '@type': 'DefinedRegion',
+            'addressCountry': merchant['country'],
+        },
+        'deliveryTime': {
+            '@type': 'ShippingDeliveryTime',
+            'handlingTime': {
+                '@type': 'QuantitativeValue',
+                'minValue': merchant['handling_days_min'],
+                'maxValue': merchant['handling_days_max'],
+                'unitCode': 'DAY',
+            },
+            'transitTime': {
+                '@type': 'QuantitativeValue',
+                'minValue': merchant['transit_days_min'],
+                'maxValue': merchant['transit_days_max'],
+                'unitCode': 'DAY',
+            },
+        },
+    }
+
+
+def _return_policy(country):
+    """Политика возврата для JSON-LD. Срок — из оферты в настройках."""
+    merchant = settings.MERCHANT
+    offer_page = StaticPage.objects.filter(slug='offer', is_published=True).first()
+    content = strip_tags(offer_page.content) if offer_page else ''
+    match = re.search(r'(\d+)\s*дн', content)
+    days = int(match.group(1)) if match else merchant['return_days']
+
+    return {
+        '@type': 'MerchantReturnPolicy',
+        'applicableCountry': country,
+        'returnPolicyCategory': 'https://schema.org/MerchantReturnFiniteReturnWindow',
+        'merchantReturnDays': days,
+        'returnMethod': 'https://schema.org/ReturnByMail',
+        'returnFees': 'https://schema.org/ReturnShippingFees',
+    }
+
+
+def _product_schema(request, product, variant, gallery_images):
+    """JSON-LD товара с данными доставки и возврата для Google."""
+    merchant = settings.MERCHANT
+    currency = merchant['currency']
+    schema = {
+        '@context': 'https://schema.org',
+        '@type': 'Product',
+        'name': f'{product.name} {variant.color}',
+        'brand': {
+            '@type': 'Brand',
+            'name': product.brand or merchant['brand'],
+        },
+        'offers': {
+            '@type': 'Offer',
+            'url': request.build_absolute_uri(),
+            'price': f'{variant.sale_price:.2f}',
+            'priceCurrency': currency,
+            'availability': _schema_availability(variant),
+            'shippingDetails': _shipping_details(currency),
+            'hasMerchantReturnPolicy': _return_policy(merchant['country']),
+        },
+    }
+
+    description = product.short_description or product.description
+    if description:
+        schema['description'] = Truncator(strip_tags(description)).chars(200)
+    if gallery_images:
+        schema['image'] = request.build_absolute_uri(gallery_images[0]['src'])
+
+    return mark_safe(json.dumps(schema, ensure_ascii=False).replace('<', '\\u003c'))
+
+
 def product_detail(request, slug):
     product = get_object_or_404(
         Product.objects.select_related('category').prefetch_related('variants__images'),
@@ -272,18 +388,24 @@ def product_detail(request, slug):
     crumbs.append((product.category.name, product.category.get_absolute_url()))
     crumbs.append((product.name, None))
 
+    gallery_images = [image_payload(img) for img in images]
+    product_schema = (
+        _product_schema(request, product, selected, gallery_images)
+        if selected else None
+    )
+
     context = {
         'product': product,
         'variants': variants,
         'variant': selected,
         'images': images,
-        'gallery_images': [image_payload(img) for img in images],
+        'gallery_images': gallery_images,
         'variants_data': variants_data,
         'related_products': related,
         'cross_sell_products': cross_sell,
         'breadcrumbs': crumbs,
         'page_title': product.name,
-        'schema_price': f'{selected.sale_price:.2f}' if selected else None,
+        'product_schema': product_schema,
         'has_discount': any(v.discount_percent > 0 for v in variants),
     }
     return render(request, 'app_catalog/product_detail.html', context)

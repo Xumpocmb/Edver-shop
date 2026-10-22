@@ -1,3 +1,4 @@
+import json
 import re
 
 from django.contrib.auth.models import User
@@ -691,6 +692,95 @@ class ColorHexWidgetTests(TestCase):
 
         self.assertIsNotNone(color_input)
         self.assertNotIn('color-hex', color_input.group(0))
+
+
+class ProductSchemaTests(TestCase):
+    """JSON-LD на странице товара: доставка, возврат и бренд для Google."""
+
+    def setUp(self):
+        self.category = Category.objects.create(name='Сумки', slug='sumki')
+        self.product = Product.objects.create(
+            name='Сумка-шопер', slug='sumka-shopper', category=self.category,
+            brand='Lacoste', short_description='Шопер из хлопка',
+        )
+        self.variant = ProductVariant.objects.create(
+            product=self.product, color='Бордовый', price='200.00', stock=3,
+        )
+
+    def schema(self):
+        html = self.client.get(self.product.get_absolute_url()).content.decode()
+        start = html.index('"@context": "https://schema.org"')
+        start = html.rindex('{', 0, start)
+        raw = html[start:html.index('</script>', start)]
+        return json.loads(raw)
+
+    def offer(self):
+        return self.schema()['offers']
+
+    def test_brand_is_rendered_from_product(self):
+        self.assertEqual(self.schema()['brand']['name'], 'Lacoste')
+
+    def test_brand_falls_back_to_shop(self):
+        self.product.brand = ''
+        self.product.save()
+
+        self.assertEqual(self.schema()['brand']['name'], 'EDVER Shop')
+
+    def test_offer_has_shipping_details(self):
+        shipping = self.offer()['shippingDetails']
+
+        self.assertEqual(shipping['@type'], 'OfferShippingDetails')
+        self.assertEqual(shipping['shippingRate']['value'], '6')
+        self.assertEqual(shipping['shippingDestination']['addressCountry'], 'BY')
+        self.assertEqual(shipping['deliveryTime']['transitTime']['unitCode'], 'DAY')
+
+    def test_offer_has_return_policy(self):
+        policy = self.offer()['hasMerchantReturnPolicy']
+
+        self.assertEqual(policy['@type'], 'MerchantReturnPolicy')
+        self.assertEqual(policy['merchantReturnDays'], 14)
+        self.assertEqual(policy['applicableCountry'], 'BY')
+
+    def test_offer_price_and_availability(self):
+        offer = self.offer()
+
+        self.assertEqual(offer['price'], '200.00')
+        self.assertEqual(offer['priceCurrency'], 'BYN')
+        self.assertEqual(offer['availability'], 'https://schema.org/InStock')
+
+    def test_out_of_stock_availability(self):
+        ProductVariant.objects.filter(pk=self.variant.pk).update(stock=0)
+
+        self.assertEqual(
+            self.offer()['availability'], 'https://schema.org/OutOfStock'
+        )
+
+    def test_description_is_plain_text(self):
+        self.product.description = '<p>Сумка из <b>хлопка</b></p>'
+        self.product.save()
+
+        self.assertEqual(self.schema()['description'], 'Шопер из хлопка')
+
+    def test_shipping_rate_comes_from_delivery_info(self):
+        from app_home.models import DeliveryInfo
+
+        DeliveryInfo.objects.create(
+            belpochta_note='Стоимость доставки 8 руб', evropochta_note='',
+        )
+
+        self.assertEqual(
+            self.offer()['shippingDetails']['shippingRate']['value'], '8'
+        )
+
+    def test_return_days_come_from_offer_page(self):
+        from app_home.models import StaticPage
+
+        StaticPage.objects.create(
+            title='Оферта', slug='offer',
+            content='<p>Покупатель вправе возвратить товар в течение 30 дней.</p>',
+        )
+
+        self.assertEqual(self.offer()['hasMerchantReturnPolicy']['merchantReturnDays'], 30)
 
 
 class ExportYmlCommandTests(TestCase):

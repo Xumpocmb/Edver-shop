@@ -70,6 +70,15 @@ class Product(models.Model):
 
     name = models.CharField(max_length=500, verbose_name="Название модели")
     slug = models.SlugField(max_length=500, unique=True, db_index=True)
+    brand = models.CharField(
+        max_length=255,
+        blank=True,
+        verbose_name="Бренд",
+        help_text=(
+            "Используется в структурированных данных для Google. "
+            "Если не заполнить, будет указан EDVER Shop."
+        ),
+    )
     category = models.ForeignKey(
         Category,
         on_delete=models.PROTECT,

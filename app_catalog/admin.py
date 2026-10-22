@@ -99,7 +99,7 @@ class ProductAdmin(admin.ModelAdmin):
     list_display_links = ['name']
     list_editable = ['order']
     list_filter = ['is_active', 'gender', 'variants__is_popular', 'is_new', 'is_sale', 'category']
-    search_fields = ['name', 'slug', 'description', 'short_description', 'variants__color']
+    search_fields = ['name', 'slug', 'brand', 'description', 'short_description', 'variants__color']
     prepopulated_fields = {'slug': ('name',)}
     inlines = [ProductVariantInline]
     save_on_top = True
@@ -109,7 +109,7 @@ class ProductAdmin(admin.ModelAdmin):
             'fields': (('name', 'slug'), ('category', 'order'), 'gender')
         }),
         ('Характеристики', {
-            'fields': ('material', 'weight', 'dimensions'),
+            'fields': ('brand', 'material', 'weight', 'dimensions'),
         }),
         ('Описание', {
             'fields': ('short_description', 'description'),

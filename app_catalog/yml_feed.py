@@ -82,6 +82,7 @@ def _offer(product, variant):
         'price': float(variant.sale_price),
         'currencyId': settings.FEED['currency'],
         'categoryId': product.category.market_category_id or product.category.slug,
+        'vendor': product.brand or settings.FEED['vendor_name'],
         'available': variant.status != 'out_of_stock' and variant.stock > 0,
     }
 
