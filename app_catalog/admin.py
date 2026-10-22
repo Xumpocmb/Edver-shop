@@ -95,8 +95,9 @@ class ProductAdmin(admin.ModelAdmin):
     class Media:
         js = ('admin/js/urlify_ru.js',)
 
-    list_display = ['main_image', 'name', 'category']
+    list_display = ['main_image', 'name', 'category', 'order']
     list_display_links = ['name']
+    list_editable = ['order']
     list_filter = ['is_active', 'gender', 'variants__is_popular', 'is_new', 'is_sale', 'category']
     search_fields = ['name', 'slug', 'description', 'short_description', 'variants__color']
     prepopulated_fields = {'slug': ('name',)}
@@ -105,7 +106,7 @@ class ProductAdmin(admin.ModelAdmin):
     change_list_template = 'admin/app_catalog/product/change_list.html'
     fieldsets = (
         (None, {
-            'fields': (('name', 'slug'), ('category',), 'gender')
+            'fields': (('name', 'slug'), ('category', 'order'), 'gender')
         }),
         ('Характеристики', {
             'fields': ('material', 'weight', 'dimensions'),

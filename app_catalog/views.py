@@ -61,13 +61,15 @@ def _apply_filters(queryset, request):
     if on_sale == '1':
         qs = qs.filter(product__is_sale=True)
 
-    sort = get.get('sort', 'newest')
+    sort = get.get('sort', 'default')
     if sort == 'price_asc':
         qs = qs.order_by('price', 'id')
     elif sort == 'price_desc':
         qs = qs.order_by('-price', 'id')
     else:
-        qs = qs.order_by('-product__created_at', 'id')
+        qs = qs.order_by(
+            'product__order', '-product__created_at', 'product_id', 'order', 'id'
+        )
     return qs
 
 
@@ -78,7 +80,7 @@ def _get_filter_context(request, base_qs, show_gender=True):
         'categories': categories,
         'price_min': price_agg.get('min_price') or 0,
         'price_max': price_agg.get('max_price') or 0,
-        'current_sort': request.GET.get('sort', 'newest'),
+        'current_sort': request.GET.get('sort') or 'default',
         'current_price_from': request.GET.get('price_from', ''),
         'current_price_to': request.GET.get('price_to', ''),
         'current_gender': request.GET.get('gender', ''),

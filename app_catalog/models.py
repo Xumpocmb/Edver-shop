@@ -117,6 +117,15 @@ class Product(models.Model):
     is_new = models.BooleanField(default=False, verbose_name="Новинка")
     is_sale = models.BooleanField(default=False, verbose_name="Распродажа")
     is_active = models.BooleanField(default=True, verbose_name="Активен")
+    order = models.PositiveIntegerField(
+        default=100,
+        verbose_name="Порядок",
+        help_text=(
+            "Порядок отображения товара в каталоге: чем меньше значение, "
+            "тем выше товар. 0–99 — в начало списка, 100 — по умолчанию, "
+            "101–999 — в конец."
+        ),
+    )
 
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="Создан")
     updated_at = models.DateTimeField(auto_now=True, verbose_name="Обновлён")

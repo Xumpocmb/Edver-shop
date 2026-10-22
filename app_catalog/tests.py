@@ -146,6 +146,58 @@ class CatalogCardsTests(TestCase):
         self.assertEqual(html.count('class="product-card"'), 4)
 
 
+class ProductOrderTests(TestCase):
+    """Поле «Порядок» задаёт позицию товара в каталоге."""
+
+    def setUp(self):
+        self.category = Category.objects.create(name='Сумки', slug='sumki')
+
+    def product(self, name, slug, order=100):
+        product = Product.objects.create(
+            name=name, slug=slug, category=self.category, order=order,
+        )
+        ProductVariant.objects.create(product=product, color='Чёрный', price='100.00')
+        return product
+
+    def variant_ids(self, url='/catalog/'):
+        html = self.client.get(url).content.decode()
+        return re.findall(r'data-variant-id="(\d+)"', html)
+
+    def test_default_order_is_100(self):
+        product = Product.objects.create(
+            name='Сумка', slug='sumka', category=self.category,
+        )
+
+        self.assertEqual(product.order, 100)
+
+    def test_catalog_orders_products_by_order_field(self):
+        late = self.product('Поздняя', 'late', order=999)
+        early = self.product('Ранняя', 'early', order=10)
+        default = self.product('Обычная', 'default', order=100)
+
+        ids = self.variant_ids()
+
+        self.assertEqual(ids, [
+            str(early.main_variant.id),
+            str(default.main_variant.id),
+            str(late.main_variant.id),
+        ])
+
+    def test_order_applies_to_category_and_search(self):
+        late = self.product('Сумка поздняя', 'late', order=500)
+        early = self.product('Сумка ранняя', 'early', order=5)
+
+        for url in (
+            self.category.get_absolute_url(),
+            '/catalog/search/?q=Сумка',
+        ):
+            with self.subTest(url=url):
+                self.assertEqual(self.variant_ids(url), [
+                    str(early.main_variant.id),
+                    str(late.main_variant.id),
+                ])
+
+
 class MainVariantTests(TestCase):
     """Галочка «Главный вариант» выбирает, какой цвет показывается по умолчанию."""
 
