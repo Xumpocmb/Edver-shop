@@ -30,16 +30,15 @@
         <button type="button" class="footer-links__btn" id="cookie-settings-btn">Настройки cookie</button>
     </nav>
 
-    <div class="footer-col footer-address">
-        <h3 class="footer-title">Магазин</h3>
-        <address class="footer-address__body">
-            г. {{ site_address.city }}, {{ site_address.street }}<br>
-            {{ site_address.place }}<br>
-            Доставка по всей Беларуси
-        </address>
-    </div>
-
     <div class="footer-info">
+        <div class="footer-address">
+            <h3 class="footer-title">Магазин</h3>
+            <address class="footer-address__body">
+                г. {{ site_address.city }}, {{ site_address.street }}<br>
+                {{ site_address.place }}<br>
+                Доставка по всей Беларуси
+            </address>
+        </div>
         <p>{{ footer_info.text|linebreaksbr }}</p>
     </div>
 

@@ -1225,6 +1225,21 @@ button {
     opacity: .85;
 }
 
+.footer-address__body {
+    font-size: .8rem;
+    line-height: 1.35;
+    opacity: .85;
+    font-style: normal;
+}
+
+.footer-address {
+    margin-bottom: .75rem;
+}
+
+.footer-address .footer-title {
+    margin-bottom: .4rem;
+}
+
 .footer-info p+p {
     margin-top: .35rem;
 }
