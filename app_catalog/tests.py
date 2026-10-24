@@ -744,6 +744,8 @@ class ProductSchemaTests(TestCase):
         self.assertEqual(policy['@type'], 'MerchantReturnPolicy')
         self.assertEqual(policy['merchantReturnDays'], 14)
         self.assertEqual(policy['applicableCountry'], 'BY')
+        self.assertEqual(policy['returnFees'], 'https://schema.org/FreeReturn')
+        self.assertNotIn('returnShippingFeesAmount', policy)
 
     def test_offer_price_and_availability(self):
         offer = self.offer()

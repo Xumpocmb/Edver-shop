@@ -323,7 +323,7 @@ def _return_policy(country):
         'returnPolicyCategory': 'https://schema.org/MerchantReturnFiniteReturnWindow',
         'merchantReturnDays': days,
         'returnMethod': 'https://schema.org/ReturnByMail',
-        'returnFees': 'https://schema.org/ReturnShippingFees',
+        'returnFees': 'https://schema.org/FreeReturn',
     }
 
 
