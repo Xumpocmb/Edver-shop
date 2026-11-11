@@ -1747,8 +1747,36 @@ button {
 }
 
 @media (min-width: 1081px) {
+    .filters-card {
+        max-height: calc(100vh - 130px);
+        display: flex;
+        flex-direction: column;
+    }
+
+    .filters-card__head {
+        flex: none;
+    }
+
     .filters-form {
         display: flex;
+        overflow-y: auto;
+        overscroll-behavior: contain;
+        min-height: 0;
+        scrollbar-width: thin;
+        scrollbar-color: var(--color-border-strong) transparent;
+    }
+
+    .filters-form::-webkit-scrollbar {
+        width: 6px;
+    }
+
+    .filters-form::-webkit-scrollbar-thumb {
+        background: var(--color-border-strong);
+        border-radius: 3px;
+    }
+
+    .filters-form::-webkit-scrollbar-track {
+        background: transparent;
     }
 
     .filters-card__arrow {
